@@ -53,8 +53,14 @@ Andrew J.
 October 3, 2011
 \end_layout
 
-\begin_layout Section
+\begin_layout Section*
+Introduction
+\end_layout
 
+\begin_layout Standard
+The Longley-Rice Irregular Terrain Model is a mathicmatical model that attempts
+ to perdict how radio waves will propigate over known terrain features.
+ 
 \end_layout
 
 \end_body
