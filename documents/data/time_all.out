@@ -1,0 +1,500 @@
+Run with 1 miles:
+
+real	0m16.922s
+user	0m16.780s
+sys	0m0.120s
+Run with 2 miles:
+
+real	0m17.376s
+user	0m17.220s
+sys	0m0.140s
+Run with 3 miles:
+
+real	0m18.311s
+user	0m18.150s
+sys	0m0.150s
+Run with 4 miles:
+
+real	0m20.129s
+user	0m19.820s
+sys	0m0.080s
+Run with 5 miles:
+
+real	0m21.956s
+user	0m21.830s
+sys	0m0.110s
+Run with 6 miles:
+
+real	0m25.204s
+user	0m25.080s
+sys	0m0.110s
+Run with 7 miles:
+
+real	0m28.633s
+user	0m28.450s
+sys	0m0.160s
+Run with 8 miles:
+
+real	0m33.027s
+user	0m32.850s
+sys	0m0.150s
+Run with 9 miles:
+
+real	0m38.838s
+user	0m38.680s
+sys	0m0.120s
+Run with 10 miles:
+
+real	0m44.858s
+user	0m44.730s
+sys	0m0.100s
+Run with 11 miles:
+
+real	0m53.052s
+user	0m52.620s
+sys	0m0.110s
+Run with 12 miles:
+
+real	1m1.753s
+user	1m1.490s
+sys	0m0.090s
+Run with 13 miles:
+
+real	1m11.900s
+user	1m11.680s
+sys	0m0.160s
+Run with 14 miles:
+
+real	1m22.657s
+user	1m22.570s
+sys	0m0.040s
+Run with 15 miles:
+
+real	1m35.714s
+user	1m35.490s
+sys	0m0.150s
+Run with 16 miles:
+
+real	2m8.615s
+user	2m8.250s
+sys	0m0.260s
+Run with 17 miles:
+
+real	2m25.360s
+user	2m24.990s
+sys	0m0.260s
+Run with 18 miles:
+
+real	3m12.724s
+user	3m12.140s
+sys	0m0.420s
+Run with 19 miles:
+
+real	3m33.364s
+user	3m32.840s
+sys	0m0.360s
+Run with 20 miles:
+
+real	3m54.783s
+user	3m54.190s
+sys	0m0.460s
+Run with 21 miles:
+
+real	4m19.812s
+user	4m19.200s
+sys	0m0.420s
+Run with 22 miles:
+
+real	4m44.346s
+user	4m43.770s
+sys	0m0.420s
+Run with 23 miles:
+
+real	5m12.848s
+user	5m12.240s
+sys	0m0.430s
+Run with 24 miles:
+
+real	5m44.268s
+user	5m43.560s
+sys	0m0.450s
+Run with 25 miles:
+
+real	6m14.340s
+user	6m13.780s
+sys	0m0.360s
+Run with 26 miles:
+
+real	6m54.053s
+user	6m53.480s
+sys	0m0.360s
+Run with 27 miles:
+
+real	7m28.725s
+user	7m28.140s
+sys	0m0.350s
+Run with 28 miles:
+
+real	8m9.882s
+user	8m9.240s
+sys	0m0.390s
+Run with 29 miles:
+
+real	8m51.043s
+user	8m50.390s
+sys	0m0.370s
+Run with 30 miles:
+
+real	9m36.040s
+user	9m35.300s
+sys	0m0.440s
+Run with 31 miles:
+
+real	11m4.128s
+user	11m2.640s
+sys	0m0.760s
+Run with 32 miles:
+
+real	11m53.738s
+user	11m52.730s
+sys	0m0.640s
+Run with 33 miles:
+
+real	12m54.044s
+user	12m53.030s
+sys	0m0.620s
+Run with 34 miles:
+
+real	13m46.902s
+user	13m45.860s
+sys	0m0.620s
+Run with 35 miles:
+
+real	14m47.073s
+user	14m45.980s
+sys	0m0.650s
+Run with 36 miles:
+
+real	15m52.192s
+user	15m51.080s
+sys	0m0.640s
+Run with 37 miles:
+
+real	17m1.123s
+user	16m59.960s
+sys	0m0.650s
+Run with 38 miles:
+
+real	18m12.887s
+user	18m11.790s
+sys	0m0.560s
+Run with 39 miles:
+
+real	19m31.561s
+user	19m30.420s
+sys	0m0.560s
+Run with 40 miles:
+
+real	21m57.200s
+user	21m55.600s
+sys	0m0.890s
+Run with 41 miles:
+
+real	23m20.412s
+user	23m18.490s
+sys	0m0.910s
+Run with 42 miles:
+
+real	24m50.334s
+user	24m48.720s
+sys	0m0.890s
+Run with 43 miles:
+
+real	26m24.246s
+user	26m22.550s
+sys	0m0.920s
+Run with 44 miles:
+
+real	28m1.022s
+user	27m59.310s
+sys	0m0.900s
+Run with 45 miles:
+
+real	29m45.229s
+user	29m43.510s
+sys	0m0.860s
+Run with 46 miles:
+
+real	31m34.998s
+user	31m33.150s
+sys	0m0.940s
+Run with 47 miles:
+
+real	33m29.387s
+user	33m27.610s
+sys	0m0.810s
+Run with 48 miles:
+
+real	35m36.830s
+user	35m34.430s
+sys	0m0.890s
+Run with 49 miles:
+
+real	37m43.233s
+user	37m40.630s
+sys	0m0.970s
+Run with 50 miles:
+
+real	39m43.128s
+user	39m40.560s
+sys	0m0.880s
+Run with 51 miles:
+
+real	41m56.750s
+user	41m54.050s
+sys	0m0.960s
+Run with 52 miles:
+
+real	44m10.136s
+user	44m8.020s
+sys	0m0.840s
+Run with 53 miles:
+
+real	46m36.337s
+user	46m33.300s
+sys	0m1.060s
+Run with 54 miles:
+
+real	48m57.047s
+user	48m54.870s
+sys	0m0.810s
+Run with 55 miles:
+
+real	51m39.515s
+user	51m36.860s
+sys	0m0.780s
+Run with 56 miles:
+
+real	54m7.778s
+user	54m4.510s
+sys	0m1.000s
+Run with 57 miles:
+
+real	56m54.763s
+user	56m51.510s
+sys	0m0.900s
+Run with 58 miles:
+
+real	59m32.395s
+user	59m29.990s
+sys	0m0.790s
+Run with 59 miles:
+
+real	62m27.586s
+user	62m24.990s
+sys	0m0.870s
+Run with 60 miles:
+
+real	65m38.804s
+user	65m35.050s
+sys	0m1.010s
+Run with 61 miles:
+
+real	68m37.871s
+user	68m35.090s
+sys	0m0.890s
+Run with 62 miles:
+
+real	71m57.222s
+user	71m54.310s
+sys	0m0.940s
+Run with 63 miles:
+
+real	76m28.791s
+user	76m25.390s
+sys	0m1.220s
+Run with 64 miles:
+
+real	80m5.549s
+user	80m0.630s
+sys	0m1.590s
+Run with 65 miles:
+
+real	83m27.495s
+user	83m23.700s
+sys	0m1.300s
+Run with 66 miles:
+
+real	87m36.339s
+user	87m31.410s
+sys	0m1.160s
+Run with 67 miles:
+
+real	91m25.593s
+user	91m20.590s
+sys	0m1.270s
+Run with 68 miles:
+
+real	95m20.184s
+user	95m14.950s
+sys	0m1.270s
+Run with 69 miles:
+
+real	99m24.311s
+user	99m20.320s
+sys	0m1.210s
+Run with 70 miles:
+
+real	103m59.199s
+user	103m53.530s
+sys	0m1.370s
+Run with 71 miles:
+
+real	108m10.427s
+user	108m4.590s
+sys	0m1.310s
+Run with 72 miles:
+
+real	113m14.060s
+user	113m9.730s
+sys	0m1.140s
+Run with 73 miles:
+
+real	117m18.006s
+user	117m11.870s
+sys	0m1.340s
+Run with 74 miles:
+
+real	122m12.261s
+user	122m6.870s
+sys	0m1.320s
+Run with 75 miles:
+
+real	128m40.241s
+user	128m32.640s
+sys	0m1.820s
+Run with 76 miles:
+
+real	134m16.189s
+user	134m8.840s
+sys	0m1.820s
+Run with 77 miles:
+
+real	139m2.518s
+user	138m55.800s
+sys	0m1.740s
+Run with 78 miles:
+
+real	146m30.469s
+user	146m24.250s
+sys	0m2.080s
+Run with 79 miles:
+
+real	152m13.181s
+user	152m6.280s
+sys	0m1.950s
+Run with 80 miles:
+
+real	158m8.308s
+user	158m1.290s
+sys	0m2.110s
+Run with 81 miles:
+
+real	164m21.119s
+user	164m14.430s
+sys	0m2.210s
+Run with 82 miles:
+
+real	170m58.420s
+user	170m49.210s
+sys	0m2.000s
+Run with 83 miles:
+
+real	176m47.046s
+user	176m40.420s
+sys	0m1.840s
+Run with 84 miles:
+
+real	183m46.937s
+user	183m37.050s
+sys	0m2.050s
+Run with 85 miles:
+
+real	190m6.300s
+user	189m59.150s
+sys	0m1.930s
+Run with 86 miles:
+
+real	197m31.087s
+user	197m20.830s
+sys	0m2.080s
+Run with 87 miles:
+
+real	203m59.351s
+user	203m51.740s
+sys	0m2.040s
+Run with 88 miles:
+
+real	211m31.357s
+user	211m22.560s
+sys	0m2.150s
+Run with 89 miles:
+
+real	218m49.440s
+user	218m41.610s
+sys	0m1.920s
+Run with 90 miles:
+
+real	226m35.465s
+user	226m23.670s
+sys	0m2.220s
+Run with 91 miles:
+
+real	234m44.075s
+user	234m31.930s
+sys	0m2.290s
+Run with 92 miles:
+
+real	242m23.413s
+user	242m14.890s
+sys	0m1.910s
+Run with 93 miles:
+
+real	251m6.053s
+user	250m53.660s
+sys	0m2.090s
+Run with 94 miles:
+
+real	259m12.740s
+user	259m3.680s
+sys	0m2.090s
+Run with 95 miles:
+
+real	268m3.877s
+user	267m50.430s
+sys	0m2.240s
+Run with 96 miles:
+
+real	276m42.017s
+user	276m31.760s
+sys	0m2.040s
+Run with 97 miles:
+
+real	288m19.103s
+user	288m8.740s
+sys	0m2.500s
+Run with 98 miles:
+
+real	297m17.730s
+user	297m7.230s
+sys	0m2.450s
+Run with 99 miles:
+
+real	306m52.110s
+user	306m41.020s
+sys	0m2.680s
+Run with 100 miles:
+
+real	316m7.948s
+user	315m56.710s
+sys	0m2.650s

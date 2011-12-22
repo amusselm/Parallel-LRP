@@ -1,0 +1,26 @@
+
+		--==[ Welcome To SPLAT! HD v1.4.0 ]==--
+
+Loading "../eledata/sdf/35:36:120:121-hd.sdf" into page 1... Done!
+Loading "../eledata/sdf/34:35:119:120-hd.sdf" into page 2... Done!
+Loading "../eledata/sdf/35:36:119:120-hd.sdf" into page 3... Done!
+Loading "../eledata/sdf/36:37:119:120-hd.sdf" into page 4... Done!
+Loading "../eledata/sdf/34:35:120:121-hd.sdf" into page 5... Done!
+Loading "../eledata/sdf/36:37:120:121-hd.sdf" into page 6... Done!
+Region  "34:35:121:122-hd" assumed as sea-level into page 7... Done!
+Loading "../eledata/sdf/35:36:121:122-hd.sdf" into page 8... Done!
+Loading "../eledata/sdf/36:37:121:122-hd.sdf" into page 9... Done!
+
+Computing ITWOM field strength contours of "W6BHZ Shack"
+out to a radius of 52.00 miles with an RX antenna at 10.00 feet AGL...
+
+ 0% to  25% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+25% to  50% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+50% to  75% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+75% to 100% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+Done!
+
+Site analysis report written to: "W6BHZ_Shack-site_report.txt"
+
+Writing "W6BHZ.ppm" (10800x10830 pixmap image)... Done!
+

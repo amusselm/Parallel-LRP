@@ -1,0 +1,10 @@
+#Global git ignore file
+
+#ignore everything in refrences, due to copyright
+./refrences/*
+
+#ignore anything that ends in ~, to avoid temporary files from lyx
+*~
+
+# And vim
+*.swp

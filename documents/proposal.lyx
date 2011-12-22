@@ -36,12 +36,13 @@
 \tracking_changes false
 \output_changes false
 \author "" 
+\author "" 
 \end_header
 
 \begin_body
 
 \begin_layout Title
-A GPGPU Implementation of the Longley-Rice Irregular Terrain Model
+A GPGPU Implementation of the Irregular Terrain with Obstructions Model
 \end_layout
 
 \begin_layout Author
@@ -50,17 +51,349 @@ Andrew J.
 \end_layout
 
 \begin_layout Date
-October 3, 2011
+December 15, 2011
 \end_layout
 
 \begin_layout Section*
-Introduction
+Project Description
 \end_layout
 
 \begin_layout Standard
-The Longley-Rice Irregular Terrain Model is a mathicmatical model that attempts
- to perdict how radio waves will propigate over known terrain features.
+To the requirements of Cal Poly's Computer Science department for senior
+ project, I intend to implement a version of the Irregular Terrain with
+ Obstructions Model (IOWTM) for graphics proscessors.
+ I will then measure how much, if any, preformance gain this approach has.
+ In order to make this utility easier to use, I may also attempt to develop
+ a simple graphical addation to existing maping software to make it easier
+ for communications technicians and broadcast engineers to use this tool.
  
+\end_layout
+
+\begin_layout Section
+Background
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Background"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+General Description
+\end_layout
+
+\begin_layout Standard
+The ITWOM is a mathicmatical model that attempts to perdict how radio waves
+ will propigate over known terrain features.
+ This is useful for 
+\begin_inset Quotes eld
+\end_inset
+
+link budgeting
+\begin_inset Quotes erd
+\end_inset
+
+, where communications technicians and radio operators attempt to map how
+ well a radio link or broadcast will work over a given path or area.
+ 
+\end_layout
+
+\begin_layout Standard
+There is an existing implementation of the ITOWM.
+ However, this implementation for a single, general-purpose CPU.
+ I believe it may be possible to achieve a significant increase in performance
+ by adapting the ITOWM to run in parallel on a GPGPU.
+ 
+\end_layout
+
+\begin_layout Subsection
+The ITOWM and the Longely-Rice Model
+\end_layout
+
+\begin_layout Standard
+The ITOWM is largely derrived from the older Longely-Rice Model, with a
+ number of changes and corrections that its author, Sidney E.
+ Shumate, claims improve its overall accuracy.
+ Addationally, their changes allow the practical use of higher-resoluation
+ elevation data.
+ Shumate also designed his code to work as a drop-in replacement for the
+ Longely-Rice Model.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "VTC_IWOTM"
+
+\end_inset
+
+ Since the two algorithims are so similar in terms of their overall structure
+ and control flow, exiting research into how one is paraellized might be
+ directly applicable to the other.
+ 
+\end_layout
+
+\begin_layout Subsection
+SPLAT!
+\end_layout
+
+\begin_layout Standard
+SPLAT is a command-line wrapper program for the ITOWM, Longely-Rice Model
+ and other RF-Propigation algorithims.
+ It takes in appropiately formated elevation data and various prarmaters
+ about each of the transmitters or receivers that the user wishes to model.
+ It has the option of outputting a bitmap or a KML file for Google Earth
+ for graphically representating coverage information.
+ It also generates text files that contain information about each radio
+ site and nearby obstructions.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "splat_www"
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Section
+Project Scope
+\end_layout
+
+\begin_layout Subsection
+Primary Objectives
+\end_layout
+
+\begin_layout Standard
+The primary objective of the project will be to create a paraell version
+ of the ITOWM to link directly into SPLAT, ideally with minimal modification
+ to SPLAT itself.
+ To insure that the modified application still generates valid output, I
+ will compare the output of my version of the ITOWM to the stock version.
+ Addationally, I will run benchmarks on the modified program to measure
+ the preformance of the modified version compared to the stock version.
+ 
+\end_layout
+
+\begin_layout Subsection
+Secondary Objectives
+\end_layout
+
+\begin_layout Standard
+The project may include a number of secondary objectives, depending outcome
+ of the primary objectives and the project schedule.
+ These might include:
+\end_layout
+
+\begin_layout Itemize
+Implemenatating a 3d graphical frontend to SPLAT using NASA's Worldwind,
+ which is a 3D map viewer
+\end_layout
+
+\begin_layout Itemize
+Implementating a 2d web-based frontend to SPLAT using OpenLayers.
+\end_layout
+
+\begin_layout Itemize
+Modifications to SPLAT or creating a new wrapper program to make the IWOTM
+ easier to work with for other mapping applications.
+\end_layout
+
+\begin_layout Subsection
+Limatations to the Project Scope
+\end_layout
+
+\begin_layout Standard
+Since I lack a technical background in RF propigation, I will not attempt
+ to measure or improve the real-world accuracy of the IWOTM.
+ Although both I and the author of the IWOTM
+\begin_inset CommandInset citation
+LatexCommand cite
+key "VTC_IWOTM"
+
+\end_inset
+
+ think that such improvements may be possible, I think that such efforts
+ are beyond the scope of this project at this time.
+\end_layout
+
+\begin_layout Section
+Existing Related Works
+\end_layout
+
+\begin_layout Standard
+There are a number the existing serial implementations of the Longley-Rice
+ Model, including a refrence implementation maintained by the US Department
+ of Commerce
+\begin_inset CommandInset citation
+LatexCommand cite
+key "us_commerce"
+
+\end_inset
+
+.
+ This refrence implementation is the basis of the IWOTM
+\begin_inset CommandInset citation
+LatexCommand cite
+key "VTC_IWOTM"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Addationally, a pair of University of Arizona researchers have recently
+ made implementations of the Longley-Rice Model for both for IBM's Cell
+ proscessor and for Nvidia's Tesla C870 GPU
+\begin_inset CommandInset citation
+LatexCommand cite
+key "lrp_itm_gpu"
+
+\end_inset
+
+.
+ These reaserchers foudn that were able to reduce execuation times to less
+ than a second.
+ They also found that the Telsa GPU was around 2-3 times as fast as the
+ IBM cell proscessor.
+ This confirms that the Longely-Rice Model is suitable for paraell proscesing,
+ which makes it highly likely that the IWOTM will have similar preformance
+ gains when it is adapted for use on the GPU.
+\end_layout
+
+\begin_layout Section
+SPLAT Benchmark results
+\end_layout
+
+\begin_layout Subsection
+Test Procedure
+\end_layout
+
+\begin_layout Standard
+To establish a baseline benchmark for SPLAT, I ran a set number tests on
+ the existing SPLAT implementation.
+ For tese tests, I modified SPLAT's build script to embed debug information
+ and enable the generation of runtime profiles, which may have a negative
+ impact on overall preformance.
+ 
+\end_layout
+
+\begin_layout Standard
+These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
+ SPLAT does not need to load terrain data for ocean areas, which would result
+ in less time reading terrain data from disk compaired to inland areas.
+ Addationally, all of these tests assume a receiver at 10 feet above ground.
+ This may only stress part of the IOWTM, while leaving other parts of the
+ code unused.
+ 
+\end_layout
+
+\begin_layout Standard
+All of these tests were run on Tesla, a Cal Poly Computer Science department
+ server.
+ This computer is equiped with *insert hardware here*.
+ The build of SPLAT used was configured to analize the largest possible
+ region, which the highest possible memory requirments.
+ Addationaly, I elected to use the highest-resoluation elevation data that
+ is aviable for use with SPLAT!.
+ 
+\end_layout
+
+\begin_layout Standard
+I created a simple shell script to run these tests.
+ This script ran as a loop: for each integer between 1 and 100, the script
+ told SPLAT to simulate propigation of a given frequency from 50 foot high
+ antenna on the Cal Poly campus to a hypothetical receiver that was located
+ 10 feet off of the ground for all points within a that integer miles radius
+ of the transmitter.
+ This would show how total runtime and the number of times specific functions
+ were called were effected by the amount of data to be proscessed.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#!/bin/bash 
+\end_layout
+
+\begin_layout Plain Layout
+
+for((i=1; i<=100; i++)) 
+\end_layout
+
+\begin_layout Plain Layout
+
+do     
+\end_layout
+
+\begin_layout Plain Layout
+
+  echo "Run with $i miles:" > ./data/time_$i.out     
+\end_layout
+
+\begin_layout Plain Layout
+
+  (time 
+\end_layout
+
+\begin_layout Plain Layout
+
+   ../splat-1.4.0/splat-hd -d ../eledata/sdf/ -L 10 -R $i -t W6BHZ.qth) 
+\end_layout
+
+\begin_layout Plain Layout
+
+       1>./data/stdout_$i.out 
+\end_layout
+
+\begin_layout Plain Layout
+
+       2>> ./data/time_$i.out
+\end_layout
+
+\begin_layout Plain Layout
+
+  echo "Run with $i miles:" > ./data/gprof_$i.out     
+\end_layout
+
+\begin_layout Plain Layout
+
+  gprof ../splat-1.4.0/splat-hd >> ./data/gprof_$i.out 
+\end_layout
+
+\begin_layout Plain Layout
+
+done 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Running Time 
+\end_layout
+
+\begin_layout Section
+Licensing Concerns
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "sources"
+options "bibtotoc,plain"
+
+\end_inset
+
+
 \end_layout
 
 \end_body
