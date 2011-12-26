@@ -292,7 +292,7 @@ These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
 \begin_layout Standard
 All of these tests were run on Tesla, a Cal Poly Computer Science department
  server.
- This computer is equiped with *insert hardware here*.
+ This computer is equiped with a pair of Intel Intel Xeon E5504 CPUs.
  The build of SPLAT used was configured to analize the largest possible
  region, which the highest possible memory requirments.
  Addationaly, I elected to use the highest-resoluation elevation data that
@@ -381,8 +381,8 @@ done
 Running Time 
 \end_layout
 
-\begin_layout Section
-Licensing Concerns
+\begin_layout Standard
+
 \end_layout
 
 \begin_layout Standard

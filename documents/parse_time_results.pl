@@ -13,8 +13,8 @@ my $dataHash;
 while($line = <STDIN>) {
    chomp($line);
    if($line =~ /^Run/){
-      if( $line =~ /[0-9]{1,3}/ ){
-         $dataHash->{'mile'} = $1;
+      if( $line =~ s/\D//g ){
+         $dataHash->{'mile'} = $line;
       }
    }
    else{
@@ -25,8 +25,15 @@ while($line = <STDIN>) {
    #Read wall (real) time...
    $line=<STDIN>;
    if($line =~ /^real/){
-      if( $line =~ /\w$/ ){
-         $dataHash->{'real'} = $1;
+      if( $line =~ m/[0-9]+m[0-9\.]+s$/ ){
+         #Remove the "real" header
+         $line =~ s/real//g;
+         #Convert the time into something open office can read
+         $line =~ s/m/:/g;
+         $line =~ s/s//g;
+         #Remove whitespace
+         $line =~ s/\s//g;
+         $dataHash->{'real'} = $line;
       }
    }
    else{
@@ -35,8 +42,15 @@ while($line = <STDIN>) {
    #Read proscess (user) time...
    $line=<STDIN>;
    if($line =~ /^user/){
-      if( $line =~ /\w/ ){
-         $dataHash->{'user'} = $1;
+      if( $line =~ m/[0-9]+m[0-9\.]+s$/ ){
+         #Remove the "real" header
+         $line =~ s/user//g;
+         #Convert the time into something open office can read
+         $line =~ s/m/:/g;
+         $line =~ s/s//g;
+         #Remove whitespace
+         $line =~ s/\s//g;
+         $dataHash->{'user'} = $line;
       }
    }
    else{
@@ -45,13 +59,20 @@ while($line = <STDIN>) {
    #Read sys time...
    $line=<STDIN>;
    if($line =~ /^sys/){
-      if( $line =~ /\w/ ){
-         $dataHash->{'sys'} = $1;
+      if( $line =~ m/[0-9]+m[0-9\.]+s$/ ){
+         #Remove the "real" header
+         $line =~ s/sys//g;
+         #Convert the time into something open office can read
+         $line =~ s/m/:/g;
+         $line =~ s/s//g;
+         #Remove whitespace
+         $line =~ s/\s//g;
+         $dataHash->{'sys'} = $line;
       }
    }
    else{
       die("Invalid Format");
    }
-   print Dumper($dataHash);
+   #print Dumper($dataHash);
    print("$dataHash->{'mile'},$dataHash->{'real'},$dataHash->{'user'}\n");
 }
