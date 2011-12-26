@@ -2,6 +2,7 @@
 
 #ignore everything in refrences, due to copyright
 ./refrences/*
+./refrences
 
 #ignore anything that ends in ~, to avoid temporary files from lyx
 *~
