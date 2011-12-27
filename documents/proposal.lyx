@@ -170,8 +170,7 @@ The primary objective of the project will be to create a paraell version
  To insure that the modified application still generates valid output, I
  will compare the output of my version of the ITOWM to the stock version.
  Addationally, I will run benchmarks on the modified program to measure
- the preformance of the modified version compared to the stock version.
- 
+ the preformance of the modified version of the ITOWM.
 \end_layout
 
 \begin_layout Subsection
@@ -185,8 +184,7 @@ The project may include a number of secondary objectives, depending outcome
 \end_layout
 
 \begin_layout Itemize
-Implemenatating a 3d graphical frontend to SPLAT using NASA's Worldwind,
- which is a 3D map viewer
+Implemenatating a 3d graphical frontend to SPLAT using NASA's Worldwind.
 \end_layout
 
 \begin_layout Itemize
@@ -253,12 +251,12 @@ key "lrp_itm_gpu"
 \end_inset
 
 .
- These reaserchers foudn that were able to reduce execuation times to less
+ These reaserchers found that were able to reduce execuation times to less
  than a second.
  They also found that the Telsa GPU was around 2-3 times as fast as the
  IBM cell proscessor.
- This confirms that the Longely-Rice Model is suitable for paraell proscesing,
- which makes it highly likely that the IWOTM will have similar preformance
+ This confirms that the Longely-Rice Model is suitable for parallel processing,
+ which makes it highly likely that the IWOTM will have similar performance
  gains when it is adapted for use on the GPU.
 \end_layout
 
@@ -273,17 +271,19 @@ Test Procedure
 \begin_layout Standard
 To establish a baseline benchmark for SPLAT, I ran a set number tests on
  the existing SPLAT implementation.
- For tese tests, I modified SPLAT's build script to embed debug information
- and enable the generation of runtime profiles, which may have a negative
- impact on overall preformance.
+ For these tests, I modified SPLAT's build script to embed debug information
+ and generate runtime profiles, which may have hurt overall performance
+ somewhat.
  
 \end_layout
 
 \begin_layout Standard
 These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
- SPLAT does not need to load terrain data for ocean areas, which would result
- in less time reading terrain data from disk compaired to inland areas.
- Addationally, all of these tests assume a receiver at 10 feet above ground.
+ SPLAT does not load terrain data for ocean areas.
+ Therefore, running SPLAT over a coastal area like the terrain surrounding
+ Cal Poly would result in SPLAT spending less time reading terrain data
+ from disk compared to inland areas.
+ Additionally, all of these tests assume a receiver at 10 feet above ground.
  This may only stress part of the IOWTM, while leaving other parts of the
  code unused.
  
@@ -292,23 +292,23 @@ These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
 \begin_layout Standard
 All of these tests were run on Tesla, a Cal Poly Computer Science department
  server.
- This computer is equiped with a pair of Intel Intel Xeon E5504 CPUs.
- The build of SPLAT used was configured to analize the largest possible
- region, which the highest possible memory requirments.
- Addationaly, I elected to use the highest-resoluation elevation data that
- is aviable for use with SPLAT!.
+ This computer is equipped with a pair of Intel Intel Xeon E5504 CPUs.
+ The build of SPLAT used was configured to analyze the largest possible
+ region, which the highest possible memory requirements.
+ Additionally, I elected to use the highest-resolution elevation data that
+ is available for use with SPLAT.
  
 \end_layout
 
 \begin_layout Standard
 I created a simple shell script to run these tests.
  This script ran as a loop: for each integer between 1 and 100, the script
- told SPLAT to simulate propigation of a given frequency from 50 foot high
+ told SPLAT to simulate propagation of a given frequency from 50 foot high
  antenna on the Cal Poly campus to a hypothetical receiver that was located
- 10 feet off of the ground for all points within a that integer miles radius
+ 10 feet off of the ground for all points within that integer miles radius
  of the transmitter.
  This would show how total runtime and the number of times specific functions
- were called were effected by the amount of data to be proscessed.
+ were called were effected by the amount of data to be processed.
  
 \end_layout
 
@@ -378,18 +378,71 @@ done
 \end_layout
 
 \begin_layout Subsection
-Running Time 
+Running Time
 \end_layout
 
 \begin_layout Standard
+When comparing the radius to the execuation time, I found that the execuation
+ time increases polynominally with the radius of the area.
+\end_layout
 
+\begin_layout Standard
+\begin_inset Graphics
+	filename chart_radius.png
+	scale 80
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+However, the amount of terrain data that SPLAT has to load and proscess
+ also increases polynominally.
+ Therefore, it makes sense to compare the execuation time to the total area
+ over which SPLAT is calculating signal strengths.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename chart_area.png
+	scale 80
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Beyond around 10,000 square miles, the execuation seems to be growing only
+ slightly faster than linearly with area.
+ I suspect this gradual increase in the rate that execuation time is increasing
+ by time is caused by the overhead of loading addational map tiles.
+ 
+\end_layout
+
+\begin_layout Section
+Conclusions
+\end_layout
+
+\begin_layout Standard
+Based on my research and benchmark tests, I believe that the IOWTM is a
+ good canidate for GPGPU computing.
+ For smaller areas, the use of a GPGPU might make the calculations almost
+ instantinious, which should improve the experience for end users.
+ Users might also use this paraell computing capibility to create graphs
+ over larger areas.
+ Therefore, if I am successful, I feel that this project will have some
+ real-world usefulness.
+ 
 \end_layout
 
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
 bibfiles "sources"
-options "bibtotoc,plain"
+options "bibtotoc,plainnat"
 
 \end_inset
 
