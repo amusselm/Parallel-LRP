@@ -1,4 +1,4 @@
-#LyX 1.6.7 created this file. For more info see http://www.lyx.org/
+#LyX 1.6.4 created this file. For more info see http://www.lyx.org/
 \lyxformat 345
 \begin_document
 \begin_header
@@ -61,10 +61,10 @@ Project Description
 \begin_layout Standard
 To the requirements of Cal Poly's Computer Science department for senior
  project, I intend to implement a version of the Irregular Terrain with
- Obstructions Model (IOWTM) for graphics proscessors.
- I will then measure how much, if any, preformance gain this approach has.
+ Obstructions Model (ITWOM) for graphics processors.
+ I will then measure how much, if any, performance gain this approach has.
  In order to make this utility easier to use, I may also attempt to develop
- a simple graphical addation to existing maping software to make it easier
+ a simple graphical addition to existing mapping software to make it easier
  for communications technicians and broadcast engineers to use this tool.
  
 \end_layout
@@ -85,8 +85,8 @@ General Description
 \end_layout
 
 \begin_layout Standard
-The ITWOM is a mathicmatical model that attempts to perdict how radio waves
- will propigate over known terrain features.
+The ITWOM is a mathematical model that attempts to predict how radio waves
+ will propagate over known terrain features.
  This is useful for 
 \begin_inset Quotes eld
 \end_inset
@@ -101,33 +101,33 @@ link budgeting
 \end_layout
 
 \begin_layout Standard
-There is an existing implementation of the ITOWM.
+There is an existing implementation of the ITWOM.
  However, this implementation for a single, general-purpose CPU.
  I believe it may be possible to achieve a significant increase in performance
- by adapting the ITOWM to run in parallel on a GPGPU.
+ by adapting the ITWOM to run in parallel on a GPGPU.
  
 \end_layout
 
 \begin_layout Subsection
-The ITOWM and the Longely-Rice Model
+The ITWOM and the Longley-Rice Model
 \end_layout
 
 \begin_layout Standard
-The ITOWM is largely derrived from the older Longely-Rice Model, with a
- number of changes and corrections that its author, Sidney E.
+The ITWOM is largely derived from the older Longley-Rice Model, with a number
+ of changes and corrections that its author, Sidney E.
  Shumate, claims improve its overall accuracy.
- Addationally, their changes allow the practical use of higher-resoluation
+ Additionally, their changes allow the practical use of higher-resolution
  elevation data.
  Shumate also designed his code to work as a drop-in replacement for the
- Longely-Rice Model.
+ Longley-Rice Model.
 \begin_inset CommandInset citation
 LatexCommand cite
 key "VTC_IWOTM"
 
 \end_inset
 
- Since the two algorithims are so similar in terms of their overall structure
- and control flow, exiting research into how one is paraellized might be
+ Since the two algorithms are so similar in terms of their overall structure
+ and control flow, exiting research into how one is parallelized might be
  directly applicable to the other.
  
 \end_layout
@@ -137,12 +137,12 @@ SPLAT!
 \end_layout
 
 \begin_layout Standard
-SPLAT is a command-line wrapper program for the ITOWM, Longely-Rice Model
- and other RF-Propigation algorithims.
- It takes in appropiately formated elevation data and various prarmaters
+SPLAT is a command-line wrapper program for the ITWOM, Longley-Rice Model
+ and other RF-Propagation algorithms.
+ It takes in appropriately formatted elevation data and various parameters
  about each of the transmitters or receivers that the user wishes to model.
  It has the option of outputting a bitmap or a KML file for Google Earth
- for graphically representating coverage information.
+ for graphically representation coverage information.
  It also generates text files that contain information about each radio
  site and nearby obstructions.
  
@@ -164,13 +164,13 @@ Primary Objectives
 \end_layout
 
 \begin_layout Standard
-The primary objective of the project will be to create a paraell version
- of the ITOWM to link directly into SPLAT, ideally with minimal modification
+The primary objective of the project will be to create a parallel version
+ of the ITWOM to link directly into SPLAT, ideally with minimal modification
  to SPLAT itself.
  To insure that the modified application still generates valid output, I
- will compare the output of my version of the ITOWM to the stock version.
- Addationally, I will run benchmarks on the modified program to measure
- the preformance of the modified version of the ITOWM.
+ will compare the output of my version of the ITWOM to the stock version.
+ Additionally, I will run benchmarks on the modified program to measure
+ the performance of the modified version of the ITWOM.
 \end_layout
 
 \begin_layout Subsection
@@ -184,26 +184,26 @@ The project may include a number of secondary objectives, depending outcome
 \end_layout
 
 \begin_layout Itemize
-Implemenatating a 3d graphical frontend to SPLAT using NASA's Worldwind.
+Implementing a 3d graphical frontend to SPLAT using NASA's Worldwind.
 \end_layout
 
 \begin_layout Itemize
-Implementating a 2d web-based frontend to SPLAT using OpenLayers.
+Implementing a 2d web-based frontend to SPLAT using OpenLayers.
 \end_layout
 
 \begin_layout Itemize
-Modifications to SPLAT or creating a new wrapper program to make the IWOTM
+Modifications to SPLAT or creating a new wrapper program to make the ITWOM
  easier to work with for other mapping applications.
 \end_layout
 
 \begin_layout Subsection
-Limatations to the Project Scope
+Limitations to the Project Scope
 \end_layout
 
 \begin_layout Standard
-Since I lack a technical background in RF propigation, I will not attempt
- to measure or improve the real-world accuracy of the IWOTM.
- Although both I and the author of the IWOTM
+Since I lack a technical background in RF propagation, I will not attempt
+ to measure or improve the real-world accuracy of the ITWOM.
+ Although both I and the author of the ITWOM
 \begin_inset CommandInset citation
 LatexCommand cite
 key "VTC_IWOTM"
@@ -220,7 +220,7 @@ Existing Related Works
 
 \begin_layout Standard
 There are a number the existing serial implementations of the Longley-Rice
- Model, including a refrence implementation maintained by the US Department
+ Model, including a reference implementation maintained by the US Department
  of Commerce
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -229,7 +229,7 @@ key "us_commerce"
 \end_inset
 
 .
- This refrence implementation is the basis of the IWOTM
+ This reference implementation is the basis of the ITWOM
 \begin_inset CommandInset citation
 LatexCommand cite
 key "VTC_IWOTM"
@@ -241,9 +241,9 @@ key "VTC_IWOTM"
 \end_layout
 
 \begin_layout Standard
-Addationally, a pair of University of Arizona researchers have recently
+Additionally, a pair of University of Arizona researchers have recently
  made implementations of the Longley-Rice Model for both for IBM's Cell
- proscessor and for Nvidia's Tesla C870 GPU
+ processor and for Nvidia's Tesla C870 GPU
 \begin_inset CommandInset citation
 LatexCommand cite
 key "lrp_itm_gpu"
@@ -251,12 +251,12 @@ key "lrp_itm_gpu"
 \end_inset
 
 .
- These reaserchers found that were able to reduce execuation times to less
+ These researchers found that were able to reduce execution times to less
  than a second.
  They also found that the Telsa GPU was around 2-3 times as fast as the
- IBM cell proscessor.
- This confirms that the Longely-Rice Model is suitable for parallel processing,
- which makes it highly likely that the IWOTM will have similar performance
+ IBM cell processor.
+ This confirms that the Longley-Rice Model is suitable for parallel processing,
+ which makes it highly likely that the ITWOM will have similar performance
  gains when it is adapted for use on the GPU.
 \end_layout
 
@@ -284,7 +284,7 @@ These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
  Cal Poly would result in SPLAT spending less time reading terrain data
  from disk compared to inland areas.
  Additionally, all of these tests assume a receiver at 10 feet above ground.
- This may only stress part of the IOWTM, while leaving other parts of the
+ This may only stress part of the ITWOM, while leaving other parts of the
  code unused.
  
 \end_layout
@@ -382,8 +382,8 @@ Running Time
 \end_layout
 
 \begin_layout Standard
-When comparing the radius to the execuation time, I found that the execuation
- time increases polynominally with the radius of the area.
+When comparing the radius to the execution time, I found that the execuation
+ time increases polynomially with the radius of the area.
 \end_layout
 
 \begin_layout Standard
@@ -397,9 +397,9 @@ When comparing the radius to the execuation time, I found that the execuation
 \end_layout
 
 \begin_layout Standard
-However, the amount of terrain data that SPLAT has to load and proscess
- also increases polynominally.
- Therefore, it makes sense to compare the execuation time to the total area
+However, the amount of terrain data that SPLAT has to load and process also
+ increases polynomially.
+ Therefore, it makes sense to compare the execution time to the total area
  over which SPLAT is calculating signal strengths.
  
 \end_layout
@@ -415,10 +415,12 @@ However, the amount of terrain data that SPLAT has to load and proscess
 \end_layout
 
 \begin_layout Standard
-Beyond around 10,000 square miles, the execuation seems to be growing only
+Beyond around 10,000 square miles, the execution seems to be growing only
  slightly faster than linearly with area.
- I suspect this gradual increase in the rate that execuation time is increasing
- by time is caused by the overhead of loading addational map tiles.
+ I suspect this gradual increase in the rate that execution time is increasing
+ by time is caused by the overhead of loading additional map tiles and stitching
+ the results of the ITOWM into a completed graph.
+ This would mean that the ITOWM has an experimental O(n).
  
 \end_layout
 
@@ -427,11 +429,11 @@ Conclusions
 \end_layout
 
 \begin_layout Standard
-Based on my research and benchmark tests, I believe that the IOWTM is a
- good canidate for GPGPU computing.
+Based on my research and benchmark tests, I believe that the ITWOM is a
+ good candidate for GPGPU computing.
  For smaller areas, the use of a GPGPU might make the calculations almost
- instantinious, which should improve the experience for end users.
- Users might also use this paraell computing capibility to create graphs
+ instantaneous, which should improve the experience for end users.
+ Users might also use this parallel computing capability to create graphs
  over larger areas.
  Therefore, if I am successful, I feel that this project will have some
  real-world usefulness.
