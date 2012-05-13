@@ -18,5 +18,6 @@
 #endif
 
 void printPlatformInfo(cl_platform_id platform);
+void printDeviceInfo(cl_device_id device);
 
 #endif

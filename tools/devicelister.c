@@ -13,28 +13,50 @@
 
 int main(int argc, char* argv[]){
    cl_platform_id platforms[MAX_PLATFORM];
-   cl_device_id devices[MAX_DEVICE]; 
+   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE]; 
    int err;
-   int numDev;
+   cl_uint numDev[MAX_PLATFORM];
    cl_uint numPlatform;
-   int ii;
+   int ii,jj;
 
    /* Identify a platform */
-   err = clGetPlatformIDs(MAX_PLATFORM, &platforms, &numPlatform);
+   err = clGetPlatformIDs(MAX_PLATFORM, platforms, &numPlatform);
    if(err < 0) {
       perror("Couldn't identify a platform");
       exit(1);
    }
    
-   if(numPlatform > MAX_PLATFORM){
+   if(numPlatform >= MAX_PLATFORM){
       fprintf(stderr,"Truncating number of devices to %d\n",MAX_PLATFORM);
+      
       numPlatform = MAX_PLATFORM;
+   }
+
+   for(ii = 0; ii < numPlatform; ii++){
+      err = clGetDeviceIDs(platforms[ii], CL_DEVICE_TYPE_ALL, MAX_DEVICE, 
+         devices[ii],&numDev[ii]);
+      if(err < 0) {
+         perror("Couldn't access any devices");
+         exit(1);   
+      }
+      if(numDev[ii] >= MAX_DEVICE){
+         fprintf(stderr,"Truncating number of devices to %d for platform %d \n",
+            MAX_PLATFORM,ii);
+         numDev[ii] = MAX_DEVICE;
+      }
    }
    
    printf("Platforms:\n");
    for(ii = 0; ii < numPlatform; ii++){
+      printf("Platform %d\n",ii);
       printPlatformInfo(platforms[ii]);
+      printf("Devices:\n");
+      for(jj=0; jj < numDev[ii]; jj++){
+         printf("Device %d\n",jj);
+         printDeviceInfo(devices[ii][jj]);
+      }
    }
+
 
    return 0;
 
@@ -62,4 +84,13 @@ void printPlatformInfo(cl_platform_id platform){
    clGetPlatformInfo(platform,CL_PLATFORM_EXTENSIONS,INFO_BUFFER_SIZE*sizeof(char),
       stringBuf,NULL);
    fprintf(stdout,"CL_PLATFORM_EXTENSIONS : %s \n",stringBuf);
+}
+
+void printDeviceInfo(cl_device_id device){
+   char stringBuf[INFO_BUFFER_SIZE];
+
+   clGetDeviceInfo(device,CL_DEVICE_NAME,INFO_BUFFER_SIZE*sizeof(char),
+      stringBuf,NULL);
+   fprintf(stdout,"CL_DEVICE_NAME:%s\n",stringBuf);
+   
 }

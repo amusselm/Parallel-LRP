@@ -1,3 +1,4 @@
 #ignore any compiled file
 *.o
+devicelister
 devicelister 
