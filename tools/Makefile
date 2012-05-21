@@ -1,5 +1,6 @@
 #Modified from http://www.drdobbs.com/parallel/231002854
 PROJ=devicelister
+PROJ2=clchk
 
 CC=gcc
 
@@ -49,11 +50,15 @@ endif
 
 endif
 endif
+ALL: $(PROJ) $(PROJ2)
 
 $(PROJ): $(PROJ).c
 	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
 
-.PHONY: clean
+$(PROJ2): $(PROJ2).c
+	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
+
+.PHONY: clean all
 
 clean:
 	rm $(PROJ)
