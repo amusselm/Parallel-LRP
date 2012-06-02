@@ -44,11 +44,11 @@
 /** This isn't used anywhere. Why is it here? Can this be used in place of
     std's complex type?
 */
-struct tcomplex
-{	
+typedef struct {	
    double tcreal;
 	double tcimag;
-};
+} tcomplex;
+
 
 struct prop_type
 {	double aref;
@@ -123,6 +123,10 @@ struct adiff2_coefficents
    double dtr;
    double dhh1, dhh2, dhec, dtof, dto1f, drof, dro2f;
 };
+
+double tcomplex_abs(const tcomplex num){
+   return sqrt((num.tcreal*num.tcreal)*(num.tcimag*num.tcimag));
+}
 
 
 double FORTRAN_DIM(const double x, const double y)
@@ -241,9 +245,9 @@ double ahd(double td)
 //double abq_alos(complex<double> r)
 //TODO FIXME
 //ANd, yes, needs to be converted
-double abq_alos(_Complex double r)
+double abq_alos(tcomplex r)
 {
-	return r.real()*r.real()+r.imag()*r.imag();
+	return r.tcreal*r.tcreal+r.tcimag*r.tcimag;
 }
 
 //Must be converted, FIXME
@@ -414,7 +418,7 @@ double saalos(double d, const struct prop_type prop, const struct propa_type pro
  * This replaces the use of static variables in adiff2()
  */
 void initadiff2(struct prop_type *prop, struct propa_type *propa, 
-   struct  adiff2_coefficents *coeff)
+   struct adiff2_coefficents *coeff)
 {
    // Coefficents
    double wd1, xd1;
@@ -433,6 +437,10 @@ void initadiff2(struct prop_type *prop, struct propa_type *propa,
    //Locals
 	double a, q, pk, rd, ds, dsl, dfdh, th, wa, ar, wd, sf1, sf2, ec, vv;
    double kedr=0.0, arp=0.0;
+
+	tcomplex prop_zgnd;
+   prop_zgnd.tcreal=prop->zgndreal;
+   prop_zgnd.tcimag=prop->zgndimag;
    q=prop->hg[0]*prop->hg[1];
    qk=prop->he[0]*prop->he[1]-q;
    dhec=2.73;
@@ -445,7 +453,7 @@ void initadiff2(struct prop_type *prop, struct propa_type *propa,
    xd1=propa->dla+propa->tha/prop->gme;
    q=(1.0-0.8*exp(-propa->dlsa/50e3))*prop->dh;
    q*=0.78*exp(-pow(q/16.0,0.25));
-   qk=1.0/abs(prop_zgnd);
+   qk=1.0/tcomplex_abs(prop_zgnd);
    aht=20.0;
    xht=0.0;
    a=0.5*(prop->dl[0]*prop->dl[0])/prop->he[0];
