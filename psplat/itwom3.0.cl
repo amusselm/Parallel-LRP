@@ -113,15 +113,8 @@ struct adiff2_coefficents
 	double wd1, xd1;
    double qk;
    double aht, xht; 
-   double toh, toho, roh, roho;
-   double dto;
-   double dto1;
-   double dtro; 
-   double dro; 
-	double dro2;
-   double drto;
    double dtr;
-   double dhh1, dhh2, dhec, dtof, dto1f, drof, dro2f;
+   double dhec;
 };
 
 double tcomplex_abs(const tcomplex num){
@@ -463,8 +456,8 @@ void initadiff2(struct prop_type *prop, struct propa_type *propa,
    xht=q;
    aht+=fht(q,pk);
                
-
-   if ((int(prop->dl[1])==0.0) || (prop->the[1]>0.2))
+   //WTF?
+   if (((int)(prop->dl[1])==0.0) || (prop->the[1]>0.2))
    { 
       xht+=xht;
       aht+=(aht-20.0);
@@ -486,33 +479,47 @@ void initadiff2(struct prop_type *prop, struct propa_type *propa,
    coeff->qk = qk; 
    coeff->aht = aht; 
    coeff->xht = xht; 
-   coeff->toh = toh; 
-   coeff->toho = toho; 
-   coeff->roh = roh; 
-   coeff->roho = roho; 
-   coeff->dto = dto; 
-   coeff->dto1 = dto1; 
-   coeff->dtro = dtro; 
-   coeff->dro = dro; 
-   coeff->dro2 = dro2; 
-   coeff->drto = drto; 
-   coeff->dtr = dtr; 
-   coeff->dhh1 = dhh1; 
-   coeff->dhh2 = dhh2; 
    coeff->dhec = dhec; 
-   coeff->dtof = dtof; 
-   coeff->dto1f = dto1f; 
-   coeff->drof = drof; 
-   coeff->dro2f = dro2f; 
 }
 
 //Must be covnerted, TODO
-double adiff2(double d, struct prop_type *prop, propa_type &propa, 
-   const struct adifff2_coefficents)
+double adiff2(double d, struct prop_type *prop, struct propa_type *propa, 
+   const struct adiff2_coefficents coeff)
 {
-	complex<double> prop_zgnd(prop->zgndreal,prop->zgndimag);
-	double a, q, pk, rd, ds, dsl, dfdh, th, wa, ar, wd, sf1, sf2, ec, vv, kedr=0.0, arp=0.0,
-	sdr=0.0, pd=0.0, srp=0.0, kem=0.0, csd=0.0, sdl=0.0, adiffv2=0.0, closs=0.0;
+	tcomplex prop_zgnd;;
+	double a, q, pk, rd, ds, dsl, dfdh, th, wa, ar, wd, sf1, sf2, ec, vv, 
+   kedr=0.0, arp=0.0, sdr=0.0, pd=0.0, srp=0.0, kem=0.0, csd=0.0, sdl=0.0, 
+   adiffv2=0.0, closs=0.0;
+   //Assign the coefficents from the struct
+   const double wd1 = coeff.wd1; 
+   const double xd1 = coeff.xd1; 
+   const double qk = coeff.qk; 
+   const double aht = coeff.aht; 
+   const double xht = coeff.xht; 
+   const double dhec = coeff.dhec; 
+
+   //These were previously defined as static, even though they are initalized
+   //before every use
+   double toh; 
+   double toho; 
+   double roh; 
+   double roho; 
+   double dto; 
+   double dto1; 
+   double dtro; 
+   double dro; 
+   double dro2; 
+   double drto; 
+   double dtr; 
+   double dhh1; 
+   double dhh2; 
+   double dtof; 
+   double drof; 
+   double dto1f; 
+   double dro2f; 
+
+   prop_zgnd.tcreal=prop->zgndreal;
+   prop_zgnd.tcimag=prop->zgndimag;
 
 	sf1=1.0;  /* average empirical hilltop foliage scatter factor for 1 obstruction  */
 	sf2=1.0;  /* average empirical hilltop foliage scatter factor for 2 obstructions */
@@ -521,220 +528,220 @@ double adiff2(double d, struct prop_type *prop, propa_type &propa,
 	ec=0.5*prop->gme;
 
 
-		th=propa.tha+d*prop->gme;
-		
-		dsl=max(d-propa.dla,0.0);
-		ds=d-propa.dla;
-		a=ds/th;
-		wa=pow(a*prop->wn,THIRD);
-		pk=qk/wa;
-		toh=prop->hht-(prop->rch[0]-prop->dl[0]*((prop->rch[1]-prop->rch[0])/prop->dist));		
-		roh=prop->hhr-(prop->rch[0]-(prop->dist-prop->dl[1])*((prop->rch[1]-prop->rch[0])/prop->dist));		
-		toho=prop->hht-(prop->rch[0]-(prop->dl[0]+dsl)*((prop->hhr-prop->rch[0])/(prop->dist-prop->dl[1])));		
-		roho=prop->hhr-(prop->hht-dsl*((prop->rch[1]-prop->hht)/dsl));	
-		dto=sqrt(prop->dl[0]*prop->dl[0]+toh*toh);		
-		dto+=prop->gme*prop->dl[0];
-		dto1=sqrt(prop->dl[0]*prop->dl[0]+toho*toho);		
-		dto1+=prop->gme*prop->dl[0];
-		dtro=sqrt((prop->dl[0]+dsl)*(prop->dl[0]+dsl)+prop->hhr*prop->hhr);
-		dtro+=prop->gme*(prop->dl[0]+dsl);
-		drto=sqrt((prop->dl[1]+dsl)*(prop->dl[1]+dsl)+prop->hht*prop->hht);
-		drto+=prop->gme*(prop->dl[1]+dsl);
-		dro=sqrt(prop->dl[1]*prop->dl[1]+roh*roh);
-		dro+=prop->gme*(prop->dl[1]);
-		dro2=sqrt(prop->dl[1]*prop->dl[1]+roho*roho);
-		dro2+=prop->gme*(prop->dl[1]);
-		dtr=sqrt(prop->dist*prop->dist+(prop->rch[0]-prop->rch[1])*(prop->rch[0]-prop->rch[1]));
-		dtr+=prop->gme*prop->dist;
-		dhh1=sqrt((prop->dist-propa.dla)*(prop->dist-propa.dla)+toho*toho);
-		dhh1+=prop->gme*(prop->dist-propa.dla);
-		dhh2=sqrt((prop->dist-propa.dla)*(prop->dist-propa.dla)+roho*roho);
-		dhh2+=prop->gme*(prop->dist-propa.dla);
+   th=propa->tha+d*prop->gme;
+   
+   dsl=max(d-propa->dla,0.0);
+   ds=d-propa->dla;
+   a=ds/th;
+   wa=pow(a*prop->wn,THIRD);
+   pk=qk/wa;
+   toh=prop->hht-(prop->rch[0]-prop->dl[0]*((prop->rch[1]-prop->rch[0])/prop->dist));		
+   roh=prop->hhr-(prop->rch[0]-(prop->dist-prop->dl[1])*((prop->rch[1]-prop->rch[0])/prop->dist));		
+   toho=prop->hht-(prop->rch[0]-(prop->dl[0]+dsl)*((prop->hhr-prop->rch[0])/(prop->dist-prop->dl[1])));		
+   roho=prop->hhr-(prop->hht-dsl*((prop->rch[1]-prop->hht)/dsl));	
+   dto=sqrt(prop->dl[0]*prop->dl[0]+toh*toh);		
+   dto+=prop->gme*prop->dl[0];
+   dto1=sqrt(prop->dl[0]*prop->dl[0]+toho*toho);		
+   dto1+=prop->gme*prop->dl[0];
+   dtro=sqrt((prop->dl[0]+dsl)*(prop->dl[0]+dsl)+prop->hhr*prop->hhr);
+   dtro+=prop->gme*(prop->dl[0]+dsl);
+   drto=sqrt((prop->dl[1]+dsl)*(prop->dl[1]+dsl)+prop->hht*prop->hht);
+   drto+=prop->gme*(prop->dl[1]+dsl);
+   dro=sqrt(prop->dl[1]*prop->dl[1]+roh*roh);
+   dro+=prop->gme*(prop->dl[1]);
+   dro2=sqrt(prop->dl[1]*prop->dl[1]+roho*roho);
+   dro2+=prop->gme*(prop->dl[1]);
+   dtr=sqrt(prop->dist*prop->dist+(prop->rch[0]-prop->rch[1])*(prop->rch[0]-prop->rch[1]));
+   dtr+=prop->gme*prop->dist;
+   dhh1=sqrt((prop->dist-propa->dla)*(prop->dist-propa->dla)+toho*toho);
+   dhh1+=prop->gme*(prop->dist-propa->dla);
+   dhh2=sqrt((prop->dist-propa->dla)*(prop->dist-propa->dla)+roho*roho);
+   dhh2+=prop->gme*(prop->dist-propa->dla);
 
-		/* for 1 obst tree base path */
-		dtof=sqrt(prop->dl[0]*prop->dl[0]+(toh-prop->cch)*(toh-prop->cch));		
-		dtof+=prop->gme*prop->dl[0];
-		dto1f=sqrt(prop->dl[0]*prop->dl[0]+(toho-prop->cch)*(toho-prop->cch));		
-		dto1f+=prop->gme*prop->dl[0];
-		drof=sqrt(prop->dl[1]*prop->dl[1]+(roh-prop->cch)*(roh-prop->cch));
-		drof+=prop->gme*(prop->dl[1]);
-		dro2f=sqrt(prop->dl[1]*prop->dl[1]+(roho-prop->cch)*(roho-prop->cch));
-		dro2f+=prop->gme*(prop->dl[1]);
+   /* for 1 obst tree base path */
+   dtof=sqrt(prop->dl[0]*prop->dl[0]+(toh-prop->cch)*(toh-prop->cch));		
+   dtof+=prop->gme*prop->dl[0];
+   dto1f=sqrt(prop->dl[0]*prop->dl[0]+(toho-prop->cch)*(toho-prop->cch));		
+   dto1f+=prop->gme*prop->dl[0];
+   drof=sqrt(prop->dl[1]*prop->dl[1]+(roh-prop->cch)*(roh-prop->cch));
+   drof+=prop->gme*(prop->dl[1]);
+   dro2f=sqrt(prop->dl[1]*prop->dl[1]+(roho-prop->cch)*(roho-prop->cch));
+   dro2f+=prop->gme*(prop->dl[1]);
 
-		/* saalos coefficients preset for post-obstacle receive path */
-		prop->tgh=prop->cch+1.0;
-		prop->tsgh=prop->hhr;
-		rd=prop->dl[1];
-	
-		/* two obstacle diffraction calculation */ 
-		if (int(ds)>0)   /* there are 2 obstacles */ 
-		{
-			if(int(prop->dl[1])>0.0) /* receive site past 2nd peak */
-			{
-					/* rounding attenuation */
-					q=(1.607-pk)*151.0*wa*th+xht;
-					ar=0.05751*q-10*log10(q)-aht;
+   /* saalos coefficients preset for post-obstacle receive path */
+   prop->tgh=prop->cch+1.0;
+   prop->tsgh=prop->hhr;
+   rd=prop->dl[1];
 
-					/* knife edge vs round weighting */
-					q=(1.0-0.8*exp(-d/50e3))*prop->dh;	
-					q=(wd1+xd1/d)*min((q*prop->wn),6283.2);
-					wd=25.1/(25.1+sqrt(q));
-	
-					q=0.6365*prop->wn;			
+   /* two obstacle diffraction calculation */ 
+   if ((int)(ds)>0)   /* there are 2 obstacles */ 
+   {
+      if((int)(prop->dl[1])>0.0) /* receive site past 2nd peak */
+      {
+            /* rounding attenuation */
+            q=(1.607-pk)*151.0*wa*th+xht;
+            ar=0.05751*q-10*log10(q)-aht;
 
-				if(prop->the[1]<0.2)  /* receive grazing angle below 0.2 rad */
-				{
-					/* knife edge attenuation for two obstructions */
+            /* knife edge vs round weighting */
+            q=(1.0-0.8*exp(-d/50e3))*prop->dh;	
+            q=(wd1+xd1/d)*min((q*prop->wn),6283.2);
+            wd=25.1/(25.1+sqrt(q));
 
-					if(prop->hht < 3400)  /* if below tree line, foliage top loss */
-					{
-						vv=q*abs(dto1+dhh1-dtro);
-						adiffv2=-18.0+sf2*aknfe(vv);
-					}
-					else
-					{
-						vv=q*abs(dto1+dhh1-dtro);					
-						adiffv2=aknfe(vv);
-					}
+            q=0.6365*prop->wn;			
 
-					if(prop->hhr < 3400)
-					{
-						vv=q*abs(dro2+dhh2-drto);
-						adiffv2+=(-18.0+sf2*aknfe(vv));
-					}
-					else
-					{
-						vv=q*abs(dro2+dhh2-drto);					
-						adiffv2+=aknfe(vv);
-					}
-					/* finally, add clutter loss */					
-					closs=saalos(rd, prop, propa);  
-					adiffv2+=min(22.0,closs); 
+         if(prop->the[1]<0.2)  /* receive grazing angle below 0.2 rad */
+         {
+            /* knife edge attenuation for two obstructions */
 
- 				}
-				else	 /* rcvr site too close to 2nd obs */
-				{	
-					/* knife edge attenuation for 1st obs */
+            if(prop->hht < 3400)  /* if below tree line, foliage top loss */
+            {
+               vv=q*fabs(dto1+dhh1-dtro);
+               adiffv2=-18.0+sf2*aknfe(vv);
+            }
+            else
+            {
+               vv=q*fabs(dto1+dhh1-dtro);					
+               adiffv2=aknfe(vv);
+            }
 
-					if(prop->hht < 3400)
-					{
-						vv=q*abs(dto1+dhh1-dtro);
-						adiffv2=-18.0+sf2*aknfe(vv);
-					}
-					else
-					{	
-						vv=q*abs(dto1+dhh1-dtro);
-						adiffv2=aknfe(vv);
-					}
+            if(prop->hhr < 3400)
+            {
+               vv=q*fabs(dro2+dhh2-drto);
+               adiffv2+=(-18.0+sf2*aknfe(vv));
+            }
+            else
+            {
+               vv=q*fabs(dro2+dhh2-drto);					
+               adiffv2+=aknfe(vv);
+            }
+            /* finally, add clutter loss */					
+            closs=saalos(rd, *prop, *propa);  
 
-					/* weighted calc. of knife vs rounded edge 
-					 adiffv2=ar*wd+(1.0-wd)*adiffv2; */
+            adiffv2+=min(22.0,closs); 
 
-					/* clutter path loss past 2nd peak */
-					if(prop->the[1]<1.22)
-					{
-						rd=prop->dl[1];
+         }
+         else	 /* rcvr site too close to 2nd obs */
+         {	
+            /* knife edge attenuation for 1st obs */
 
-						if(prop->the[1]>0.6) /* through foliage downhill */
-						{
-							prop->tgh=prop->cch;
-						}
-						else	/* close to foliage, rcvr in foliage downslope */
-						{
-							vv=0.6365*prop->wn*abs(dro2+dhh2-drto);
-						}
-						adiffv2+=aknfe(vv);
-						closs=saalos(rd, prop, propa);
-						adiffv2+=min(closs,22.0); 
-					}
-					else	/* rcvr very close to bare cliff or skyscraper */
-					{
-							adiffv2=5.8+25.0;
-					}
-				}
-			}
-			else /* receive site is atop a 2nd peak */
-			{			
-				vv=0.6365*prop->wn*abs(dto+dro-dtr);
-				adiffv2=5.8 + aknfe(vv);
-			}
-		}
-		else /* for single obstacle */
-		{
+            if(prop->hht < 3400)
+            {
+               vv=q*fabs(dto1+dhh1-dtro);
+               adiffv2=-18.0+sf2*aknfe(vv);
+            }
+            else
+            {	
+               vv=q*fabs(dto1+dhh1-dtro);
+               adiffv2=aknfe(vv);
+            }
 
-			if(int(prop->dl[1])>0.0) /* receive site past 1st peak */
-			{
+            /* weighted calc. of knife vs rounded edge 
+             adiffv2=ar*wd+(1.0-wd)*adiffv2; */
 
-				if(prop->the[1]<0.2) /* receive grazing angle less than .2 radians */
-				{
-					vv=0.6365*prop->wn*abs(dto+dro-dtr);
+            /* clutter path loss past 2nd peak */
+            if(prop->the[1]<1.22)
+            {
+               rd=prop->dl[1];
 
-					if(prop->hht < 3400)
-					{
-						sdl=18.0;
-						sdl=pow(10,(-sdl/20));
-						/* ke phase difference with respect to direct t-r line */
-						kedr=0.159155*prop->wn*abs(dto+dro-dtr);
-						arp=abs(kedr-(int(kedr)));
-						kem=aknfe(vv);
-						kem= pow(10,(-kem/20));
-						/* scatter path phase with respect to direct t-r line */
-						sdr=0.5+0.159155*prop->wn*abs(dtof+drof-dtr);
-						srp=abs(sdr-(int(sdr)));
-						/* difference between scatter and ke phase in radians */
-						pd=6.283185307*abs(srp-arp);
-						/* report pd prior to restriction 
-						   keep pd between 0 and pi radians and adjust for 3&4 quadrant */ 
-						if(pd>=3.141592654)
-						{
-							pd=6.283185307-pd;
-							csd=abq_alos(complex<double>(sdl,0)+complex<double>(kem*-cos(pd), kem*-sin(pd))); 
-						} 
-						else						
-						{
-							csd=abq_alos(complex<double>(sdl,0)+complex<double>(kem*cos(pd), kem*sin(pd))); 
-						}
-						/*csd=max(csd,0.0009); limits maximum loss value to 30.45 db */
-						adiffv2=-3.71-10*log10(csd);
-					}
-					else
-					{
-						adiffv2=aknfe(vv);	
-					}
-					/* finally, add clutter loss */
-					closs=saalos(rd, prop, propa);
-					adiffv2+=min(closs,22.0);   
-				}
-				else	/* receive grazing angle too high */
-				{	
-					if(prop->the[1]<1.22)
-					{
-						rd=prop->dl[1];
+               if(prop->the[1]>0.6) /* through foliage downhill */
+               {
+                  prop->tgh=prop->cch;
+               }
+               else	/* close to foliage, rcvr in foliage downslope */
+               {
+                  vv=0.6365*prop->wn*fabs(dro2+dhh2-drto);
+               }
+               adiffv2+=aknfe(vv);
+               closs=saalos(rd, *prop, *propa);
+               adiffv2+=min(closs,22.0); 
+            }
+            else	/* rcvr very close to bare cliff or skyscraper */
+            {
+                  adiffv2=5.8+25.0;
+            }
+         }
+      }
+      else /* receive site is atop a 2nd peak */
+      {			
+         vv=0.6365*prop->wn*fabs(dto+dro-dtr);
+         adiffv2=5.8 + aknfe(vv);
+      }
+   }
+   else /* for single obstacle */
+   {
 
-						if(prop->the[1]>0.6)  /* through foliage downhill */
-						{
-							prop->tgh=prop->cch;
-						}							
-						else	/* downhill slope just above foliage  */
-						{
-							vv=0.6365*prop->wn*abs(dto+dro-dtr);
-							adiffv2=aknfe(vv);	
-						}
-						closs=saalos(rd, prop, propa);
-						adiffv2+=min(22.0,closs); 
-					}
-					else	/* receiver very close to bare cliff or skyscraper */
-					{
-							adiffv2=5.8+25.0;
-					}
-				}
-			}
-			else	/* if occurs, receive site atop first peak  */
-			{
-				adiffv2=5.8;
-			}
-		}
-	}
+      if((int)(prop->dl[1])>0.0) /* receive site past 1st peak */
+      {
+
+         if(prop->the[1]<0.2) /* receive grazing angle less than .2 radians */
+         {
+            vv=0.6365*prop->wn*fabs(dto+dro-dtr);
+
+            if(prop->hht < 3400)
+            {
+               sdl=18.0;
+               sdl=pow(10,(-sdl/20));
+               /* ke phase difference with respect to direct t-r line */
+               kedr=0.159155*prop->wn*fabs(dto+dro-dtr);
+               arp=fabs(kedr-((int)(kedr)));
+               kem=aknfe(vv);
+               kem= pow(10,(-kem/20));
+               /* scatter path phase with respect to direct t-r line */
+               sdr=0.5+0.159155*prop->wn*fabs(dtof+drof-dtr);
+               srp=fabs(sdr-((int)(sdr)));
+               /* difference between scatter and ke phase in radians */
+               pd=6.283185307*fabs(srp-arp);
+               /* report pd prior to restriction 
+                  keep pd between 0 and pi radians and adjust for 3&4 quadrant */ 
+               if(pd>=3.141592654)
+               {
+                  pd=6.283185307-pd;
+                  csd=abq_alos(complex<double>(sdl,0)+complex<double>(kem*-cos(pd), kem*-sin(pd))); 
+               } 
+               else						
+               {
+                  csd=abq_alos(complex<double>(sdl,0)+complex<double>(kem*cos(pd), kem*sin(pd))); 
+               }
+               /*csd=max(csd,0.0009); limits maximum loss value to 30.45 db */
+               adiffv2=-3.71-10*log10(csd);
+            }
+            else
+            {
+               adiffv2=aknfe(vv);	
+            }
+            /* finally, add clutter loss */
+            closs=saalos(rd, prop, propa);
+            adiffv2+=min(closs,22.0);   
+         }
+         else	/* receive grazing angle too high */
+         {	
+            if(prop->the[1]<1.22)
+            {
+               rd=prop->dl[1];
+
+               if(prop->the[1]>0.6)  /* through foliage downhill */
+               {
+                  prop->tgh=prop->cch;
+               }							
+               else	/* downhill slope just above foliage  */
+               {
+                  vv=0.6365*prop->wn*fabs(dto+dro-dtr);
+                  adiffv2=aknfe(vv);	
+               }
+               closs=saalos(rd, prop, propa);
+               adiffv2+=min(22.0,closs); 
+            }
+            else	/* receiver very close to bare cliff or skyscraper */
+            {
+                  adiffv2=5.8+25.0;
+            }
+         }
+      }
+      else	/* if occurs, receive site atop first peak  */
+      {
+         adiffv2=5.8;
+      }
+   }
 	return adiffv2;
 }
 
@@ -1994,26 +2001,6 @@ void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielec
 	errnum=prop.kwx;
 }
 
-
-
-
-double ITMAreadBLoss(long ModVar, double deltaH, double tht_m, double rht_m,
-		  double dist_km, int TSiteCriteria, int RSiteCriteria, 
-          	  double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
-		  double enc_ncc_clcref,double clutter_height,double clutter_density,
-		  double delta_h_diff, double frq_mhz, int radio_climate, int pol, 
-		  int mode_var, double pctTime, double pctLoc, double pctConf)
-{
-	char strmode[200];
-	int errnum;
-	double dbloss;
-	area(ModVar,deltaH,tht_m,rht_m,dist_km,TSiteCriteria,RSiteCriteria, 
-		          eps_dielect,sgm_conductivity,eno_ns_surfref,
-		  	  enc_ncc_clcref,clutter_height,clutter_density,
-		  	  delta_h_diff,frq_mhz,radio_climate,pol,mode_var,pctTime,
-			  pctLoc,pctConf,dbloss,strmode,errnum);
-	return dbloss;
-}
 
 double ITWOMVersion()
 {
