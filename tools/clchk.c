@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
    /* Build program */
    err = build_program(context, device, argv[1]);
    if(err < 0){
-      perror("Compile failed!");
+      fprintf(stdout,"Compile failed\n");
       exit(1);   
    }
    
