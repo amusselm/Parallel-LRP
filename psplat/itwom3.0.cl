@@ -49,6 +49,13 @@ typedef struct {
 	double tcimag;
 } tcomplex;
 
+tcomplex add_complex(tcomplex a, tcomplex b){
+   tcomplex tmp;
+   tmp.tcreal = a.tcreal + b.tcreal;
+   tmp.tcimag = a.tcimag + b.tcimag;
+   return tmp;
+}
+
 
 struct prop_type
 {	double aref;
@@ -116,6 +123,14 @@ struct adiff2_coefficents
    double dtr;
    double dhec;
 };
+
+struct ascat_coeff
+{
+	double ad;
+   double rr; 
+   double etq;
+   double h0s;
+}
 
 double tcomplex_abs(const tcomplex num){
    return sqrt((num.tcreal*num.tcreal)*(num.tcimag*num.tcimag));
@@ -457,6 +472,9 @@ void initadiff2(struct prop_type *prop, struct propa_type *propa,
    aht+=fht(q,pk);
                
    //WTF?
+   //So, this used to use an integer constructor, like this:
+   //int(prop->dl[1]).
+   //That strikes me as almost certainly wrong
    if (((int)(prop->dl[1])==0.0) || (prop->the[1]>0.2))
    { 
       xht+=xht;
@@ -517,6 +535,11 @@ double adiff2(double d, struct prop_type *prop, struct propa_type *propa,
    double drof; 
    double dto1f; 
    double dro2f; 
+
+   //Temporary variable declrations for call to abq_alos
+   tcomplex sdl_complex;
+   tcomplex pd_complex;
+   tcomplex abq_complex;
 
    prop_zgnd.tcreal=prop->zgndreal;
    prop_zgnd.tcimag=prop->zgndimag;
@@ -693,14 +716,23 @@ double adiff2(double d, struct prop_type *prop, struct propa_type *propa,
                pd=6.283185307*fabs(srp-arp);
                /* report pd prior to restriction 
                   keep pd between 0 and pi radians and adjust for 3&4 quadrant */ 
+
+               sdl_complex.tcreal=sdl; 
+               sdl_complex.tcimag=0; 
                if(pd>=3.141592654)
                {
                   pd=6.283185307-pd;
-                  csd=abq_alos(complex<double>(sdl,0)+complex<double>(kem*-cos(pd), kem*-sin(pd))); 
+                  pd_complex.tcreal=kem*-cos(pd);
+                  pd_complex.tcimag=kem*-sin(pd);
+                  abq_complex = add_complex(sdl_complex,pd_complex); 
+                  csd=abq_alos(abq_complex); 
                } 
                else						
                {
-                  csd=abq_alos(complex<double>(sdl,0)+complex<double>(kem*cos(pd), kem*sin(pd))); 
+                  pd_complex.tcreal=kem*cos(pd);
+                  pd_complex.tcimag=kem*sin(pd);
+                  abq_complex = add_complex(sdl_complex,pd_complex); 
+                  csd=abq_alos(abq_complex); 
                }
                /*csd=max(csd,0.0009); limits maximum loss value to 30.45 db */
                adiffv2=-3.71-10*log10(csd);
@@ -710,7 +742,7 @@ double adiff2(double d, struct prop_type *prop, struct propa_type *propa,
                adiffv2=aknfe(vv);	
             }
             /* finally, add clutter loss */
-            closs=saalos(rd, prop, propa);
+            closs=saalos(rd, *prop, *propa);
             adiffv2+=min(closs,22.0);   
          }
          else	/* receive grazing angle too high */
@@ -728,7 +760,7 @@ double adiff2(double d, struct prop_type *prop, struct propa_type *propa,
                   vv=0.6365*prop->wn*fabs(dto+dro-dtr);
                   adiffv2=aknfe(vv);	
                }
-               closs=saalos(rd, prop, propa);
+               closs=saalos(rd, *prop, *propa);
                adiffv2+=min(22.0,closs); 
             }
             else	/* receiver very close to bare cliff or skyscraper */
@@ -745,77 +777,94 @@ double adiff2(double d, struct prop_type *prop, struct propa_type *propa,
 	return adiffv2;
 }
 
-//Yes, it's used. Must be converted TODO
-double ascat( double d, prop_type &prop, propa_type &propa)
+/**
+ * Initalization for the coefficents for ascat
+ */
+void ascat_init(const struct prop_type prop, 
+   const struct propa_type propa, struct ascat_coeff *coeff)
 {
-	static double ad, rr, etq, h0s;
+	double ad, rr, etq, h0s;
+   double ascatv;
+   double th;
+   ad=prop.dl[0]-prop.dl[1];
+   rr=prop.he[1]/prop.rch[0];
+
+   if (ad<0.0)
+   {
+      ad=-ad;
+      rr=1.0/rr;
+   }
+
+   etq=(5.67e-6*prop.ens-2.32e-3)*prop.ens+0.031;
+   h0s=-15.0;
+   ascatv=0.0;
+
+   coeff->ad = ad;
+   coeff->rr = rr;
+   coeff->etq = etq;
+   coeff->h0s = h0s;
+}
+
+//Yes, it's used. Must be converted TODO
+double ascat( double d, const struct prop_type prop, const struct propa_type propa,
+   struct ascat_coeff *coeff)
+{
 	double h0, r1, r2, z0, ss, et, ett, th, q;
 	double ascatv, temp;
 
-	if (d==0.0)
-	{
-		ad=prop.dl[0]-prop.dl[1];
-		rr=prop.he[1]/prop.rch[0];
+   double ad = coeff->ad;
+   double rr = coeff->rr; 
+   double etq = coeff->etq;
+   double h0s = coeff->h0s;
 
-		if (ad<0.0)
-		{
-			ad=-ad;
-			rr=1.0/rr;
-		}
 
-		etq=(5.67e-6*prop.ens-2.32e-3)*prop.ens+0.031;
-		h0s=-15.0;
-		ascatv=0.0;
-	}
+   if (h0s>15.0)
+      h0=h0s;
+   else
+   {
+      th=prop.the[0]+prop.the[1]+d*prop.gme;
+      r2=2.0*prop.wn*th;
+      r1=r2*prop.he[0];
+      r2*=prop.he[1];
 
-	else
-	{
-		if (h0s>15.0)
-			h0=h0s;
-		else
-		{
-			th=prop.the[0]+prop.the[1]+d*prop.gme;
-			r2=2.0*prop.wn*th;
-			r1=r2*prop.he[0];
-			r2*=prop.he[1];
+      if (r1<0.2 && r2<0.2)
+         return 1001.0;  // <==== early return
 
-			if (r1<0.2 && r2<0.2)
-				return 1001.0;  // <==== early return
+      ss=(d-ad)/(d+ad);
+      q=rr/ss;
+      ss=max(0.1,ss);
+      q=min(max(0.1,q),10.0);
+      z0=(d-ad)*(d+ad)*th*0.25/d;
+      /* et=(etq*exp(-pow(min(1.7,z0/8.0e3),6.0))+1.0)*z0/1.7556e3; */
 
-			ss=(d-ad)/(d+ad);
-			q=rr/ss;
-			ss=max(0.1,ss);
-			q=min(max(0.1,q),10.0);
-			z0=(d-ad)*(d+ad)*th*0.25/d;
-			/* et=(etq*exp(-pow(min(1.7,z0/8.0e3),6.0))+1.0)*z0/1.7556e3; */
+      temp=min(1.7,z0/8.0e3);
+      temp=temp*temp*temp*temp*temp*temp;
+      et=(etq*exp(-temp)+1.0)*z0/1.7556e3;
 
-			temp=min(1.7,z0/8.0e3);
-			temp=temp*temp*temp*temp*temp*temp;
-			et=(etq*exp(-temp)+1.0)*z0/1.7556e3;
+      ett=max(et,1.0);
+      h0=(h0f(r1,ett)+h0f(r2,ett))*0.5;
+      h0+=min(h0,(1.38-log(ett))*log(ss)*log(q)*0.49);
+      h0=FORTRAN_DIM(h0,0.0);
 
-			ett=max(et,1.0);
-			h0=(h0f(r1,ett)+h0f(r2,ett))*0.5;
-			h0+=min(h0,(1.38-log(ett))*log(ss)*log(q)*0.49);
-			h0=FORTRAN_DIM(h0,0.0);
+      if (et<1.0)
+      {
+         /* h0=et*h0+(1.0-et)*4.343*log(pow((1.0+1.4142/r1)*(1.0+1.4142/r2),2.0)*(r1+r2)/(r1+r2+2.8284)); */
 
-			if (et<1.0)
-			{
-				/* h0=et*h0+(1.0-et)*4.343*log(pow((1.0+1.4142/r1)*(1.0+1.4142/r2),2.0)*(r1+r2)/(r1+r2+2.8284)); */
+         temp=((1.0+1.4142/r1)*(1.0+1.4142/r2));
+         h0=et*h0+(1.0-et)*4.343*log((temp*temp)*(r1+r2)/(r1+r2+2.8284));
+      }
 
-				temp=((1.0+1.4142/r1)*(1.0+1.4142/r2));
-				h0=et*h0+(1.0-et)*4.343*log((temp*temp)*(r1+r2)/(r1+r2+2.8284));
-			}
+      if (h0>15.0 && h0s>=0.0)
+         h0=h0s;
+   }
 
-			if (h0>15.0 && h0s>=0.0)
-				h0=h0s;
-		}
-
-		h0s=h0;
-		th=propa.tha+d*prop.gme;
-		/* ascatv=ahd(th*d)+4.343*log(47.7*prop.wn*pow(th,4.0))-0.1*(prop.ens-301.0)*exp(-th*d/40e3)+h0; */
-		ascatv=ahd(th*d)+4.343*log(47.7*prop.wn*(th*th*th*th))-0.1*(prop.ens-301.0)*exp(-th*d/40e3)+h0;
-	}
+   h0s=h0;
+   th=propa.tha+d*prop.gme;
+   /* ascatv=ahd(th*d)+4.343*log(47.7*prop.wn*pow(th,4.0))-0.1*(prop.ens-301.0)*exp(-th*d/40e3)+h0; */
+   ascatv=ahd(th*d)+4.343*log(47.7*prop.wn*(th*th*th*th))-0.1*(prop.ens-301.0)*exp(-th*d/40e3)+h0;
 	
+   //Since the h0s value is both read and written, this has to be retained
+   coeff->h0s = h0s;
 	return ascatv;
 }
 
@@ -842,72 +891,38 @@ double qerfi(double q)
 }
 
 //Used by point-to-point, must be converted TODO
-void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sgm, prop_type &prop)
+void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sgm, 
+   struct prop_type *prop)
 {
 	double gma=157e-9;
+   tcomplex tmp_zq;
 
-	prop.wn=fmhz/47.7;
-	prop.ens=en0;
+	prop->wn=fmhz/47.7;
+	prop->ens=en0;
 
 	if (zsys!=0.0)
-		prop.ens*=exp(-zsys/9460.0);
+		prop->ens*=exp(-zsys/9460.0);
 
-	prop.gme=gma*(1.0-0.04665*exp(prop.ens/179.3));
-	complex<double> zq, prop_zgnd(prop.zgndreal,prop.zgndimag);
-	zq=complex<double> (eps,376.62*sgm/prop.wn);
+	prop->gme=gma*(1.0-0.04665*exp(prop->ens/179.3));
+	complex<double> zq, prop_zgnd(prop->zgndreal,prop->zgndimag);
+   tmp_zq.tcreal=eps;
+   tmp_zq.tcimag=376.62*sgm/prop->wn;
+   zq = tmp_zq;
+   //What does this mean if zq is a complex number?
 	prop_zgnd=sqrt(zq-1.0);
 
 	if (ipol!=0.0)
 		prop_zgnd=prop_zgnd/zq;
 	
-	prop.zgndreal=prop_zgnd.real();
-	prop.zgndimag=prop_zgnd.imag();
+	prop->zgndreal=prop_zgnd.real();
+	prop->zgndimag=prop_zgnd.imag();
 	
 }
 
-double alos(double d, prop_type &prop, propa_type &propa)
-{
-	complex<double> prop_zgnd(prop.zgndreal,prop.zgndimag);
-	static double wls;
-	complex<double> r;
-	double s, sps, q;
-	double alosv;
-
-	if (d==0.0)
-	{
-		wls=0.021/(0.021+prop.wn*prop.dh/max(10e3,propa.dlsa));
-		alosv=0.0;
-	}
-
-	else
-	{
-		q=(1.0-0.8*exp(-d/50e3))*prop.dh;
-		s=0.78*q*exp(-pow(q/16.0,0.25));
-		q=prop.he[0]+prop.he[1];
-		sps=q/sqrt(d*d+q*q);
-		r=(sps-prop_zgnd)/(sps+prop_zgnd)*exp(-min(10.0,prop.wn*s*sps));
-		q=abq_alos(r);
-
-		if (q<0.25 || q<sps)
-			r=r*sqrt(sps/q);
-
-		alosv=propa.emd*d+propa.aed;
-		q=prop.wn*prop.he[0]*prop.he[1]*2.0/d;
-
-		if (q>1.57)
-			q=3.14-2.4649/q;
-
-		alosv=(-4.343*log(abq_alos(complex<double>(cos(q),-sin(q))+r))-alosv)*wls+alosv;
-
-	}
-	return alosv;
-}
-
-
 //also must be converted, TODO
-double alos2(double d, prop_type &prop, propa_type &propa)
+double alos2(double d, struct prop_type *prop, const struct propa_type propa)
 {
-	complex<double> prop_zgnd(prop.zgndreal,prop.zgndimag);
+	complex<double> prop_zgnd(prop->zgndreal,prop->zgndimag);
 	complex<double> r;
 	double cd, cr, dr, hr, hrg, ht, htg, hrp, re, s, sps, q, pd, drh;
 	int rp;
@@ -915,13 +930,13 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 	
 	cd=0.0;
 	cr=0.0;
-	htg=prop.hg[0];
-	hrg=prop.hg[1];
-	ht=prop.ght;
-	hr=prop.ghr;
-	rp=prop.rpl;
-	hrp=prop.rph;
-	pd=prop.dist;
+	htg=prop->hg[0];
+	hrg=prop->hg[1];
+	ht=prop->ght;
+	hr=prop->ghr;
+	rp=prop->rpl;
+	hrp=prop->rph;
+	pd=prop->dist;
 
 	if (d==0.0)
 	{
@@ -930,11 +945,11 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 
 	else
 	{
-		q=prop.he[0]+prop.he[1];
+		q=prop->he[0]+prop->he[1];
 		sps=q/sqrt(pd*pd+q*q);
-		q=(1.0-0.8*exp(-pd/50e3))*prop.dh;
+		q=(1.0-0.8*exp(-pd/50e3))*prop->dh;
 		
-		if (prop.mdp<0)
+		if (prop->mdp<0)
 		{
 			dr=pd/(1+hrg/htg);
 			
@@ -947,16 +962,16 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 				drh=6378137.0-sqrt(-(0.5*pd)*(0.5*pd)+6378137.0*6378137.0+(dr-0.5*pd)*(dr-0.5*pd));  
 			}
 					
-			if ((sps<0.05) && (prop.cch>hrg) && (prop.dist< prop.dl[0])) /* if far from transmitter and receiver below canopy */  
+			if ((sps<0.05) && (prop->cch>hrg) && (prop->dist< prop->dl[0])) /* if far from transmitter and receiver below canopy */  
 			{
-				cd=max(0.01,pd*(prop.cch-hrg)/(htg-hrg));
-				cr=max(0.01,pd-dr+dr*(prop.cch-drh)/htg);
-				q=((1.0-0.8*exp(-pd/50e3))*prop.dh*(min(-20*log10(cd/cr),1.0)));	
+				cd=max(0.01,pd*(prop->cch-hrg)/(htg-hrg));
+				cr=max(0.01,pd-dr+dr*(prop->cch-drh)/htg);
+				q=((1.0-0.8*exp(-pd/50e3))*prop->dh*(min(-20*log10(cd/cr),1.0)));	
 			}
 		}
 	
 		s=0.78*q*exp(-pow(q/16.0,0.25));
-		q=exp(-min(10.0,prop.wn*s*sps));
+		q=exp(-min(10.0,prop->wn*s*sps));
 		r=q*(sps-prop_zgnd)/(sps+prop_zgnd);
 		q=abq_alos(r);
 		q=min(q,1.0);		
@@ -965,11 +980,11 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 		{
 			r=r*sqrt(sps/q);
 		}	
-		q=prop.wn*prop.he[0]*prop.he[1]/(pd*3.1415926535897);		
+		q=prop->wn*prop->he[0]*prop->he[1]/(pd*3.1415926535897);		
 			
-		if (prop.mdp<0)	
+		if (prop->mdp<0)	
 		{		
-			q=prop.wn*((ht-hrp)*(hr-hrp))/(pd*3.1415926535897);
+			q=prop->wn*((ht-hrp)*(hr-hrp))/(pd*3.1415926535897);
 		}
 		q-=floor(q);
 		
@@ -986,18 +1001,18 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 		   by removing minus sign from in front of sin function */
 		re=abq_alos(complex<double>(cos(q),sin(q))+r);
 		alosv=-10*log10(re);
-		prop.tgh=prop.hg[0];  /*tx above gnd hgt set to antenna height AGL */	
-		prop.tsgh=prop.rch[0]-prop.hg[0]; /* tsgh set to tx site gl AMSL */		
+		prop->tgh=prop->hg[0];  /*tx above gnd hgt set to antenna height AGL */	
+		prop->tsgh=prop->rch[0]-prop->hg[0]; /* tsgh set to tx site gl AMSL */		
 							
-		if ((prop.hg[1]<prop.cch) && (prop.thera<0.785) && (prop.thenr<0.785))
+		if ((prop->hg[1]<prop->cch) && (prop->thera<0.785) && (prop->thenr<0.785))
 		{					
 			if (sps<0.05)
 			{			
-				alosv=alosv+saalos(pd, prop, propa);
+				alosv=alosv+saalos(pd, *prop, propa);
 			}					
 			else
 			{
-				alosv=saalos(pd, prop, propa);
+				alosv=saalos(pd, *prop, propa);
 			}
 		}
 	}
@@ -1006,92 +1021,108 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 }
 
 //needs to be converted, TODO
-void lrprop2(double d, prop_type &prop, propa_type &propa)
+void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 {
 	/* ITWOM_lrprop2 */
-	static bool wlos, wscat;
-	static double dmin, xae;
-	complex<double> prop_zgnd(prop.zgndreal,prop.zgndimag);
+   //These do not need to be static for point to point, since lrprop2 is 
+   //only called once. 
+	bool wlos, wscat;
+	double dmin, xae;
+  
+	complex<double> prop_zgnd(prop->zgndreal,prop->zgndimag);
 	double pd1;	
 	double a0, a1, a2, a3, a4, a5, a6, iw;
 	double d0, d1, d2, d3, d4, d5, d6;
 	bool wq;
 	double q;
 	int j;
+   //Replaces ascat's static variables
+   struct ascat_coeff ascat_var;
+   struct adiff2_coefficents adiff2_coeff;
 
-	iw=prop.tiw;
-	pd1=prop.dist;
-	propa.dx=2000000.0;
+	iw=prop->tiw;
+	pd1=prop->dist;
+	propa->dx=2000000.0;
 		
-	if (prop.mdp!=0) /* if oper. mode is not 0, i.e. not area mode ongoing */
+	if (prop->mdp!=0) /* if oper. mode is not 0, i.e. not area mode ongoing */
   	{
-		for (j=0; j<2; j++)
-			propa.dls[j]=sqrt(2.0*prop.he[j]/prop.gme);
+		for (j=0; j<2; j++){
+			propa->dls[j]=sqrt(2.0*prop->he[j]/prop->gme);
+      }
 	
-		propa.dlsa=propa.dls[0]+propa.dls[1];
-		propa.dlsa=min(propa.dlsa,1000000.0);
-		propa.dla=prop.dl[0]+prop.dl[1];	
-		propa.tha=max(prop.the[0]+prop.the[1],-propa.dla*prop.gme);		
+		propa->dlsa=propa->dls[0]+propa->dls[1];
+		propa->dlsa=min(propa->dlsa,1000000.0);
+		propa->dla=prop->dl[0]+prop->dl[1];	
+		propa->tha=max(prop->the[0]+prop->the[1],-propa->dla*prop->gme);		
 		wlos=false;
 		wscat=false;
 
 		/*checking for parameters-in-range, error codes set if not */
 
-		if (prop.wn<0.838 || prop.wn>210.0)
-			prop.kwx=max(prop.kwx,1);
+		if (prop->wn<0.838 || prop->wn>210.0)
+			prop->kwx=max(prop->kwx,1);
 
-		for (j=0; j<2; j++)
-			if (prop.hg[j]<1.0 || prop.hg[j]>1000.0)
-				prop.kwx=max(prop.kwx,1);
+		for (j=0; j<2; j++){
+			if (prop->hg[j]<1.0 || prop->hg[j]>1000.0){
+				prop->kwx=max(prop->kwx,1);
+         }
+      }
 		
-		if(abs(prop.the[0])>200e-3)
-			prop.kwx=max(prop.kwx,3);
+		if(fabs(prop->the[0])>200e-3){
+			prop->kwx=max(prop->kwx,3);
+      }
 
-		if(abs(prop.the[1])>1.220)
-			prop.kwx=max(prop.kwx,3);
+		if(fabs(prop->the[1])>1.220){
+			prop->kwx=max(prop->kwx,3);
+      }
 
 		/*for (j=0; j<2; j++)
-		     if (prop.dl[j]<0.1*propa.dls[j] || prop.dl[j]>3.0*propa.dls[j])
-				prop.kwx=max(prop.kwx,3);  */
+		     if (prop->dl[j]<0.1*propa->dls[j] || prop->dl[j]>3.0*propa->dls[j])
+				prop->kwx=max(prop->kwx,3);  */
 
-		if (prop.ens<250.0 || prop.ens>400.0 || prop.gme<75e-9 || prop.gme>250e-9 || prop_zgnd.real() <=abs(prop_zgnd.imag()) || prop.wn<0.419 || prop.wn>420.0)
-			prop.kwx=4;
+		if (prop->ens<250.0 || prop->ens>400.0 || prop->gme<75e-9 || 
+          prop->gme>250e-9 || prop_zgnd.real() <=abs(prop_zgnd.imag()) || 
+            prop->wn<0.419 || prop->wn>420.0)
+      {
+			prop->kwx=4;
+      }
 
-		for (j=0; j<2; j++)
-		
-			if (prop.hg[j]<0.5 || prop.hg[j]>3000.0)
-				prop.kwx=4;
+		for (j=0; j<2; j++){	
+			if (prop->hg[j]<0.5 || prop->hg[j]>3000.0)
+				prop->kwx=4;
+      }
 
-		dmin=abs(prop.he[0]-prop.he[1])/200e-3;
-		q=adiff2(0.0,prop,propa);
-		xae=pow(prop.wn*(prop.gme*prop.gme),-THIRD);  
-		d3=max(propa.dlsa,1.3787*xae+propa.dla);
+		dmin=abs(prop->he[0]-prop->he[1])/200e-3;
+      initadiff2(prop,propa,&adiff2_coeff);
+		//q=adiff2(0.0,prop,propa);
+		xae=pow(prop->wn*(prop->gme*prop->gme),-THIRD);  
+		d3=max(propa->dlsa,1.3787*xae+propa->dla);
 		d4=d3+2.7574*xae;
-		a3=adiff2(d3,prop,propa);
-		a4=adiff2(d4,prop,propa);
-		propa.emd=(a4-a3)/(d4-d3);
-		propa.aed=a3-propa.emd*d3;
+		a3=adiff2(d3,prop,propa,adiff2_coeff);
+		a4=adiff2(d4,prop,propa,adiff2_coeff);
+		propa->emd=(a4-a3)/(d4-d3);
+		propa->aed=a3-propa->emd*d3;
 	}
 
-	if (prop.mdp>=0) /* if initializing the area mode */
+	if (prop->mdp>=0) /* if initializing the area mode */
 	{
-		prop.mdp=0;   /* area mode is initialized */
-		prop.dist=d;
+		prop->mdp=0;   /* area mode is initialized */
+		prop->dist=d;
 	}
 
-	if (prop.dist>0.0)
+	if (prop->dist>0.0)
 	{
-		if (prop.dist>1000e3)   /* prop.dist being in meters, if greater than 1000 km, kwx=1 */
-			prop.kwx=max(prop.kwx,1);
+		if (prop->dist>1000e3)   /* prop->dist being in meters, if greater than 1000 km, kwx=1 */
+			prop->kwx=max(prop->kwx,1);
 
-		if (prop.dist<dmin)
-			prop.kwx=max(prop.kwx,3);
+		if (prop->dist<dmin)
+			prop->kwx=max(prop->kwx,3);
 
-		if (prop.dist<1e3 || prop.dist>2000e3)
-			prop.kwx=4;
+		if (prop->dist<1e3 || prop->dist>2000e3)
+			prop->kwx=4;
 	}
 
-	if (prop.dist<propa.dlsa)
+	if (prop->dist<propa->dlsa)
 	{
 	
 		if (iw<=0.0)   /* if interval width is zero or less, used for area mode */
@@ -1100,24 +1131,24 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 			if (!wlos)
 			{
 				q=alos2(0.0,prop,propa);
-				d2=propa.dlsa;
-				a2=propa.aed+d2*propa.emd;
-				d0=1.908*prop.wn*prop.he[0]*prop.he[1];
+				d2=propa->dlsa;
+				a2=propa->aed+d2*propa->emd;
+				d0=1.908*prop->wn*prop->he[0]*prop->he[1];
 
-				if (propa.aed>0.0)
+				if (propa->aed>0.0)
 				{	
-					prop.aref=propa.aed+propa.emd*prop.dist;
+					prop->aref=propa->aed+propa->emd*prop->dist;
 				}
 				else
 				{
-					if (propa.aed==0.0)
+					if (propa->aed==0.0)
 					{
-						d0=min(d0,0.5*propa.dla);
-						d1=d0+0.25*(propa.dla-d0);
+						d0=min(d0,0.5*propa->dla);
+						d1=d0+0.25*(propa->dla-d0);
 					}
 					else	/* aed less than zero */
 					{
-						d1=max(-propa.aed/propa.emd,0.25*propa.dla);
+						d1=max(-propa->aed/propa->emd,0.25*propa->dla);
 					}
 					a1=alos2(d1,prop,propa);
 					wq=false;
@@ -1127,34 +1158,34 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 						a0=alos2(d0,prop,propa);
 						a2=min(a2,alos2(d2,prop,propa));
 						q=log(d2/d0);
-			propa.ak2=max(0.0,((d2-d0)*(a1-a0)-(d1-d0)*(a2-a0))/((d2-d0)*log(d1/d0)-(d1-d0)*q));
-						wq=propa.aed>=0.0 || propa.ak2>0.0;
+			propa->ak2=max(0.0,((d2-d0)*(a1-a0)-(d1-d0)*(a2-a0))/((d2-d0)*log(d1/d0)-(d1-d0)*q));
+						wq=propa->aed>=0.0 || propa->ak2>0.0;
 
 						if (wq)
 						{ 
-						propa.ak1=(a2-a0-propa.ak2*q)/(d2-d0);
+						propa->ak1=(a2-a0-propa->ak2*q)/(d2-d0);
 
-							if (propa.ak1<0.0)
+							if (propa->ak1<0.0)
                         				{
-							propa.ak1=0.0;
-							propa.ak2=FORTRAN_DIM(a2,a0)/q;
+							propa->ak1=0.0;
+							propa->ak2=FORTRAN_DIM(a2,a0)/q;
 
-							     if (propa.ak2==0.0)
-								     propa.ak1=propa.emd;
+							     if (propa->ak2==0.0)
+								     propa->ak1=propa->emd;
 							}
 						}
 					}
 
 					if(!wq)
 					{       
-						propa.ak1=FORTRAN_DIM(a2,a1)/(d2-d1);
-						propa.ak2=0.0;
+						propa->ak1=FORTRAN_DIM(a2,a1)/(d2-d1);
+						propa->ak2=0.0;
 
-						if (propa.ak1==0.0)
-							propa.ak1=propa.emd;
+						if (propa->ak1==0.0)
+							propa->ak1=propa->emd;
 						
 					}
-					propa.ael=a2-propa.ak1*d2-propa.ak2*log(d2);
+					propa->ael=a2-propa->ak1*d2-propa->ak2*log(d2);
 					wlos=true;
 				}
 			}
@@ -1168,24 +1199,24 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 				wlos=true;
 			}
 
-			if (prop.los==1)	/* if line of sight */
+			if (prop->los==1)	/* if line of sight */
 			{
-				prop.aref=alos2(pd1,prop,propa);
+				prop->aref=alos2(pd1,prop,propa);
 			}
 			else
 			{			
-			 	if (int(prop.dist-prop.dl[0])==0)  /* if at 1st horiz */
+			 	if (int(prop->dist-prop->dl[0])==0)  /* if at 1st horiz */
 				{
-				prop.aref=5.8+alos2(pd1,prop,propa);
+				prop->aref=5.8+alos2(pd1,prop,propa);
 				}
-				else if (int(prop.dist-prop.dl[0])>0.0)    /* if past 1st horiz */
+				else if (int(prop->dist-prop->dl[0])>0.0)    /* if past 1st horiz */
 				{
-				q=adiff2(0.0,prop,propa);
-				prop.aref=adiff2(pd1,prop,propa);
+               initadiff2(prop,propa,&adiff2_coeff);
+               prop->aref=adiff2(pd1,prop,propa,&adiff2_coeff);
 				}			
 				else
 				{
-				prop.aref=1.0;
+				prop->aref=1.0;
 				}
 
 			}
@@ -1193,70 +1224,73 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 	}
 
 	/* los and diff. range coefficents done. Starting troposcatter */
-	if (prop.dist<=0.0 || prop.dist>=propa.dlsa)
+	if (prop->dist<=0.0 || prop->dist>=propa->dlsa)
 	{
 		if (iw==0.0)  /* area mode */
 		{
 			if(!wscat)
 			{ 
-				q=ascat(0.0,prop,propa);
-				d5=propa.dla+200e3;
+				q=ascat_init(prop,propa,&ascat_var);
+				d5=propa->dla+200e3;
 				d6=d5+200e3;
-				a6=ascat(d6,prop,propa);
-				a5=ascat(d5,prop,propa);
+				a6=ascat(d6,prop,propa,&ascat_var);
+				a5=ascat(d5,prop,propa,&ascat_var);
 			
 				if (a5<1000.0)
 				{
-					propa.ems=(a6-a5)/200e3;
-					propa.dx=max(propa.dlsa,max(propa.dla+0.3*xae*log(47.7*prop.wn),(a5-propa.aed-propa.ems*d5)/(propa.emd-propa.ems)));
+					propa->ems=(a6-a5)/200e3;
+					propa->dx=max(propa->dlsa,max(propa->dla+0.3*xae*log(47.7*prop->wn),(a5-propa->aed-propa->ems*d5)/(propa->emd-propa->ems)));
 					
-					propa.aes=(propa.emd-propa.ems)*propa.dx+propa.aed;
+					propa->aes=(propa->emd-propa->ems)*propa->dx+propa->aed;
 				}
 	
 				else
 				{
-					propa.ems=propa.emd;
-					propa.aes=propa.aed;
-					propa.dx=10000000;
+					propa->ems=propa->emd;
+					propa->aes=propa->aed;
+					propa->dx=10000000;
 				}
 				wscat=true;
 				}	
 	
-			if (prop.dist>propa.dx)
+			if (prop->dist>propa->dx)
 			{
-				prop.aref=propa.aes+propa.ems*prop.dist;
+				prop->aref=propa->aes+propa->ems*prop->dist;
 			}
 			else
 			{
-				prop.aref=propa.aed+propa.emd*prop.dist;
+				prop->aref=propa->aed+propa->emd*prop->dist;
 			}
 		}	
-		else   /* ITWOM mode  q used to preset coefficients with zero input */
+		else
 		{				
 			if(!wscat)
 			{ 
 				d5=0.0;
 				d6=0.0;
-				q=ascat(0.0,prop,propa);
-				a6=ascat(pd1,prop,propa);
-				q=adiff2(0.0,prop,propa);			
-				a5=adiff2(pd1,prop,propa);
+            /*  ITWOM mode: ascat_init  used to preset coefficients with 
+               zero input */
+				ascat_init(prop,propa,&ascat_var);
+				a6=ascat(pd1,prop,propa,&ascat_var);
+            initadiff2(prop,propa,&adiff2_coeff);
+				//q=adiff2(0.0,prop,propa);			
+				a5=adiff2(pd1,prop,propa,&adiff2_coeff);
 							
 				if (a5<=a6)
 				{		
-					propa.dx=10000000;
-					prop.aref=a5;
+					propa->dx=10000000;
+					prop->aref=a5;
 				}
 				else
 				{
-					propa.dx=propa.dlsa;
-					prop.aref=a6;
+					propa->dx=propa->dlsa;
+					prop->aref=a6;
 				}
 			wscat=true;
 			}			
 		}
 	}
-	prop.aref=max(prop.aref,0.0);
+	prop->aref=max(prop->aref,0.0);
 }
 
 
@@ -1277,10 +1311,12 @@ double curve (double const c1, double const c2, double const x1,
 }
 
 //Also used in point-to-point
-double avar(double zzt, double zzl, double zzc, prop_type &prop, propv_type &propv)
+double avar(double zzt, double zzl, double zzc, struct prop_type* prop, 
+   struct propv_type* propv)
 {
-	static	int kdv;
-	static	double dexa, de, vmd, vs0, sgl, sgtm, sgtp, sgtd, tgtd,
+   //These don't need to be static, since avar is only called once
+	int kdv;
+	double dexa, de, vmd, vs0, sgl, sgtm, sgtp, sgtd, tgtd,
 		gm, gp, cv1, cv2, yv1, yv2, yv3, csm1, csm2, ysm1, ysm2,
 		ysm3, csp1, csp2, ysp1, ysp2, ysp3, csd1, zd, cfm1, cfm2,
 		cfm3, cfp1, cfp2, cfp3;
