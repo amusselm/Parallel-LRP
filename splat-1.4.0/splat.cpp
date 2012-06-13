@@ -3206,6 +3206,9 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	   of a topographic map when the WritePPMLR() or
 	   WritePPMSS() functions are later invoked. */
 
+//This function is the entery point for my paraellization efforts. This 
+// This function should be the "kernel"
+//TODO 
 	int y, z, count;
 	struct site edge;
 	double lat, lon, minwest, maxnorth, th;
@@ -3272,6 +3275,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=lon;
 		edge.alt=altitude;
 
+      //Foo 4?
 		PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
@@ -3300,6 +3304,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=min_west;
 		edge.alt=altitude;
 
+      //Foo1?
 		PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
@@ -3331,6 +3336,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=lon;
 		edge.alt=altitude;
 
+      //Foo2?
 		PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
@@ -3359,6 +3365,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=max_west;
 		edge.alt=altitude;
 
+      //Foo3?
 		PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
