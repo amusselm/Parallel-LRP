@@ -58,7 +58,8 @@ tcomplex add_complex(tcomplex a, tcomplex b){
 
 
 struct prop_type
-{	double aref;
+{	
+   double aref;
 	double dist;
 	double hg[2];
 	double rch[2];
@@ -895,7 +896,11 @@ void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sg
    struct prop_type *prop)
 {
 	double gma=157e-9;
+   tcomplex zq;
    tcomplex tmp_zq;
+   tcomplex prop_zgnd;
+   prop_zgnd.tcreal = prop->zgndreal;
+   prop_zgnd.tcimag = prop->zgndimag;
 
 	prop->wn=fmhz/47.7;
 	prop->ens=en0;
@@ -904,7 +909,7 @@ void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sg
 		prop->ens*=exp(-zsys/9460.0);
 
 	prop->gme=gma*(1.0-0.04665*exp(prop->ens/179.3));
-	complex<double> zq, prop_zgnd(prop->zgndreal,prop->zgndimag);
+	//complex<double> zq, prop_zgnd(prop->zgndreal,prop->zgndimag);
    tmp_zq.tcreal=eps;
    tmp_zq.tcimag=376.62*sgm/prop->wn;
    zq = tmp_zq;
@@ -914,8 +919,8 @@ void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sg
 	if (ipol!=0.0)
 		prop_zgnd=prop_zgnd/zq;
 	
-	prop->zgndreal=prop_zgnd.real();
-	prop->zgndimag=prop_zgnd.imag();
+	prop->zgndreal=prop_zgnd.tcreal;
+	prop->zgndimag=prop_zgnd.tcimag;
 	
 }
 
@@ -1029,7 +1034,9 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 	bool wlos, wscat;
 	double dmin, xae;
   
-	complex<double> prop_zgnd(prop->zgndreal,prop->zgndimag);
+	//complex<double> prop_zgnd(prop->zgndreal,prop->zgndimag);
+   tcomplex prop_zgnd; 
+
 	double pd1;	
 	double a0, a1, a2, a3, a4, a5, a6, iw;
 	double d0, d1, d2, d3, d4, d5, d6;
@@ -1039,6 +1046,10 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
    //Replaces ascat's static variables
    struct ascat_coeff ascat_var;
    struct adiff2_coefficents adiff2_coeff;
+
+   //Initalizing prop_zgnd
+   prop_zgnd.tcreal = prop->zgndreal;
+   prop_zgnd.tcimag = prop->zgndimag;
 
 	iw=prop->tiw;
 	pd1=prop->dist;
@@ -1081,7 +1092,7 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 				prop->kwx=max(prop->kwx,3);  */
 
 		if (prop->ens<250.0 || prop->ens>400.0 || prop->gme<75e-9 || 
-          prop->gme>250e-9 || prop_zgnd.real() <=abs(prop_zgnd.imag()) || 
+          prop->gme>250e-9 || prop_zgnd.tcreal <=fabs(prop_zgnd.tcimag) || 
             prop->wn<0.419 || prop->wn>420.0)
       {
 			prop->kwx=4;
@@ -1092,7 +1103,7 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 				prop->kwx=4;
       }
 
-		dmin=abs(prop->he[0]-prop->he[1])/200e-3;
+		dmin=fabs(prop->he[0]-prop->he[1])/200e-3;
       initadiff2(prop,propa,&adiff2_coeff);
 		//q=adiff2(0.0,prop,propa);
 		xae=pow(prop->wn*(prop->gme*prop->gme),-THIRD);  
@@ -1130,7 +1141,7 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 		
 			if (!wlos)
 			{
-				q=alos2(0.0,prop,propa);
+				q=alos2(0.0,prop,*propa);
 				d2=propa->dlsa;
 				a2=propa->aed+d2*propa->emd;
 				d0=1.908*prop->wn*prop->he[0]*prop->he[1];
@@ -1150,13 +1161,13 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 					{
 						d1=max(-propa->aed/propa->emd,0.25*propa->dla);
 					}
-					a1=alos2(d1,prop,propa);
+					a1=alos2(d1,prop,*propa);
 					wq=false;
 
 					if (d0<d1)
 					{
-						a0=alos2(d0,prop,propa);
-						a2=min(a2,alos2(d2,prop,propa));
+						a0=alos2(d0,prop,*propa);
+						a2=min(a2,alos2(d2,prop,*propa));
 						q=log(d2/d0);
 			propa->ak2=max(0.0,((d2-d0)*(a1-a0)-(d1-d0)*(a2-a0))/((d2-d0)*log(d1/d0)-(d1-d0)*q));
 						wq=propa->aed>=0.0 || propa->ak2>0.0;
@@ -1195,20 +1206,22 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 
 			if (!wlos)
 			{
-				q=alos2(0.0,prop,propa); /* coefficient setup */	
+				q=alos2(0.0,prop,*propa); /* coefficient setup */	
 				wlos=true;
 			}
 
 			if (prop->los==1)	/* if line of sight */
 			{
-				prop->aref=alos2(pd1,prop,propa);
+				prop->aref=alos2(pd1,prop,*propa);
 			}
 			else
 			{			
+            //This is suspicious, this previously used an int constructor
 			 	if (int(prop->dist-prop->dl[0])==0)  /* if at 1st horiz */
 				{
-				prop->aref=5.8+alos2(pd1,prop,propa);
+               prop->aref=5.8+alos2(pd1,prop,*propa);
 				}
+            //This is suspicious, this previously used an int constructor
 				else if (int(prop->dist-prop->dl[0])>0.0)    /* if past 1st horiz */
 				{
                initadiff2(prop,propa,&adiff2_coeff);
@@ -1216,7 +1229,7 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 				}			
 				else
 				{
-				prop->aref=1.0;
+               prop->aref=1.0;
 				}
 
 			}
@@ -1230,11 +1243,11 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 		{
 			if(!wscat)
 			{ 
-				q=ascat_init(prop,propa,&ascat_var);
+				q=ascat_init(*prop,*propa,&ascat_var);
 				d5=propa->dla+200e3;
 				d6=d5+200e3;
-				a6=ascat(d6,prop,propa,&ascat_var);
-				a5=ascat(d5,prop,propa,&ascat_var);
+				a6=ascat(d6,*prop,*propa,&ascat_var);
+				a5=ascat(d5,*prop,*propa,&ascat_var);
 			
 				if (a5<1000.0)
 				{
@@ -1270,8 +1283,8 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 				d6=0.0;
             /*  ITWOM mode: ascat_init  used to preset coefficients with 
                zero input */
-				ascat_init(prop,propa,&ascat_var);
-				a6=ascat(pd1,prop,propa,&ascat_var);
+				ascat_init(*prop,*propa,&ascat_var);
+				a6=ascat(pd1,*prop,*propa,&ascat_var);
             initadiff2(prop,propa,&adiff2_coeff);
 				//q=adiff2(0.0,prop,propa);			
 				a5=adiff2(pd1,prop,propa,&adiff2_coeff);
@@ -1344,21 +1357,21 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 	double bfp1[7]={1.0,0.93,1.0,0.93,0.93,1.0,1.0};
 	double bfp2[7]={0.0,0.31,0.0,0.19,0.31,0.0,0.0};
 	double bfp3[7]={0.0,2.00,0.0,1.79,2.00,0.0,0.0};
-	static bool ws, w1;
+	bool ws, w1;
 	double rt=7.8, rl=24.0, avarv, q, vs, zt, zl, zc;
 	double sgt, yr, temp1, temp2;
-	int temp_klim=propv.klim-1;
+	int temp_klim=propv->klim-1;
 
-	if (propv.lvar>0)
+	if (propv->lvar>0)
 	{
-		switch (propv.lvar)
+		switch (propv->lvar)
 		{
 			default:
-			if (propv.klim<=0 || propv.klim>7)
+			if (propv->klim<=0 || propv->klim>7)
 			{
-				propv.klim=5;
+				propv->klim=5;
 				temp_klim=4;
-				prop.kwx=max(prop.kwx,2);
+				prop->kwx=max(prop->kwx,2);
 			}
 
 			cv1=bv1[temp_klim];
@@ -1386,7 +1399,7 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 			cfp3=bfp3[temp_klim];
 
 			case 4:
-			kdv=propv.mdvar;
+			kdv=propv->mdvar;
 			ws=kdv>=20;
 
 			if (ws)
@@ -1400,11 +1413,11 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 			if (kdv<0 || kdv>3)
 			{
 				kdv=0;
-				prop.kwx=max(prop.kwx,2);
+				prop->kwx=max(prop->kwx,2);
 			}
 
 			case 3:
-			q=log(0.133*prop.wn);
+			q=log(0.133*prop->wn);
 
 			/* gm=cfm1+cfm2/(pow(cfm3*q,2.0)+1.0); */
 			/* gp=cfp1+cfp2/(pow(cfp3*q,2.0)+1.0); */
@@ -1413,13 +1426,13 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 			gp=cfp1+cfp2/((cfp3*q*cfp3*q)+1.0);
 
 			case 2:
-			dexa=sqrt(18e6*prop.he[0])+sqrt(18e6*prop.he[1])+pow((575.7e12/prop.wn),THIRD);
+			dexa=sqrt(18e6*prop->he[0])+sqrt(18e6*prop->he[1])+pow((575.7e12/prop->wn),THIRD);
 
 			case 1:
-			if (prop.dist<dexa)
-				de=130e3*prop.dist/dexa;
+			if (prop->dist<dexa)
+				de=130e3*prop->dist/dexa;
 			else
-				de=130e3+prop.dist-dexa;
+				de=130e3+prop->dist-dexa;
 		}
 
 		vmd=curve(cv1,cv2,yv1,yv2,yv3,de);
@@ -1432,7 +1445,7 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 			sgl=0.0;
 		else
 		{
-			q=(1.0-0.8*exp(-prop.dist/50e3))*prop.dh*prop.wn;
+			q=(1.0-0.8*exp(-prop->dist/50e3))*prop->dh*prop->wn;
 			sgl=10.0*q/(q+13.0);
 		}
 
@@ -1446,7 +1459,7 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 
 		}
 
-		propv.lvar=0;
+		propv->lvar=0;
 	}
 
 	zt=zzt;
@@ -1469,7 +1482,7 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 	}
 
 	if (fabs(zt)>3.1 || fabs(zl)>3.1 || fabs(zc)>3.1)
-		prop.kwx=max(prop.kwx,1);
+		prop->kwx=max(prop->kwx,1);
 
 	if (zt<0.0)
 		sgt=sgtm;
@@ -1490,28 +1503,28 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 	if (kdv==0)
 	{
 		yr=0.0;
-		propv.sgc=sqrt(sgt*sgt+sgl*sgl+vs);
+		propv->sgc=sqrt(sgt*sgt+sgl*sgl+vs);
 	}
 
 	else if (kdv==1)
 	{
 		yr=sgt*zt;
-		propv.sgc=sqrt(sgl*sgl+vs);
+		propv->sgc=sqrt(sgl*sgl+vs);
 	}
 
 	else if (kdv==2)
 	{
 		yr=sqrt(sgt*sgt+sgl*sgl)*zt;
-		propv.sgc=sqrt(vs);
+		propv->sgc=sqrt(vs);
 	}
 
 	else
 	{
 		yr=sgt*zt+sgl*zl;
-		propv.sgc=sqrt(vs);
+		propv->sgc=sqrt(vs);
 	}
 
-	avarv=prop.aref-vmd-yr-propv.sgc*zc;
+	avarv=prop->aref-vmd-yr-propv->sgc*zc;
 
 	if (avarv<0.0)
 		avarv=avarv*(29.0-avarv)/(29.0-10.0*avarv);
@@ -1521,7 +1534,7 @@ double avar(double zzt, double zzl, double zzc, struct prop_type* prop,
 
 
 //Must be converted TODO
-void hzns2(double pfl[], prop_type &prop, propa_type &propa)
+void hzns2(double pfl[], struct prop_type *prop, struct propa_type *propa)
 {
 	bool wq;
 	int np, rp, i, j;
@@ -1529,40 +1542,40 @@ void hzns2(double pfl[], prop_type &prop, propa_type &propa)
 
 	np=(int)pfl[0];
 	xi=pfl[1];
-	za=pfl[2]+prop.hg[0];
-	zb=pfl[np+2]+prop.hg[1];
-	prop.tiw=xi;
-	prop.ght=za;
-	prop.ghr=zb;
-	qc=0.5*prop.gme;
-	q=qc*prop.dist;
-	prop.the[1]=atan((zb-za)/prop.dist);
-	prop.the[0]=(prop.the[1])-q;
-	prop.the[1]=-prop.the[1]-q;
-	prop.dl[0]=prop.dist;
-	prop.dl[1]=prop.dist;
-	prop.hht=0.0;
-	prop.hhr=0.0;
-	prop.los=1;
+	za=pfl[2]+prop->hg[0];
+	zb=pfl[np+2]+prop->hg[1];
+	prop->tiw=xi;
+	prop->ght=za;
+	prop->ghr=zb;
+	qc=0.5*prop->gme;
+	q=qc*prop->dist;
+	prop->the[1]=atan((zb-za)/prop->dist);
+	prop->the[0]=(prop->the[1])-q;
+	prop->the[1]=-prop->the[1]-q;
+	prop->dl[0]=prop->dist;
+	prop->dl[1]=prop->dist;
+	prop->hht=0.0;
+	prop->hhr=0.0;
+	prop->los=1;
     	
 	if(np>=2)
 	{
 		sa=0.0;
-		sb=prop.dist;
+		sb=prop->dist;
 		wq=true;
 
 		for(j=1; j<np; j++)
 		{
 			sa+=xi;
-			q=pfl[j+2]-(qc*sa+prop.the[0])*sa-za;
+			q=pfl[j+2]-(qc*sa+prop->the[0])*sa-za;
           		
 			if(q>0.0)
 			{
-				prop.los=0;
-				prop.the[0]+=q/sa;
-				prop.dl[0]=sa;
-				prop.the[0]=min(prop.the[0],1.569);
-				prop.hht=pfl[j+2];				
+				prop->los=0;
+				prop->the[0]+=q/sa;
+				prop->dl[0]=sa;
+				prop->the[0]=min(prop->the[0],1.569);
+				prop->hht=pfl[j+2];				
 				wq=false;
 			}
 		}
@@ -1572,41 +1585,41 @@ void hzns2(double pfl[], prop_type &prop, propa_type &propa)
 			for(i=1; i<np; i++)
 			{
 				sb-=xi;
-				q=pfl[np+2-i]-(qc*(prop.dist-sb)+prop.the[1])*(prop.dist-sb)-zb;
+				q=pfl[np+2-i]-(qc*(prop->dist-sb)+prop->the[1])*(prop->dist-sb)-zb;
 				if(q>0.0)
 				{
-					prop.the[1]+=q/(prop.dist-sb);
-					prop.the[1]=min(prop.the[1],1.57);
-					prop.the[1]=max(prop.the[1],-1.568);					
-					prop.hhr=pfl[np+2-i];					
-					prop.dl[1]=max(0.0,prop.dist-sb);
+					prop->the[1]+=q/(prop->dist-sb);
+					prop->the[1]=min(prop->the[1],1.57);
+					prop->the[1]=max(prop->the[1],-1.568);					
+					prop->hhr=pfl[np+2-i];					
+					prop->dl[1]=max(0.0,prop->dist-sb);
 				}
 			}
-			prop.the[0]=atan((prop.hht-za)/prop.dl[0])-0.5*prop.gme*prop.dl[0];
-			prop.the[1]=atan((prop.hhr-zb)/prop.dl[1])-0.5*prop.gme*prop.dl[1];
+			prop->the[0]=atan((prop->hht-za)/prop->dl[0])-0.5*prop->gme*prop->dl[0];
+			prop->the[1]=atan((prop->hhr-zb)/prop->dl[1])-0.5*prop->gme*prop->dl[1];
 		}
 	}
 
-	if((prop.dl[1])<(prop.dist))
+	if((prop->dl[1])<(prop->dist))
 	{
-		dshh=prop.dist-prop.dl[0]-prop.dl[1];
+		dshh=prop->dist-prop->dl[0]-prop->dl[1];
 
 		if(int(dshh)==0) /* one obstacle */
 		{
-			dr=prop.dl[1]/(1+zb/prop.hht);		
+			dr=prop->dl[1]/(1+zb/prop->hht);		
 		}
 		else	/* two obstacles */
 		{		
-			dr=prop.dl[1]/(1+zb/prop.hhr);		
+			dr=prop->dl[1]/(1+zb/prop->hhr);		
 		}	
 	}
 	else    /* line of sight  */
 	{
-		dr=(prop.dist)/(1+zb/za);
+		dr=(prop->dist)/(1+zb/za);
 	}
 	rp=2+(int)(floor(0.5+dr/xi));
-	prop.rpl=rp;	
-	prop.rph=pfl[rp];
+	prop->rpl=rp;	
+	prop->rph=pfl[rp];
 }
  
 //must be converted TODO
