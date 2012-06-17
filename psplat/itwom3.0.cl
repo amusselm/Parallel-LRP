@@ -131,7 +131,7 @@ struct ascat_coeff
    double rr; 
    double etq;
    double h0s;
-}
+};
 
 double tcomplex_abs(const tcomplex num){
    return sqrt((num.tcreal*num.tcreal)*(num.tcimag*num.tcimag));
@@ -1225,7 +1225,7 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 				else if (int(prop->dist-prop->dl[0])>0.0)    /* if past 1st horiz */
 				{
                initadiff2(prop,propa,&adiff2_coeff);
-               prop->aref=adiff2(pd1,prop,propa,&adiff2_coeff);
+               prop->aref=adiff2(pd1,prop,propa,adiff2_coeff);
 				}			
 				else
 				{
@@ -1286,8 +1286,8 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 				ascat_init(*prop,*propa,&ascat_var);
 				a6=ascat(pd1,*prop,*propa,&ascat_var);
             initadiff2(prop,propa,&adiff2_coeff);
-				//q=adiff2(0.0,prop,propa);			
-				a5=adiff2(pd1,prop,propa,&adiff2_coeff);
+				//q=adiff2(0.0,prop,propa); Replaced by initadiff2			
+				a5=adiff2(pd1,prop,propa,adiff2_coeff);
 							
 				if (a5<=a6)
 				{		
@@ -1623,7 +1623,7 @@ void hzns2(double pfl[], struct prop_type *prop, struct propa_type *propa)
 }
  
 //must be converted TODO
-void z1sq2(double z[], const double x1, const double x2, double& z0, double& zn)
+void z1sq2(double z[], const double x1, const double x2, double *z0, double *zn)
 {
 	/* corrected for use with ITWOM */
 	double xn, xa, xb, x, a, b, bn;
@@ -1661,8 +1661,8 @@ void z1sq2(double z[], const double x1, const double x2, double& z0, double& zn)
 
 	a/=(xa+2);
 	b=b/bn;
-	z0=a-(b*xb);
-	zn=a+(b*(xn-xb));
+	*z0=a-(b*xb);
+	*zn=a+(b*(xn-xb));
 }
 
 //Must be converted
@@ -1776,7 +1776,7 @@ double d1thx2(double pfl[], const double x1, const double x2,
 		xc=xc+xb;
 	}
 
-	z1sq2(s,0.0,sn,xa,xb);
+	z1sq2(s,0.0,sn,&xa,&xb);
 	xb=(xb-xa)/sn;
 	
 	for (j=0; j<n; j++)
@@ -1816,8 +1816,8 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, struct prop_type *prop,
 		/* for TRANSHORIZON; diffraction over a mutual horizon, or for one or more obstructions */
 		if (dlb<1.5*prop->dist)  
 		{	
-			z1sq2(pfl,xl[0],0.9*prop->dl[0],za,q);
-			z1sq2(pfl,prop->dist-0.9*prop->dl[1],xl[1],q,zb);
+			z1sq2(pfl,xl[0],0.9*prop->dl[0],&za,&q);
+			z1sq2(pfl,prop->dist-0.9*prop->dl[1],xl[1],&q,&zb);
 			prop->he[0]=prop->hg[0]+FORTRAN_DIM(pfl[2],za);
 			prop->he[1]=prop->hg[1]+FORTRAN_DIM(pfl[np+2],zb);
 		}
@@ -1825,7 +1825,7 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, struct prop_type *prop,
 		/* for a Line-of-Sight path */		
 		else
 		{			
-			z1sq2(pfl,xl[0],xl[1],za,zb);
+			z1sq2(pfl,xl[0],xl[1],&za,&zb);
 			prop->he[0]=prop->hg[0]+FORTRAN_DIM(pfl[2],za);
 			prop->he[1]=prop->hg[1]+FORTRAN_DIM(pfl[np+2],zb);
 
@@ -1864,7 +1864,7 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, struct prop_type *prop,
 				
 		if (prop->dist>550.0)
 		{
-			z1sq2(pfl,rad,prop->dist,rae1,rae2);
+			z1sq2(pfl,rad,prop->dist,&rae1,&rae2);
 		}
 		else
 		{
@@ -1872,7 +1872,7 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, struct prop_type *prop,
          rae2=0.0;
 		}
 
-		prop->thera=atan(absf(rae2-rae1)/prop->dist);
+		prop->thera=atan(fabs(rae2-rae1)/prop->dist);
 		
 		if (rae2<rae1)	
 		{
@@ -1965,9 +1965,9 @@ void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielec
 
 *****************************************************************************/
 {
-	prop_type   prop;
-	propv_type  propv;
-	propa_type  propa;
+	struct prop_type   prop;
+	struct propv_type  propv;
+	struct propa_type  propa;
 
 	double zsys=0;
 	double zc, zr;
@@ -2017,8 +2017,8 @@ void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielec
 	}
 
 	propv.mdvar=mode_var;
-	qlrps(frq_mhz,zsys,q,pol,eps_dielect,sgm_conductivity,prop);
-	qlrpfl2(elev,propv.klim,propv.mdvar,prop,propa,propv);
+	qlrps(frq_mhz,zsys,q,pol,eps_dielect,sgm_conductivity,&prop);
+	qlrpfl2(elev,propv.klim,propv.mdvar,&prop,&propa,&propv);
 	tpd=sqrt((prop.he[0]-prop.he[1])*(prop.he[0]-prop.he[1])+(prop.dist)*(prop.dist));
 	fs=32.45+20.0*log10(frq_mhz)+20.0*log10(tpd/1000.0);	
 	q=prop.dist-propa.dla;	
