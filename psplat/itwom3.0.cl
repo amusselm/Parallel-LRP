@@ -1736,7 +1736,8 @@ double qtile (const int nn, double a[], const int ir)
 }
 
 //must be converted TODO
-double d1thx2(double pfl[], const double x1, const double x2, propa_type &propa)
+double d1thx2(double pfl[], const double x1, const double x2, 
+   struct propa_type *propa)
 {
 	int np, ka, kb, n, k, kmx, j;
 	double d1thx2v, sn, xa, xb, xc;
@@ -1791,109 +1792,110 @@ double d1thx2(double pfl[], const double x1, const double x2, propa_type &propa)
 }
 
 //Also used in point-to-point
-void qlrpfl2(double pfl[], int klimx, int mdvarx, prop_type &prop, propa_type &propa, propv_type &propv)
+void qlrpfl2(double pfl[], int klimx, int mdvarx, struct prop_type *prop, 
+   struct propa_type *propa, struct propv_type *propv)
 {
 	int np, j;
 	double xl[2], dlb, q, za, zb, temp, rad, rae1, rae2;
 
-	prop.dist=pfl[0]*pfl[1];
+	prop->dist=pfl[0]*pfl[1];
 	np=(int)pfl[0];
 	hzns2(pfl,prop, propa);
-	dlb=prop.dl[0]+prop.dl[1];
-	prop.rch[0]=prop.hg[0]+pfl[2];
-	prop.rch[1]=prop.hg[1]+pfl[np+2];
+	dlb=prop->dl[0]+prop->dl[1];
+	prop->rch[0]=prop->hg[0]+pfl[2];
+	prop->rch[1]=prop->hg[1]+pfl[np+2];
 
 	for (j=0; j<2; j++)
-		xl[j]=min(15.0*prop.hg[j],0.1*prop.dl[j]);
+		xl[j]=min(15.0*prop->hg[j],0.1*prop->dl[j]);
 
-	xl[1]=prop.dist-xl[1];
-	prop.dh=d1thx2(pfl,xl[0],xl[1],propa);
+	xl[1]=prop->dist-xl[1];
+	prop->dh=d1thx2(pfl,xl[0],xl[1],propa);
 	
 	if ((np<1) || (pfl[1]>150.0))
 	{
 		/* for TRANSHORIZON; diffraction over a mutual horizon, or for one or more obstructions */
-		if (dlb<1.5*prop.dist)  
+		if (dlb<1.5*prop->dist)  
 		{	
-			z1sq2(pfl,xl[0],0.9*prop.dl[0],za,q);
-			z1sq2(pfl,prop.dist-0.9*prop.dl[1],xl[1],q,zb);
-			prop.he[0]=prop.hg[0]+FORTRAN_DIM(pfl[2],za);
-			prop.he[1]=prop.hg[1]+FORTRAN_DIM(pfl[np+2],zb);
+			z1sq2(pfl,xl[0],0.9*prop->dl[0],za,q);
+			z1sq2(pfl,prop->dist-0.9*prop->dl[1],xl[1],q,zb);
+			prop->he[0]=prop->hg[0]+FORTRAN_DIM(pfl[2],za);
+			prop->he[1]=prop->hg[1]+FORTRAN_DIM(pfl[np+2],zb);
 		}
 		
 		/* for a Line-of-Sight path */		
 		else
 		{			
 			z1sq2(pfl,xl[0],xl[1],za,zb);
-			prop.he[0]=prop.hg[0]+FORTRAN_DIM(pfl[2],za);
-			prop.he[1]=prop.hg[1]+FORTRAN_DIM(pfl[np+2],zb);
+			prop->he[0]=prop->hg[0]+FORTRAN_DIM(pfl[2],za);
+			prop->he[1]=prop->hg[1]+FORTRAN_DIM(pfl[np+2],zb);
 
 			for (j=0; j<2; j++)
-				prop.dl[j]=sqrt(2.0*prop.he[j]/prop.gme)*exp(-0.07*sqrt(prop.dh/max(prop.he[j],5.0)));
+				prop->dl[j]=sqrt(2.0*prop->he[j]/prop->gme)*exp(-0.07*sqrt(prop->dh/max(prop->he[j],5.0)));
 			
 			/* for one or more obstructions only NOTE buried as in ITM FORTRAN and DLL, not functional  */
-			if ((prop.dl[0]+prop.dl[1])<=prop.dist)
+			if ((prop->dl[0]+prop->dl[1])<=prop->dist)
 			{	
-				/* q=pow(prop.dist/(dl[0]+dl[1])),2.0); */
-				temp=prop.dist/(prop.dl[0]+prop.dl[1]);
+				/* q=pow(prop->dist/(dl[0]+dl[1])),2.0); */
+				temp=prop->dist/(prop->dl[0]+prop->dl[1]);
 				q=temp*temp;
 			}
 			
 			for (j=0; j<2; j++)
 			{
-				prop.he[j]*=q;
-				prop.dl[j]=sqrt(2.0*prop.he[j]/prop.gme)*exp(-0.07*sqrt(prop.dh/max(prop.he[j],5.0)));
+				prop->he[j]*=q;
+				prop->dl[j]=sqrt(2.0*prop->he[j]/prop->gme)*exp(-0.07*sqrt(prop->dh/max(prop->he[j],5.0)));
 			}
 
-			/* this sets (or resets) prop.the, and is not in The Guide FORTRAN QLRPFL */
+			/* this sets (or resets) prop->the, and is not in The Guide FORTRAN QLRPFL */
 			for (j=0; j<2; j++)
 			{
-				q=sqrt(2.0*prop.he[j]/prop.gme);
-				prop.the[j]=(0.65*prop.dh*(q/prop.dl[j]-1.0)-2.0*prop.he[j])/q;
+				q=sqrt(2.0*prop->he[j]/prop->gme);
+				prop->the[j]=(0.65*prop->dh*(q/prop->dl[j]-1.0)-2.0*prop->he[j])/q;
 			}
 		}
 	}
 			
 	else    /* for ITWOM ,computes he for tx, rcvr, and the receiver approach angles for use in saalos */ 
 	{
-		prop.he[0]=prop.hg[0]+(pfl[2]);
-		prop.he[1]=prop.hg[1]+(pfl[np+2]);
+		prop->he[0]=prop->hg[0]+(pfl[2]);
+		prop->he[1]=prop->hg[1]+(pfl[np+2]);
 		
-		rad=(prop.dist-500.0);	
+		rad=(prop->dist-500.0);	
 				
-		if (prop.dist>550.0)
+		if (prop->dist>550.0)
 		{
-			z1sq2(pfl,rad,prop.dist,rae1,rae2);
+			z1sq2(pfl,rad,prop->dist,rae1,rae2);
 		}
 		else
 		{
-		rae1=0.0;
-		rae2=0.0;
+         rae1=0.0;
+         rae2=0.0;
 		}
 
-		prop.thera=atan(abs(rae2-rae1)/prop.dist);
+		prop->thera=atan(absf(rae2-rae1)/prop->dist);
 		
 		if (rae2<rae1)	
 		{
-			prop.thera=-prop.thera;
+			prop->thera=-prop->thera;
 		}
 		
-		prop.thenr=atan(max(0.0,(pfl[np+2]-pfl[np+1]))/pfl[1]);
+		prop->thenr=atan(max(0.0,(pfl[np+2]-pfl[np+1]))/pfl[1]);
 				
 	}	
 	
-	prop.mdp=-1;
-	propv.lvar=max(propv.lvar,3);
+	prop->mdp=-1;
+	propv->lvar=max(propv->lvar,3);
 
 	if (mdvarx>=0)
 	{
-		propv.mdvar=mdvarx;
-		propv.lvar=max(propv.lvar,4);
+		propv->mdvar=mdvarx;
+		propv->lvar=max(propv->lvar,4);
 	}
 
 	if (klimx>0)
 	{
-		propv.klim=klimx;
-		propv.lvar=5;
+		propv->klim=klimx;
+		propv->lvar=5;
 	}
 
 	lrprop2(0.0,prop,propa);
