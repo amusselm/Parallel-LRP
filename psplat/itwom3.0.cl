@@ -704,12 +704,12 @@ double adiff2(double d, struct prop_type *prop, struct propa_type *propa,
             if(prop->hht < 3400)
             {
                sdl=18.0;
-               sdl=pow(10,(-sdl/20));
+               sdl=pow(10.0,(-sdl/20));
                /* ke phase difference with respect to direct t-r line */
                kedr=0.159155*prop->wn*fabs(dto+dro-dtr);
                arp=fabs(kedr-((int)(kedr)));
                kem=aknfe(vv);
-               kem= pow(10,(-kem/20));
+               kem= pow(10.0,(-kem/20));
                /* scatter path phase with respect to direct t-r line */
                sdr=0.5+0.159155*prop->wn*fabs(dtof+drof-dtr);
                srp=fabs(sdr-((int)(sdr)));
