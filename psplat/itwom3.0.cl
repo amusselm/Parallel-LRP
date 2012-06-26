@@ -49,12 +49,43 @@ typedef struct {
 	double tcimag;
 } tcomplex;
 
-tcomplex add_complex(tcomplex a, tcomplex b){
+inline tcomplex add_complex(tcomplex a, tcomplex b){
    tcomplex tmp;
    tmp.tcreal = a.tcreal + b.tcreal;
    tmp.tcimag = a.tcimag + b.tcimag;
    return tmp;
 }
+
+inline double tcomplex_abs(const tcomplex num){
+   return sqrt((num.tcreal*num.tcreal)*(num.tcimag*num.tcimag));
+}
+
+
+/* code borrowed/adapted from 
+ * https://github.com/inducer/pyopencl/blob/master/src/cl/pyopencl-complex.h
+ */
+tcomplex tcomplex_sqrt(tcomplex a) 
+{ 
+   double re = a.tcreal; 
+   double im = a.tcreal; 
+   double mag = tcomplex_abs(a); 
+   tcomplex result; 
+
+   if (mag == 0.f) { 
+      result.tcreal = result.tcimag = 0.f; 
+   } else if (re > 0.f) { 
+      result.tcreal = sqrt(0.5f * (mag + re)); 
+      result.tcimag = im/result.tcreal/2.f; 
+   } else { 
+      result.tcimag = sqrt(0.5f * (mag - re)); 
+      if (im < 0.f) {
+         result.tcimag = - result.tcimag; 
+      }
+      result.tcreal = im/result.tcimag/2.f; 
+   } 
+   return result; 
+} 
+
 
 
 struct prop_type
@@ -133,9 +164,6 @@ struct ascat_coeff
    double h0s;
 };
 
-double tcomplex_abs(const tcomplex num){
-   return sqrt((num.tcreal*num.tcreal)*(num.tcimag*num.tcimag));
-}
 
 
 double FORTRAN_DIM(const double x, const double y)
@@ -913,8 +941,10 @@ void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sg
    tmp_zq.tcreal=eps;
    tmp_zq.tcimag=376.62*sgm/prop->wn;
    zq = tmp_zq;
+
+   tmp_zq.tcreal = tmp_zq.tcreal-1.0;
    //What does this mean if zq is a complex number?
-	prop_zgnd=sqrt(zq-1.0);
+	prop_zgnd=tcomplex_sqrt(tmp_zq);
 
 	if (ipol!=0.0)
 		prop_zgnd=prop_zgnd/zq;
@@ -927,11 +957,15 @@ void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sg
 //also must be converted, TODO
 double alos2(double d, struct prop_type *prop, const struct propa_type propa)
 {
-	complex<double> prop_zgnd(prop->zgndreal,prop->zgndimag);
-	complex<double> r;
+   tcomplex prop_zgnd;
+	//complex<double> prop_zgnd(prop->zgndreal,prop->zgndimag);
+	//complex<double> r;
+   tcomplex r;
 	double cd, cr, dr, hr, hrg, ht, htg, hrp, re, s, sps, q, pd, drh;
 	int rp;
 	double alosv;
+   prop_zgnd.tcreal=prop->zgndreal;
+   prop_zgnd.tcimag=prop->zgndimag;
 	
 	cd=0.0;
 	cr=0.0;
@@ -1004,7 +1038,13 @@ double alos2(double d, struct prop_type *prop, const struct propa_type propa)
 			}
 		/* no longer valid complex conjugate removed 
 		   by removing minus sign from in front of sin function */
-		re=abq_alos(complex<double>(cos(q),sin(q))+r);
+		//re=abq_alos(complex<double>(cos(q),sin(q))+r);
+      tcomplex tempcomplex;
+      tempcomplex.tcreal=cos(q)+r;
+      tempcomplex.tcimag=sin(q);
+		re=abq_alos(tempcomplex);
+
+
 		alosv=-10*log10(re);
 		prop->tgh=prop->hg[0];  /*tx above gnd hgt set to antenna height AGL */	
 		prop->tsgh=prop->rch[0]-prop->hg[0]; /* tsgh set to tx site gl AMSL */		
@@ -1216,13 +1256,14 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 			}
 			else
 			{			
-            //This is suspicious, this previously used an int constructor
-			 	if (int(prop->dist-prop->dl[0])==0)  /* if at 1st horiz */
+            //Okay(ish). I'm still wondering why this is cast
+            //See http://stackoverflow.com/questions/1652396/what-is-the-difference-between-typevalue-and-typevalue
+			 	if ((int)prop->dist-prop->dl[0]==0)  /* if at 1st horiz */
 				{
                prop->aref=5.8+alos2(pd1,prop,*propa);
 				}
-            //This is suspicious, this previously used an int constructor
-				else if (int(prop->dist-prop->dl[0])>0.0)    /* if past 1st horiz */
+            //Okay(ish). I'm still wondering why this is cast
+				else if ((int)prop->dist-prop->dl[0]>0.0)    /* if past 1st horiz */
 				{
                initadiff2(prop,propa,&adiff2_coeff);
                prop->aref=adiff2(pd1,prop,propa,adiff2_coeff);
@@ -1243,7 +1284,7 @@ void lrprop2(double d, struct prop_type *prop, struct propa_type *propa)
 		{
 			if(!wscat)
 			{ 
-				q=ascat_init(*prop,*propa,&ascat_var);
+				ascat_init(*prop,*propa,&ascat_var);
 				d5=propa->dla+200e3;
 				d6=d5+200e3;
 				a6=ascat(d6,*prop,*propa,&ascat_var);
@@ -1604,7 +1645,9 @@ void hzns2(double pfl[], struct prop_type *prop, struct propa_type *propa)
 	{
 		dshh=prop->dist-prop->dl[0]-prop->dl[1];
 
-		if(int(dshh)==0) /* one obstacle */
+      //Okay(ish). I'm still wondering why this is cast
+      //See http://stackoverflow.com/questions/1652396/what-is-the-difference-between-typevalue-and-typevalue
+		if((int)dshh==0) /* one obstacle */
 		{
 			dr=prop->dl[1]/(1+zb/prop->hht);		
 		}
@@ -1630,8 +1673,10 @@ void z1sq2(double z[], const double x1, const double x2, double *z0, double *zn)
 	int n, ja, jb;
 
 	xn=z[0];
-	xa=int(FORTRAN_DIM(x1/z[1],0.0));
-	xb=xn-int(FORTRAN_DIM(xn,x2/z[1]));
+   //Okay(ish). I'm still wondering why this is cast
+   //See http://stackoverflow.com/questions/1652396/what-is-the-difference-between-typevalue-and-typevalue
+	xa=(int)FORTRAN_DIM(x1/z[1],0.0);
+	xb=xn-(int)FORTRAN_DIM(xn,x2/z[1]);
 		
 	if (xb<=xa)
 	{
@@ -1641,7 +1686,7 @@ void z1sq2(double z[], const double x1, const double x2, double *z0, double *zn)
 
 	ja=(int)xa;
 	jb=(int)xb;
-	xa=(2*int((xb-xa)/2))-1;
+	xa=(2*(int)(xb-xa)/2)-1;
 	x=-0.5*(xa+1);
 	xb+=x;
 	ja=jb-1-(int)xa;
@@ -1761,8 +1806,8 @@ double d1thx2(double pfl[], const double x1, const double x2,
 	s[0]=sn;
 	s[1]=1.0;
 	xb=(xb-xa)/sn;
-	k=(int(xa+1.0));
-	xc=xa-(double(k));
+	k=(int)xa+1.0;
+	xc=xa-(double)k;
 	
 	for (j=0; j<n; j++)
 	{
@@ -1909,7 +1954,7 @@ double deg2rad(double d)
 //***************************************************************************************
 //* Point-To-Point Mode Calculations 
 //***************************************************************************************
-void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode, int &errnum)
+void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double *dbloss, char *strmode, int *errnum)
 
 /******************************************************************************
 
@@ -2048,8 +2093,8 @@ void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielec
 	}
    */
 
-	dbloss=avar(zr,0.0,zc,prop,propv)+fs;
-	errnum=prop.kwx;
+	*dbloss=avar(zr,0.0,zc,&prop,&propv)+fs;
+	*errnum=prop.kwx;
 }
 
 
