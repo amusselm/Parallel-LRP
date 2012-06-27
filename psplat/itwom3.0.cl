@@ -41,18 +41,63 @@
 #define THIRD (1.0/3.0)
 
 
-/** This isn't used anywhere. Why is it here? Can this be used in place of
-    std's complex type?
-*/
 typedef struct {	
    double tcreal;
 	double tcimag;
 } tcomplex;
 
-inline tcomplex add_complex(tcomplex a, tcomplex b){
+inline tcomplex tcomplex_add(tcomplex a, tcomplex b){
    tcomplex tmp;
    tmp.tcreal = a.tcreal + b.tcreal;
    tmp.tcimag = a.tcimag + b.tcimag;
+   return tmp;
+}
+
+inline tcomplex tcomplex_sub(tcomplex a, tcomplex b){
+   tcomplex tmp;
+   tmp.tcreal = a.tcreal - b.tcreal;
+   tmp.tcimag = a.tcimag - b.tcimag;
+   return tmp;
+}
+
+inline tcomplex tcomplex_add_d(double a, tcomplex b){
+   tcomplex tmp;
+   tmp.tcreal = a + b.tcreal;
+   tmp.tcimag = b.tcimag;
+   return tmp;
+}
+
+inline tcomplex tcomplex_sub_d(double a, tcomplex b){
+   tcomplex tmp;
+   tmp.tcreal = a - b.tcreal;
+   tmp.tcimag = b.tcimag;
+   return tmp;
+}
+
+inline tcomplex tcomplex_mult_d(double a, tcomplex b){
+   tcomplex tmp;
+   tmp.tcreal = a*b.tcreal;
+   tmp.tcimag = a*b.tcimag;
+   return tmp;
+}
+
+/**
+ * Devides x by y
+ * x/y
+ * Thanks to:
+ * http://www.khanacademy.org/math/algebra/complex-numbers/v/complex-numbers--part-2 
+ * for the math.
+ */
+inline tcomplex tcomplex_div(tcomplex x, tcomplex y){
+   tcomplex tmp;
+   double a = x.tcreal;
+   double b = x.tcimag;
+   double c = y.tcreal;
+   double d = y.tcimag;
+   
+   tmp.tcreal = ((a*c)+(b*d))/(c*c+d*d); 
+   tmp.tcimag = ((b*c)-(a*d))/(c*c+d*d);
+
    return tmp;
 }
 
@@ -753,14 +798,14 @@ double adiff2(double d, struct prop_type *prop, struct propa_type *propa,
                   pd=6.283185307-pd;
                   pd_complex.tcreal=kem*-cos(pd);
                   pd_complex.tcimag=kem*-sin(pd);
-                  abq_complex = add_complex(sdl_complex,pd_complex); 
+                  abq_complex = tcomplex_add(sdl_complex,pd_complex); 
                   csd=abq_alos(abq_complex); 
                } 
                else						
                {
                   pd_complex.tcreal=kem*cos(pd);
                   pd_complex.tcimag=kem*sin(pd);
-                  abq_complex = add_complex(sdl_complex,pd_complex); 
+                  abq_complex = tcomplex_add(sdl_complex,pd_complex); 
                   csd=abq_alos(abq_complex); 
                }
                /*csd=max(csd,0.0009); limits maximum loss value to 30.45 db */
@@ -947,7 +992,7 @@ void qlrps(double fmhz, double zsys, double en0, int ipol, double eps, double sg
 	prop_zgnd=tcomplex_sqrt(tmp_zq);
 
 	if (ipol!=0.0)
-		prop_zgnd=prop_zgnd/zq;
+		prop_zgnd=tcomplex_div(prop_zgnd,zq);
 	
 	prop->zgndreal=prop_zgnd.tcreal;
 	prop->zgndimag=prop_zgnd.tcimag;
@@ -1011,13 +1056,16 @@ double alos2(double d, struct prop_type *prop, const struct propa_type propa)
 	
 		s=0.78*q*exp(-pow(q/16.0,0.25));
 		q=exp(-min(10.0,prop->wn*s*sps));
-		r=q*(sps-prop_zgnd)/(sps+prop_zgnd);
+      //What I wouldn't give for some operator overloading...
+		r=tcomplex_mult_d(q,tcomplex_div(
+            (tcomplex_sub_d(sps,prop_zgnd)),
+            (tcomplex_add_d(sps,prop_zgnd))));
 		q=abq_alos(r);
 		q=min(q,1.0);		
 	
 		if (q<0.25 || q<sps)
 		{
-			r=r*sqrt(sps/q);
+			r=tcomplex_mult_d(sqrt(sps/q),r);
 		}	
 		q=prop->wn*prop->he[0]*prop->he[1]/(pd*3.1415926535897);		
 			
@@ -1040,8 +1088,9 @@ double alos2(double d, struct prop_type *prop, const struct propa_type propa)
 		   by removing minus sign from in front of sin function */
 		//re=abq_alos(complex<double>(cos(q),sin(q))+r);
       tcomplex tempcomplex;
-      tempcomplex.tcreal=cos(q)+r;
+      tempcomplex.tcreal=cos(q);
       tempcomplex.tcimag=sin(q);
+      tempcomplex = tcomplex_add(tempcomplex,r);
 		re=abq_alos(tempcomplex);
 
 
