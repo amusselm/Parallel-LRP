@@ -1851,7 +1851,7 @@ double d1thx2(double pfl[], const double x1, const double x2,
 	n=10*ka-5;
 	kb=n-ka+1;
 	sn=n-1;
-	assert((s=new double[n+2])!=0);
+	//assert((s=new double[n+2])!=0);
 	s[0]=sn;
 	s[1]=1.0;
 	xb=(xb-xa)/sn;
@@ -1881,7 +1881,7 @@ double d1thx2(double pfl[], const double x1, const double x2,
 
 	d1thx2v=qtile(n-1,s+2,ka-1)-qtile(n-1,s+2,kb-1);
 	d1thx2v/=1.0-0.8*exp(-(x2-x1)/50.0e3);
-	delete[] s;
+	//delete[] s;
 	return d1thx2v;
 }
 
