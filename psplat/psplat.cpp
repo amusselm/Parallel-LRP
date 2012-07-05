@@ -2,7 +2,7 @@
 *	   SPLAT!: An RF Signal Path Loss And Terrain Analysis Tool          *
 ******************************************************************************
 *	     Project started in 1997 by John A. Magliacane, KD2BD 	     *
-*			  Last update: 01-Feb-2011			     *
+*             Parallel OpenCL modifications by Andrew J. Musselman, KI6UOC   *
 ******************************************************************************
 *         Please consult the documentation for a complete list of	     *
 *	     individuals who have contributed to this project. 		     *
@@ -131,19 +131,21 @@ int	min_north=90, max_north=-90, min_west=360, max_west=-1, ippd, mpi,
 
 unsigned char got_elevation_pattern, got_azimuth_pattern, metric=0, dbm=0, smooth_contours=0;
 
-struct site {	double lat;
-		double lon;
-		float alt;
-		char name[50];
-		char filename[255];
-	    } 	site;
+struct site {	
+   double lat;
+   double lon;
+   float alt;
+   char name[50];
+   char filename[255];
+} site;
 
-struct path {	double lat[ARRAYSIZE];
-		double lon[ARRAYSIZE];
-		double elevation[ARRAYSIZE];
-		double distance[ARRAYSIZE];
-		int length;
-	    }	path;
+struct path {	
+   double lat[ARRAYSIZE];
+   double lon[ARRAYSIZE];
+   double elevation[ARRAYSIZE];
+   double distance[ARRAYSIZE];
+   int length;
+}	path;
 
 struct dem {	int min_north;
 		int max_north;
