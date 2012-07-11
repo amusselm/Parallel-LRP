@@ -38,6 +38,8 @@
 *                                                                               *
 ********************************************************************************/
 
+#include "psplatcombinedsize.h"
+
 #define THIRD (1.0/3.0)
 
 
@@ -1835,7 +1837,8 @@ double d1thx2(double pfl[], const double x1, const double x2,
 {
 	int np, ka, kb, n, k, kmx, j;
 	double d1thx2v, sn, xa, xb, xc;
-	double *s;
+   //The maximum of this is based on the 
+	double s[ARRAYSIZE];
 
 	np=(int)pfl[0];
 	xa=x1/pfl[1];
@@ -1846,6 +1849,9 @@ double d1thx2(double pfl[], const double x1, const double x2,
 		return d1thx2v;
 
 	ka=(int)(0.1*(xb-xa+8.0));
+   //pfl[1] represents the length of the path in meters. 
+   //Yes, that's utterly stupid and broken and should be refactored later
+   //I don't know where 83350 is coming from
 	kmx=max(25,(int)(83350/(pfl[1])));
 	ka=min(max(4,ka),kmx);
 	n=10*ka-5;
