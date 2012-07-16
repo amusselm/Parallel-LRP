@@ -143,4 +143,14 @@ struct LR {
    float antenna_pattern[361][1001];
 };
 
+
+typedef struct path {	
+   double lat[ARRAYSIZE];
+   double lon[ARRAYSIZE];
+   double elevation[ARRAYSIZE];
+   double distance[ARRAYSIZE];
+   int length;
+} path_t;
+
+
 #endif
