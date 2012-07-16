@@ -64,16 +64,10 @@ int	min_north=90, max_north=-90, min_west=360, max_west=-1, ippd, mpi,
 
 unsigned char got_elevation_pattern, got_azimuth_pattern, metric=0, dbm=0, smooth_contours=0;
 
-struct path {	
-   double lat[ARRAYSIZE];
-   double lon[ARRAYSIZE];
-   double elevation[ARRAYSIZE];
-   double distance[ARRAYSIZE];
-   int length;
-}	path;
 
 //This global vairable represents the terrain elevation data
-struct dem[MAXPAGES];
+struct dem dem[MAXPAGES];
+struct path path;
 
 struct LR {	double eps_dielect; 
 		double sgm_conductivity; 

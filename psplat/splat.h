@@ -4,8 +4,104 @@
  * Modified by hand as part of the OpenCL reconfigureing...
  * Andrew J. Musselman, KI6UOC
 */
+#ifndef splat_h
+#define splat_h
 #define HD_MODE 1
 #define MAXPAGES 4
+
+/**
+ * Bunch of preproscessor definations. These exist so that both host and device
+ * code know how big the statically allocated arrays are
+ */
+#if HD_MODE==0
+	#if MAXPAGES==4
+	#define ARRAYSIZE 4950
+	#endif
+
+	#if MAXPAGES==9
+	#define ARRAYSIZE 10870
+	#endif
+
+	#if MAXPAGES==16
+	#define ARRAYSIZE 19240
+	#endif
+
+	#if MAXPAGES==25
+	#define ARRAYSIZE 30025
+	#endif
+
+	#if MAXPAGES==36
+	#define ARRAYSIZE 43217
+	#endif
+
+	#if MAXPAGES==49
+	#define ARRAYSIZE 58813
+	#endif
+
+	#if MAXPAGES==64
+	#define ARRAYSIZE 76810
+	#endif
+
+	#define IPPD 1200
+#endif
+
+#if HD_MODE==1
+	#if MAXPAGES==1
+	#define ARRAYSIZE 5092 
+	#endif
+
+	#if MAXPAGES==4
+	#define ARRAYSIZE 14844 
+	#endif
+
+	#if MAXPAGES==9
+	#define ARRAYSIZE 32600
+	#endif
+
+	#if MAXPAGES==16
+	#define ARRAYSIZE 57713
+	#endif
+
+	#if MAXPAGES==25
+	#define ARRAYSIZE 90072
+	#endif
+
+	#if MAXPAGES==36
+	#define ARRAYSIZE 129650
+	#endif
+
+	#if MAXPAGES==49 
+	#define ARRAYSIZE 176437
+	#endif
+
+	#if MAXPAGES==64
+	#define ARRAYSIZE 230430
+	#endif
+
+	#define IPPD 3600
+#endif
+
+#include "psplatcombinedsize.h"
+
+#ifndef PI
+#define PI 3.141592653589793
+#endif
+
+#ifndef TWOPI
+#define TWOPI 6.283185307179586
+#endif
+
+#ifndef HALFPI
+#define HALFPI 1.570796326794896
+#endif
+
+#define DEG2RAD 1.74532925199e-02
+#define EARTHRADIUS 20902230.97
+#define	METERS_PER_MILE 1609.344
+#define METERS_PER_FOOT 0.3048
+#define	KM_PER_MILE 1.609344
+#define FOUR_THIRDS 1.3333333333333
+
 
 struct site {	
    double lat;
@@ -29,7 +125,7 @@ struct dem {
    short data[IPPD][IPPD];
    unsigned char mask[IPPD][IPPD];
    unsigned char signal[IPPD][IPPD];
-}	
+};	
 
 /**
  * Stores the Longely-Rice paramaters
@@ -45,4 +141,6 @@ struct LR {
    int radio_climate;  
    int pol;
    float antenna_pattern[361][1001];
-}
+};
+
+#endif
