@@ -512,6 +512,7 @@ void ReadPath(struct site source, struct site destination)
 	lat2=destination.lat*DEG2RAD;
 	lon2=destination.lon*DEG2RAD;
 
+   //This is SO broken
 	if (ppd==1200.0)
 		samples_per_radian=68755.0;
 
