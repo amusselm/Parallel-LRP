@@ -53,6 +53,11 @@
 #define	KM_PER_MILE 1.609344
 #define FOUR_THIRDS 1.3333333333333
 
+
+/* OpenCL Array Sizes */
+#define MAX_PLATFORM 64
+#define MAX_DEVICE 1024 
+
 char 	string[255], sdf_path[255], opened=0, gpsav=0, splat_name[10],
 	splat_version[6], dashes[80], olditm;
 
