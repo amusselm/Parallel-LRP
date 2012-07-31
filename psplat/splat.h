@@ -6,6 +6,25 @@
 */
 #ifndef splat_h
 #define splat_h
+
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <bzlib.h>
+#include <unistd.h>
+#include <time.h>
+
+#ifdef MAC
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+
+#include "fontdata.h"
+#include "clutil.h"
+
 #define HD_MODE 1
 #define MAXPAGES 4
 

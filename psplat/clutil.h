@@ -17,5 +17,12 @@
 #include <CL/cl.h>
 #endif
 
-int getDevices(cl_device_id devices[][], size_t maxPlatform, size_t maxDevice);
+#define MAX_PLATFORM 64
+#define MAX_DEVICE 1024 
+#define INFO_BUFFER_SIZE 2048
+#define ARRAY_SIZE 64
+
+int getDevices(cl_device_id devices[MAX_PLATFORM][MAX_DEVICE], size_t maxPlatform, 
+   size_t maxDevice, cl_uint numDev[MAX_PLATFORM], cl_uint *numPlatforms);
+cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename);
 #endif

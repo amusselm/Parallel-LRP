@@ -1,10 +1,9 @@
 #Modified from http://www.drdobbs.com/parallel/231002854
 PSPLAT=psplat
-PSPLATHD=psplat-hd
 
 CC=g++
 
-CFLAGS= -Wall -DUNIX -g -DDEBUG
+CFLAGS=  -DUNIX -g -DDEBUG
 
 # Check for 32-bit vs 64-bit
 PROC_TYPE = $(strip $(shell uname -m | grep 64))
@@ -26,7 +25,7 @@ ifneq ($(DARWIN),)
 else
 
 # Linux OS
-LIBS=-lOpenCL
+LIBS=-lOpenCL -ffast-math -lm -lbz2 
 ifeq ($(PROC_TYPE),)
 	CFLAGS+=-m32
 else
@@ -50,16 +49,13 @@ endif
 
 endif
 endif
-ALL: $(PSPLAT) $(PSPLATHD)
+ALL: $(PSPLAT) 
 
-$(PSPLAT): $(PSPLAT).c
-	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
-
-$(PSPLAT-HD): $(PSPLAT).c
+$(PSPLAT): psplat.cpp splat.h psplatcombinedsize.h clutil.h clutil.cpp 
 	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
 
 
 .PHONY: clean all
 
 clean:
-	rm $(PROJ)
+	rm $(PSPLAT)

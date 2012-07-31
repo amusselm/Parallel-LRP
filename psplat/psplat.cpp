@@ -20,15 +20,8 @@
 *									     *
 \****************************************************************************/
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <bzlib.h>
-#include <unistd.h>
-#include "fontdata.h"
 #include "splat.h"
+
 
 #define GAMMA 2.5
 #define BZBUFFER 65536
@@ -74,17 +67,7 @@ unsigned char got_elevation_pattern, got_azimuth_pattern, metric=0, dbm=0, smoot
 struct dem dem[MAXPAGES];
 struct path path;
 
-struct LR {	double eps_dielect; 
-		double sgm_conductivity; 
-		double eno_ns_surfref;
-		double frq_mhz; 
-		double conf; 
-		double rel;
-		double erp;
-		int radio_climate;  
-		int pol;
-		float antenna_pattern[361][1001];
-          }	LR;
+struct LR LR;
 
 struct region { unsigned char color[32][3];
 		int level[32];
@@ -93,17 +76,21 @@ struct region { unsigned char color[32][3];
 
 double elev[ARRAYSIZE+10];
 
+/*
 void point_to_point(double elev[], double tht_m, double rht_m,
 	  double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
 	  double frq_mhz, int radio_climate, int pol, double conf,
 	  double rel, double &dbloss, char *strmode, int &errnum);
+*/
 
+/*
 void point_to_point_ITM(double elev[], double tht_m, double rht_m,
 	  double eps_dielect, double sgm_conductivity, double eno_ns_surfref,
 	  double frq_mhz, int radio_climate, int pol, double conf,
 	  double rel, double &dbloss, char *strmode, int &errnum);
+*/
 
-double ITWOMVersion();
+//double ITWOMVersion();
 
 int interpolate(int y0, int y1, int x0, int x1, int n)
 {
@@ -2809,11 +2796,12 @@ void PlotLRPath(struct site source, struct site destination, unsigned char mask_
 			elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
 
 			if (olditm)
-				point_to_point_ITM(elev,source.alt*METERS_PER_FOOT, 
+				/* point_to_point_ITM(elev,source.alt*METERS_PER_FOOT, 
   		 		destination.alt*METERS_PER_FOOT, LR.eps_dielect,
 				LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
+            */
 
 			else
 				point_to_point(elev,source.alt*METERS_PER_FOOT, 
@@ -3129,11 +3117,35 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 // This function should be the "kernel"
 //TODO 
 	int y, z, count;
+   cl_int err = 0;
 	struct site edge;
 	double lat, lon, minwest, maxnorth, th;
 	unsigned char x, symbol[4];
 	static unsigned char mask_value=1;
 	FILE *fd=NULL;
+   cl_platform_id platforms[MAX_PLATFORM];
+   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE]; 
+   cl_uint numDev[MAX_PLATFORM];
+   cl_uint numPlatform;
+   cl_context context;
+   cl_program program[MAX_PLATFORM];
+
+   // Get all OpenCL devices
+   //(yes, that's a bad idea for a function)
+   // Edits devices, numDev and NumPlatform
+   err = getDevices(devices,MAX_PLATFORM,MAX_DEVICE,numDev,&numPlatform);
+   if(err != 0){
+      fprintf(stderr,"Error grabbing devices! Exiting!\n");
+   }
+   //We'll just grab a certain device for now
+   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
+   
+   //Hardcoded filename - FIXME
+   program[0] = build_program(context, devices[0][0], "itm_support.cl");
+   if(err != 0){
+      fprintf(stderr,"Error Compiling program! Exiting!\n");
+   }
+
 
 	minwest=dpp+(double)min_west;
 	maxnorth=(double)max_north-dpp;
@@ -3171,6 +3183,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	if (plo_filename[0]!=0)
 		fd=fopen(plo_filename,"wb");
 
+   //I'm going to have to move this functionality elsewhere...
 	if (fd!=NULL)
 	{
 		/* Write header information to output file */
@@ -6730,7 +6743,7 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 		if (olditm)
 			fprintf(fd2,"Longley-Rice Parameters Used In This Analysis:\n\n");
 		else
-			fprintf(fd2,"ITWOM Version %.1f Parameters Used In This Analysis:\n\n",ITWOMVersion());
+			//fprintf(fd2,"ITWOM Version %.1f Parameters Used In This Analysis:\n\n",ITWOMVersion());
 
 		fprintf(fd2,"Earth's Dielectric Constant: %.3lf\n",LR.eps_dielect);
 		fprintf(fd2,"Earth's Conductivity: %.3lf Siemens/meter\n",LR.sgm_conductivity);
@@ -6907,11 +6920,13 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 			elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
 
 			if (olditm)
+            /*
 				point_to_point_ITM(elev,source.alt*METERS_PER_FOOT, 
   		 		destination.alt*METERS_PER_FOOT, LR.eps_dielect,
 				LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
+            */
 			else
 				point_to_point(elev,source.alt*METERS_PER_FOOT, 
   		 		destination.alt*METERS_PER_FOOT, LR.eps_dielect,
@@ -6970,7 +6985,8 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 		if (olditm)
 			fprintf(fd2,"Longley-Rice path loss: %.2f dB\n",loss);
 		else
-			fprintf(fd2,"ITWOM Version %.1f path loss: %.2f dB\n",ITWOMVersion(),loss);
+			//fprintf(fd2,"ITWOM Version %.1f path loss: %.2f dB\n",ITWOMVersion(),loss);
+			fprintf(fd2," path loss: %.2f dB\n",loss);
 
 		if (free_space_loss!=0.0)
 			fprintf(fd2,"Attenuation due to terrain shielding: %.2f dB\n",loss-free_space_loss);
@@ -7144,8 +7160,9 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 		{
 			if (olditm)
 				fprintf(fd,"set ylabel \"Longley-Rice Path Loss (dB)");
-			else
-				fprintf(fd,"set ylabel \"ITWOM Version %.1f Path Loss (dB)",ITWOMVersion());
+			else{
+				//fprintf(fd,"set ylabel \"ITWOM Version %.1f Path Loss (dB)",ITWOMVersion());
+         }
 		}
 
 		fprintf(fd,"\"\nset output \"%s.%s\"\n",basename,ext);
@@ -7744,7 +7761,7 @@ int main(int argc, char *argv[])
 		else
 			fprintf(stdout,"degrees");
 
-		fprintf(stdout," of terrain, and computes signal levels using ITWOM Version %.1f.\n\n",ITWOMVersion());
+		//fprintf(stdout," of terrain, and computes signal levels using ITWOM Version %.1f.\n\n",ITWOMVersion());
 		fflush(stdout);
 
 		return 1;
