@@ -1837,8 +1837,9 @@ double d1thx2(double pfl[], const double x1, const double x2,
 {
 	int np, ka, kb, n, k, kmx, j;
 	double d1thx2v, sn, xa, xb, xc;
-   //The maximum of this is based on the 
-	double s[ARRAYSIZE];
+   //This may potentially break. 
+   //I don't know why S was of that length to begin with
+	__private double s[ARRAYSIZE];
 
 	np=(int)pfl[0];
 	xa=x1/pfl[1];
