@@ -2795,20 +2795,21 @@ void PlotLRPath(struct site source, struct site destination, unsigned char mask_
 
 			elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
 
-			if (olditm)
+			if (olditm){
 				/* point_to_point_ITM(elev,source.alt*METERS_PER_FOOT, 
   		 		destination.alt*METERS_PER_FOOT, LR.eps_dielect,
 				LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
             */
-
-			else
+         } 
+         else{
 				point_to_point(elev,source.alt*METERS_PER_FOOT, 
   	 			destination.alt*METERS_PER_FOOT, LR.eps_dielect,
 				LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
+         }
 
 			temp.lat=path.lat[y];
 			temp.lon=path.lon[y];
@@ -6919,7 +6920,7 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 
 			elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
 
-			if (olditm)
+			if (olditm){
             /*
 				point_to_point_ITM(elev,source.alt*METERS_PER_FOOT, 
   		 		destination.alt*METERS_PER_FOOT, LR.eps_dielect,
@@ -6927,12 +6928,14 @@ void PathReport(struct site source, struct site destination, char *name, char gr
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
             */
-			else
+         }
+			else{
 				point_to_point(elev,source.alt*METERS_PER_FOOT, 
   		 		destination.alt*METERS_PER_FOOT, LR.eps_dielect,
 				LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
+         }
 
 			if (block)
 				elevation=((acos(cos_test_angle))/DEG2RAD)-90.0;

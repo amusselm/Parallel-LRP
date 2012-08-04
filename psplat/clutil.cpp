@@ -51,7 +51,7 @@ int getDevices(cl_device_id devices[MAX_PLATFORM][MAX_DEVICE], size_t maxPlatfor
          return 1;
       }
       if(numDev[ii] >= maxDevice){
-         fprintf(stderr,"Truncating number of devices to %ld for platform %ld \n",
+         fprintf(stderr,"Truncating number of devices to %ld for platform %d \n",
             maxPlatform,ii);
          numDev[ii] = maxDevice;
       }
