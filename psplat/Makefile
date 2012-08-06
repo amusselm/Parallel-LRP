@@ -51,11 +51,21 @@ endif
 endif
 ALL: $(PSPLAT) 
 
-$(PSPLAT): psplat.cpp splat.h psplatcombinedsize.h clutil.h clutil.cpp 
+$(PSPLAT): $(PSPLAT).o clutil.o itwomclwrapper.o 
 	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
+
+$(PSPLAT).o: psplat.cpp 
+	$(CC) $(CFLAGS) -c -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
+
+clutil.o: clutil.cpp
+	$(CC) $(CFLAGS) -c -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
+
+itwomclwrapper.o:itwomclwrapper.cpp 
+	$(CC) $(CFLAGS) -c -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
+   
 
 
 .PHONY: clean all
 
 clean:
-	rm $(PSPLAT)
+	rm $(PSPLAT) $(PSPLAT).o itwomclwrapper.o clutil.o

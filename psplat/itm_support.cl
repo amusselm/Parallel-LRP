@@ -53,7 +53,6 @@ double arccos(double x, double y)
  *  If lon1 is west of lon2, the result is positive.
  *  If lon1 is east of lon2, the result is negative. 
 */
-
 double LonDiff(double lon1, double lon2)
 {
 
@@ -72,7 +71,8 @@ double LonDiff(double lon1, double lon2)
 
 /**
  * This function returns the great circle distance
- *	in miles between any two site locations. */
+ *	in miles between any two site locations. 
+ */
 double Distance(struct site site1, struct site site2)
 {
 
@@ -444,7 +444,6 @@ int PutMask(double lat, double lon, int value, __global struct dem *dem, int mpi
 		return -1;
 }
 
-
 void PlotLRPath(struct site source, struct site destination, 
    unsigned char mask_value, struct LR LR, __global struct dem *dem, 
    const int mpi, 
@@ -690,4 +689,98 @@ __kernel void PlotLRPath_cl(
    *dbm);
 }
 
+/* This function performs a 360 degree sweep around the
+ *  transmitter site (source location), and plots the
+ *  Irregular Terrain Model attenuation on the SPLAT!
+ *  generated topographic map based on a receiver located
+ *  at the specified altitude (in feet AGL).  Results
+ *  are stored in memory, and written out in the form
+ *  of a topographic map when the WritePPMLR() or
+ *  WritePPMSS() functions are later invoked. */
+__kernel void PlotAllLRPath_cl(
+   __local struct site *source,
+   __local double *max_north,
+   __local double *min_north,
+   __local double *max_west,
+   __local double *min_west,
+   __local unsigned char *mask_value,
+   __global struct LR *LR,
+   __global struct dem *dem,
+   __constant const double *altitude,
+   __constant const int *mpi,
+   __constant const double *ppd,
+   __constant  const double *clutter,
+   __constant const double *max_range,
+   __local unsigned char *got_elevation_pattern,
+   __local unsigned char *dbm
+   ){
+	struct site edge;
+	int y, count;
+	double lat, lon, minwest, maxnorth;
+	double dpp=1.0/(*ppd);/* degrees per pixel */
+
+	minwest=dpp+(double)*min_west;
+	maxnorth=(double)*max_north-dpp;
+
+   for (lon=minwest, y=0; (LonDiff(lon,(double)*max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
+	{
+		if (lon>=360.0)
+			lon-=360.0;
+
+		edge.lat=*max_north;
+		edge.lon=lon;
+		edge.alt=*altitude;
+
+		//PlotLRPath(source,edge,mask_value,fd);
+      PlotLRPath(*source,edge,
+         *mask_value,*LR,dem,*mpi,*ppd,*clutter,*max_range,* got_elevation_pattern,
+         *dbm);
+	}
+
+
+	for (lat=maxnorth, y=0; lat>=(double)*min_north; y++, lat=maxnorth-(dpp*(double)y))
+	{
+		edge.lat=lat;
+		edge.lon=*min_west;
+		edge.alt=*altitude;
+
+		//PlotLRPath(source,edge,mask_value,fd);
+      PlotLRPath(*source,edge,
+         *mask_value,*LR,dem,*mpi,*ppd,*clutter,*max_range,* got_elevation_pattern,
+         *dbm);
+		count++;
+	}
+
+
+	for (lon=minwest, y=0; (LonDiff(lon,(double)*max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
+	{
+		if (lon>=360.0)
+			lon-=360.0;
+
+		edge.lat=*min_north;
+		edge.lon=lon;
+		edge.alt=*altitude;
+
+		//PlotLRPath(source,edge,mask_value,fd);
+      PlotLRPath(*source,edge,
+         *mask_value,*LR,dem,*mpi,*ppd,*clutter,*max_range,* got_elevation_pattern,
+         *dbm);
+	}
+
+
+	for (lat=(double)*min_north, y=0; lat<(double)*max_north; y++, lat=(double)*min_north+(dpp*(double)y))
+	{
+		edge.lat=lat;
+		edge.lon=*max_west;
+		edge.alt=*altitude;
+
+		//PlotLRPath(source,edge,mask_value,fd);
+      PlotLRPath(*source,edge,
+         *mask_value,*LR,dem,*mpi,*ppd,*clutter,*max_range,* got_elevation_pattern,
+         *dbm);
+		count++;
+	}
+	if (*mask_value<30)
+		*mask_value++;
+}
 

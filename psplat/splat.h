@@ -7,25 +7,9 @@
 #ifndef splat_h
 #define splat_h
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <bzlib.h>
-#include <unistd.h>
-#include <time.h>
-
-#ifdef MAC
-#include <OpenCL/cl.h>
-#else
-#include <CL/cl.h>
-#endif
-
-#include "fontdata.h"
-#include "clutil.h"
-
+/* We always use HD mode for testing */
 #define HD_MODE 1
+/* Smaller number of pages for testing */
 #define MAXPAGES 4
 
 /**
@@ -128,7 +112,7 @@ struct site {
    float alt;
    char name[50];
    char filename[255];
-} site;
+};
 
 /**
  * Represents the terrain data, and keeps track of which points have already been

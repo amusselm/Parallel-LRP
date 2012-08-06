@@ -21,6 +21,8 @@
 \****************************************************************************/
 
 #include "splat.h"
+#include "psplat.h"
+#include "itwomclwrapper.h"
 
 
 #define GAMMA 2.5
@@ -66,6 +68,7 @@ unsigned char got_elevation_pattern, got_azimuth_pattern, metric=0, dbm=0, smoot
 //This global vairable represents the terrain elevation data
 struct dem dem[MAXPAGES];
 struct path path;
+struct site site;
 
 struct LR LR;
 
@@ -2804,11 +2807,13 @@ void PlotLRPath(struct site source, struct site destination, unsigned char mask_
             */
          } 
          else{
+            /* Moved to OPEN CL
 				point_to_point(elev,source.alt*METERS_PER_FOOT, 
   	 			destination.alt*METERS_PER_FOOT, LR.eps_dielect,
 				LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
+            */
          }
 
 			temp.lat=path.lat[y];
@@ -3114,39 +3119,19 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	   of a topographic map when the WritePPMLR() or
 	   WritePPMSS() functions are later invoked. */
 
-//This function is the entery point for my paraellization efforts. This 
-// This function should be the "kernel"
-//TODO 
+   //This function is the entery point for my paraellization efforts. This 
+   // This function should be the "kernel"
+   //TODO 
 	int y, z, count;
    cl_int err = 0;
 	struct site edge;
 	double lat, lon, minwest, maxnorth, th;
 	unsigned char x, symbol[4];
 	static unsigned char mask_value=1;
+   //Yes, that should be static, because this can be called by multiple tx
+   // sites
 	FILE *fd=NULL;
-   cl_platform_id platforms[MAX_PLATFORM];
-   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE]; 
-   cl_uint numDev[MAX_PLATFORM];
-   cl_uint numPlatform;
-   cl_context context;
-   cl_program program[MAX_PLATFORM];
-
-   // Get all OpenCL devices
-   //(yes, that's a bad idea for a function)
-   // Edits devices, numDev and NumPlatform
-   err = getDevices(devices,MAX_PLATFORM,MAX_DEVICE,numDev,&numPlatform);
-   if(err != 0){
-      fprintf(stderr,"Error grabbing devices! Exiting!\n");
-   }
-   //We'll just grab a certain device for now
-   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
-   
-   //Hardcoded filename - FIXME
-   program[0] = build_program(context, devices[0][0], "itm_support.cl");
-   if(err != 0){
-      fprintf(stderr,"Error Compiling program! Exiting!\n");
-   }
-
+  
 
 	minwest=dpp+(double)min_west;
 	maxnorth=(double)max_north-dpp;
@@ -6930,11 +6915,13 @@ void PathReport(struct site source, struct site destination, char *name, char gr
             */
          }
 			else{
+            /* MOVED to OPEN CL component 
 				point_to_point(elev,source.alt*METERS_PER_FOOT, 
   		 		destination.alt*METERS_PER_FOOT, LR.eps_dielect,
 				LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
 				LR.radio_climate, LR.pol, LR.conf, LR.rel, loss,
 				strmode, errnum);
+            */
          }
 
 			if (block)
@@ -7673,6 +7660,8 @@ int main(int argc, char *argv[])
 	int		x, y, z=0, min_lat, min_lon, max_lat, max_lon,
 			rxlat, rxlon, txlat, txlon, west_min, west_max,
 			north_min, north_max;
+
+   unsigned char mask_value = 1;
 
 	unsigned char	coverage=0, LRmap=0, terrain_plot=0,
 			elevation_plot=0, height_plot=0, map=0,
@@ -8645,8 +8634,12 @@ int main(int argc, char *argv[])
 			if (coverage)
 				PlotLOSMap(tx_site[x],altitude);
 
-			else if (ReadLRParm(tx_site[x],1))
-					PlotLRMap(tx_site[x],altitudeLR,ano_filename);
+			else if (ReadLRParm(tx_site[x],1)){
+					//PlotLRMap(tx_site[x],altitudeLR,ano_filename);
+            PlotLRMap_cl1(tx_site[x],max_north,min_north,max_west,min_west,
+               &mask_value, LR, dem, altitudeLR,clutter,max_range,
+               got_elevation_pattern,dbm); 
+         }
 
 			SiteReport(tx_site[x]);
 		}
