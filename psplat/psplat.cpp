@@ -53,6 +53,7 @@
 #define MAX_PLATFORM 64
 #define MAX_DEVICE 1024 
 
+
 char 	string[255], sdf_path[255], opened=0, gpsav=0, splat_name[10],
 	splat_version[6], dashes[80], olditm;
 
@@ -3197,13 +3198,14 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    //LonDiff returns between -180 and +180. Array size calculation will fail
    //if you get the order wrong.
    // Notice that I'm rounding up. It's better to have one too many elements in the array than not enough.
-   int siteArraySize = 2*(int)ceil(LonDiff(minwest,(double)max_west)/dpp);
-   siteArraySize += 2*(int)ceil((max_north-min_north)/dpp);
+   int siteArraySize = 2*(int)ceil(LonDiff((double)max_west,minwest)/dpp)+2;
+   siteArraySize += 2*(int)ceil((max_north-min_north)/dpp)+2;
+
 
    //The acctual count of sites in the array. This may be smaller than the acctual array size, but not bigger!
    size_t siteArrayCount = 0;
 
-   struct site *sitebuffer = new struct site[siteArraySize];; 
+   struct site *sitebuffer = new struct site[siteArraySize]; 
 
    
 
@@ -3336,6 +3338,8 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		}
 	}
 
+   fprintf(stderr,"Site Array Size: %d \n",siteArraySize);
+   fprintf(stderr,"Site Array Count: %d \n",siteArrayCount);
    assert(siteArrayCount <= siteArraySize);
    //Create OpenCL devices/etc...
    cl_uint numPlatforms;
@@ -3353,8 +3357,9 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    //Hardcoded to get first device...
    context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
    //Call the OpenCL Kernel:
+   
 
-   program = build_program(context, device,"itm_support.cl" );
+   program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
 
    cl_mem sourceBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -3485,33 +3490,86 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
    /* Create Kernel arguments */
    err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &sourceBuffer);
-   err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &destBuffer);
-   err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &mask_valueBuffer);
-   err |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &LRBuffer);
-   err |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &demBuffer);
-   err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &mpiBuffer);
-   err |= clSetKernelArg(kernel, 6, sizeof(cl_mem), &ppdBuffer);
-   err |= clSetKernelArg(kernel, 7, sizeof(cl_mem), &max_rangeBuffer);
-   err |= clSetKernelArg(kernel, 8, sizeof(cl_mem), &got_elevation_patternBuffer);
-   err |= clSetKernelArg(kernel, 9, sizeof(cl_mem), &dbmBuffer);
-   
    if(err < 0) {
-      perror("Couldn't create a kernel argument");
+      fprintf(stderr,"Couldn't create a kernel argument:Source Code:%d",err);
       exit(1);
    }
+
+   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &destBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:dest Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &mask_valueBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:mask Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 3, sizeof(cl_mem), &LRBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:LR buffer Code:%d",err);
+      exit(1);
+   }
+   err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &demBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:dem Code:%d",err);
+      exit(1);
+   }
+   err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &mpiBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:mpi Code:%d",err);
+      exit(1);
+   }
+   err = clSetKernelArg(kernel, 6, sizeof(cl_mem), &ppdBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:ppd Code:%d",err);
+      exit(1);
+   }
+   err = clSetKernelArg(kernel, 7, sizeof(cl_mem), &clutterBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:clutter Code:%d",err);
+      exit(1);
+   }
+   err = clSetKernelArg(kernel, 8, sizeof(cl_mem), &max_rangeBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:max_range Code:%d",err);
+      exit(1);
+   }
+   err = clSetKernelArg(kernel, 9, sizeof(cl_mem), &got_elevation_patternBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:got_ele Code:%d",err);
+      exit(1);
+   }
+   err = clSetKernelArg(kernel, 10, sizeof(cl_mem), &dbmBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:dbm Code:%d",err);
+      exit(1);
+   }
+
 
    /* Enqueue kernel */
    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &siteArrayCount, 
          NULL, 0, NULL, NULL); 
    if(err < 0) {
-      perror("Couldn't enqueue the kernel");
+      fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
       exit(1);
    }
 
    /* Read the kernel's output */
-   err = clEnqueueReadBuffer(queue, demBuffer, CL_TRUE, 0, 
-         sizeof(struct dem)*MAXPAGES, 0, 0, NULL, NULL);
+   err = clEnqueueReadBuffer(
+         queue,//Command Queue 
+         demBuffer, //CL buffer
+         CL_TRUE, //Blocking read
+         0, //Offset
+         sizeof(struct dem)*MAXPAGES, //size to read
+         dem, 
+         0, 
+         NULL, 
+         NULL);
    if(err < 0) {
+      fprintf(stderr,"Error code %d",err);
       perror("Couldn't read the buffer");
       exit(1);
    }
@@ -8854,10 +8912,10 @@ int main(int argc, char *argv[])
 				PlotLOSMap(tx_site[x],altitude);
 
 			else if (ReadLRParm(tx_site[x],1)){
-					//PlotLRMap(tx_site[x],altitudeLR,ano_filename);
-            PlotLRMap_cl1(tx_site[x],max_north,min_north,max_west,min_west,
-               &mask_value, LR, dem, altitudeLR,clutter,max_range,
-               got_elevation_pattern,dbm); 
+					PlotLRMap(tx_site[x],altitudeLR,ano_filename);
+            //PlotLRMap_cl1(tx_site[x],max_north,min_north,max_west,min_west,
+            //   &mask_value, LR, dem, altitudeLR,clutter,max_range,
+            //   got_elevation_pattern,dbm); 
          }
 
 			SiteReport(tx_site[x]);

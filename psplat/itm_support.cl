@@ -699,8 +699,8 @@ __kernel void PlotLRPaths_cl(
    __constant const double *ppd,
    __constant  const double *clutter,
    __constant const double *max_range,
-   __local unsigned char *got_elevation_pattern,
-   __local unsigned char *dbm
+   __global unsigned char *got_elevation_pattern,
+   __global unsigned char *dbm
    ){
    int id = get_global_id(0);
     
