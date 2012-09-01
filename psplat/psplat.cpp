@@ -3119,9 +3119,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	   of a topographic map when the WritePPMLR() or
 	   WritePPMSS() functions are later invoked. */
 
-   //This function is the entery point for my paraellization efforts. This 
-   // This function should be the "kernel"
-   //TODO 
+   //This function is the entery point for my paraellization efforts. 
 	int y, z, count;
    cl_int err = 0;
 	struct site edge;
@@ -3131,9 +3129,21 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    //Yes, that should be static, because this can be called by multiple tx
    // sites
 	FILE *fd=NULL;
+
+   /* OpenCL structures */
+   cl_device_id device;
+   cl_context context;
+   cl_program program;
+   cl_kernel kernel;
+   cl_command_queue queue;
+   cl_int i, j;
+
   
 
+   //dpp == Degrees Per Pixel
+   //Therefore, minwest is one "step" from min_west 
 	minwest=dpp+(double)min_west;
+   //and maxnorth is one "step" from min_west
 	maxnorth=(double)max_north-dpp;
 
 	symbol[0]='.';
@@ -3184,6 +3194,19 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
 	z=(int)(th*ReduceAngle(max_west-min_west));
 
+   //LonDiff returns between -180 and +180. Array size calculation will fail
+   //if you get the order wrong.
+   // Notice that I'm rounding up. It's better to have one too many elements in the array than not enough.
+   int siteArraySize = 2*(int)ceil(LonDiff(minwest,(double)max_west)/dpp);
+   siteArraySize += 2*(int)ceil((max_north-min_north)/dpp);
+
+   //The acctual count of sites in the array. This may be smaller than the acctual array size, but not bigger!
+   size_t siteArrayCount = 0;
+
+   struct site *sitebuffer = new struct site[siteArraySize];; 
+
+   
+
 	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
 	{
 		if (lon>=360.0)
@@ -3193,8 +3216,12 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=lon;
 		edge.alt=altitude;
 
+      //I hope this adds edge to the array
+      sitebuffer[siteArrayCount] = edge;
+      siteArrayCount++;
+
       //Foo 4?
-		PlotLRPath(source,edge,mask_value,fd);
+		//PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
 		if (count==z) 
@@ -3222,8 +3249,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=min_west;
 		edge.alt=altitude;
 
+      //I hope this adds edge to the array
+      sitebuffer[siteArrayCount] = edge;
+      siteArrayCount++;
       //Foo1?
-		PlotLRPath(source,edge,mask_value,fd);
+		//PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
 		if (count==z) 
@@ -3254,8 +3284,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=lon;
 		edge.alt=altitude;
 
+      //I hope this adds edge to the array
+      sitebuffer[siteArrayCount] = edge;
+      siteArrayCount++;
       //Foo2?
-		PlotLRPath(source,edge,mask_value,fd);
+		//PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
 		if (count==z)
@@ -3283,8 +3316,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=max_west;
 		edge.alt=altitude;
 
+      //I hope this adds edge to the array
+      sitebuffer[siteArrayCount] = edge;
+      siteArrayCount++;
       //Foo3?
-		PlotLRPath(source,edge,mask_value,fd);
+		//PlotLRPath(source,edge,mask_value,fd);
 		count++;
 
 		if (count==z)
@@ -3299,6 +3335,189 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 				x++;
 		}
 	}
+
+   assert(siteArrayCount <= siteArraySize);
+   //Create OpenCL devices/etc...
+   cl_uint numPlatforms;
+   cl_uint numDevices[MAX_DEVICE];
+   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE];
+   cl_platform_id platforms;
+   if(getDevices(devices,MAX_PLATFORM,MAX_DEVICE,&numPlatforms,numDevices) > 0){
+      fprintf(stderr,"Couldn't get devices");    
+      exit(1);
+   }
+
+   cl_mem destBuffer;
+   cl_mem demBuffer;
+    
+   //Hardcoded to get first device...
+   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
+   //Call the OpenCL Kernel:
+
+   program = build_program(context, device,"itm_support.cl" );
+
+   cl_mem sourceBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(struct site),
+      &source,
+      &err);
+
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   destBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      siteArrayCount*sizeof(struct site),
+      sitebuffer,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   cl_mem mask_valueBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(unsigned char),
+      &mask_value,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   cl_mem LRBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(struct LR),
+      &LR,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //We DO NOT WANT to copy all of the elevation to the device. 
+   demBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_USE_HOST_PTR, 
+      sizeof(struct dem) * MAXPAGES,
+      &dem,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   cl_mem mpiBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(int),
+      &mpi,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   cl_mem ppdBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &ppd,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };  
+
+   cl_mem clutterBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &clutter,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };  
+
+   cl_mem max_rangeBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &max_range,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   cl_mem got_elevation_patternBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(unsigned char),
+      &got_elevation_pattern,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   cl_mem dbmBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(unsigned char),
+      &dbm,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+   
+
+   /* Create a command queue */
+   queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
+   if(err < 0) {
+      perror("Couldn't create a command queue");
+      exit(1);   
+   };
+   
+   /* create kernel */
+   kernel = clCreateKernel(program, "PlotLRPaths_cl", &err);
+   if(err < 0) {
+      perror("Couldn't create a kernel");
+      exit(1);
+   }
+
+   /* Create Kernel arguments */
+   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &sourceBuffer);
+   err |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &destBuffer);
+   err |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &mask_valueBuffer);
+   err |= clSetKernelArg(kernel, 3, sizeof(cl_mem), &LRBuffer);
+   err |= clSetKernelArg(kernel, 4, sizeof(cl_mem), &demBuffer);
+   err |= clSetKernelArg(kernel, 5, sizeof(cl_mem), &mpiBuffer);
+   err |= clSetKernelArg(kernel, 6, sizeof(cl_mem), &ppdBuffer);
+   err |= clSetKernelArg(kernel, 7, sizeof(cl_mem), &max_rangeBuffer);
+   err |= clSetKernelArg(kernel, 8, sizeof(cl_mem), &got_elevation_patternBuffer);
+   err |= clSetKernelArg(kernel, 9, sizeof(cl_mem), &dbmBuffer);
+   
+   if(err < 0) {
+      perror("Couldn't create a kernel argument");
+      exit(1);
+   }
+
+   /* Enqueue kernel */
+   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &siteArrayCount, 
+         NULL, 0, NULL, NULL); 
+   if(err < 0) {
+      perror("Couldn't enqueue the kernel");
+      exit(1);
+   }
+
+   /* Read the kernel's output */
+   err = clEnqueueReadBuffer(queue, demBuffer, CL_TRUE, 0, 
+         sizeof(struct dem)*MAXPAGES, 0, 0, NULL, NULL);
+   if(err < 0) {
+      perror("Couldn't read the buffer");
+      exit(1);
+   }
+
+
+   delete[] sitebuffer;
 
 	if (fd!=NULL)
 		fclose(fd);

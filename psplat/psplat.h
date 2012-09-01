@@ -9,6 +9,7 @@
 #include <bzlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <cassert>
 
 
 #include "fontdata.h"

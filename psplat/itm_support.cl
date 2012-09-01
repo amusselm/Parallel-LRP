@@ -689,6 +689,25 @@ __kernel void PlotLRPath_cl(
    *dbm);
 }
 
+__kernel void PlotLRPaths_cl(
+   __global struct site *source,
+   __global struct site *destination,
+   __global unsigned char *mask_value,
+   __global struct LR *LR,
+   __global struct dem *dem,
+   __constant const int *mpi,
+   __constant const double *ppd,
+   __constant  const double *clutter,
+   __constant const double *max_range,
+   __local unsigned char *got_elevation_pattern,
+   __local unsigned char *dbm
+   ){
+   int id = get_global_id(0);
+    
+   PlotLRPath(*source,destination[id],
+      *mask_value,*LR,dem,*mpi,*ppd,*clutter,*max_range,* got_elevation_pattern,
+      *dbm);
+}
 /* This function performs a 360 degree sweep around the
  *  transmitter site (source location), and plots the
  *  Irregular Terrain Model attenuation on the SPLAT!
@@ -697,7 +716,7 @@ __kernel void PlotLRPath_cl(
  *  are stored in memory, and written out in the form
  *  of a topographic map when the WritePPMLR() or
  *  WritePPMSS() functions are later invoked. */
-__kernel void PlotAllLRPath_cl(
+__kernel void PlotAllLRPath_cl_singlethread(
    __local struct site *source,
    __local double *max_north,
    __local double *min_north,
