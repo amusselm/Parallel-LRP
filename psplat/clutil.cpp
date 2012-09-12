@@ -105,7 +105,7 @@ cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename)
       /* Find size of log and print to std output */
       clGetProgramBuildInfo(program, dev, CL_PROGRAM_BUILD_LOG, 
             0, NULL, &log_size);
-      program_log = (char*) malloc(log_size + 1);
+      program_log = (char*) malloc((log_size + 1)*sizeof(char));
       program_log[log_size] = '\0';
       clGetProgramBuildInfo(program, dev, CL_PROGRAM_BUILD_LOG, 
             log_size + 1, program_log, NULL);

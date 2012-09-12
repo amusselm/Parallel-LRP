@@ -3548,12 +3548,18 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);
    }
 
-
    /* Enqueue kernel */
+   unsigned int foo = 50;
    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &siteArrayCount, 
          NULL, 0, NULL, NULL); 
    if(err < 0) {
       fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
+      exit(1);
+   }
+
+   err = clFinish(queue);
+   if(err < 0){
+      fprintf(stderr,"Kernel didn't finish, code: %d",err);
       exit(1);
    }
 
