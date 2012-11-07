@@ -1,6 +1,10 @@
+#define mem_size 203430*4 
+//^ That number should be far larger than the amount of memory that 
+// the LongelyRice code is creating for all of it's operations.
+
 int getResult() {
-   int foo[999999];
-   for(int i = 0; i < 999999; i++){
+   int foo[mem_size];
+   for(int i = 0; i < mem_size; i++){
       foo[i] = i;
    }
    foo[99999] = 2321;
