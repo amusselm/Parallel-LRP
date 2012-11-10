@@ -88,9 +88,25 @@ void printPlatformInfo(cl_platform_id platform){
 
 void printDeviceInfo(cl_device_id device){
    char stringBuf[INFO_BUFFER_SIZE];
+   size_t maxParamSize;
+   cl_ulong memAllocSize;
+   cl_ulong localMemAllocSize;
 
    clGetDeviceInfo(device,CL_DEVICE_NAME,INFO_BUFFER_SIZE*sizeof(char),
       stringBuf,NULL);
    fprintf(stdout,"CL_DEVICE_NAME:%s\n",stringBuf);
+
+   clGetDeviceInfo(device,CL_DEVICE_MAX_PARAMETER_SIZE,sizeof(maxParamSize),
+      &maxParamSize,NULL);
+   fprintf(stdout,"CL_DEVICE_MAX_PARAMETER_SIZE: %ld\n",maxParamSize);
+
+   clGetDeviceInfo(device,CL_DEVICE_MAX_MEM_ALLOC_SIZE,sizeof(memAllocSize),
+      &memAllocSize,NULL);
+   fprintf(stdout,"CL_DEVICE_MAX_MEM_ALLOC_SIZE: %ld\n",memAllocSize);
+
+   clGetDeviceInfo(device,CL_DEVICE_LOCAL_MEM_SIZE,sizeof(localMemAllocSize),
+      &localMemAllocSize,NULL);
+   fprintf(stdout,"CL_DEVICE_LOCAL_MEM_SIZE: %ld\n",localMemAllocSize);
+   
    
 }
