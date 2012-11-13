@@ -191,12 +191,12 @@ void ReadPath(struct site source, struct site destination, path_t *path,
    __global struct dem *dem,int mpi, double ppd)
 {
 
-	int	c;
-	double	azimuth, distance, lat1, lon1, beta, den, num,
-		lat2, lon2, total_distance, dx, dy, path_length,
-		miles_per_sample;
-   double samples_per_radian = 68755.0;
-	struct	site tempsite;
+//	int	c;
+//	double	azimuth, distance, lat1, lon1, beta, den, num,
+//		lat2, lon2, total_distance, dx, dy, path_length,
+//		miles_per_sample;
+//   double samples_per_radian = 68755.0;
+//	struct	site tempsite;
 
 //	lat1=source.lat*DEG2RAD;
 //	lon1=source.lon*DEG2RAD;
@@ -470,7 +470,7 @@ void PlotLRPath(struct site source, struct site destination,
 	struct	site temp;
    
    int max_north = dem[0].max_north;
-	ReadPath(source,destination,&path,dem,mpi,ppd);
+//	ReadPath(source,destination,&path,dem,mpi,ppd);
 
 //	four_thirds_earth=FOUR_THIRDS*EARTHRADIUS;
 
