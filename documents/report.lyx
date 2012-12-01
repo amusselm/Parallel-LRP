@@ -298,12 +298,82 @@ For the most part, each path is independent of the others.
 Generate Paths on the Device
 \end_layout
 
+\begin_layout Standard
+One approach to parallelizing this problem is to take the task of generating
+ each terrain profile and put it on the device side.
+ Then, run through a loop on the device side processing each point along
+ each path, putting the results back into the data structure that represents
+ both signal loss and elevation at each point.
+ The advantage to this approach is that the system has to transfer vastly
+ less data to and from the device and it requires less device and host memory.
+ 
+\end_layout
+
+\begin_layout Standard
+However, this comes at a cost of greater complexity of the code that is
+ run on the device.
+ Implementation is much more difficult than some of the other approaches
+ because there is that much more code that has to be adapted to run in OpenCL
+ and synchronization of work items that are accessing the same data structure
+ becomes more of an issue.
+ Additionally, this approach does not allow parallelization of the path
+ loss calculations along a given path.
+ 
+\end_layout
+
+\begin_layout Standard
+The author initially attempted to implement this approach before encountering
+ difficulties with the OpenCL language.
+ 
+\end_layout
+
 \begin_layout Subsubsection
 Path at a Time
 \end_layout
 
+\begin_layout Standard
+Another approach is to simply push one path at a time to the device and
+ run the path loss calculations in parallel for each point along that path.
+ This approach has the advantage of having the lowest memory requirements
+ of all of these proposed methods.
+ This comes at a cost of having to transfer much more data to and from the
+ device over the course of plotting the path loss over an area.
+ For points that are close to the transmitter, the distance between two
+ paths is minimal, which means the same altitude data is sent to device
+ code multiple times with this approach.
+ There is also the additional cost in having to enqueue each item separately.
+ 
+\end_layout
+
 \begin_layout Subsubsection
 Block at a Time
+\end_layout
+
+\begin_layout Standard
+It's possible to reduce the overhead of the path-at-a-time approach by creating
+ a buffer that contains a certain number of paths and another buffer that
+ is used to store the path loss results from each point.
+ In exchange, both the host system and the device must have the memory to
+ support this buffer.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Multiple Paths/Blocks at a Time With Callbacks
+\end_layout
+
+\begin_layout Standard
+OpenCL also provides a callback functionality that allows host system code
+ to be called when a work item completes.
+ With the right host system code, this could be used load more data onto
+ the device while other elements are calculating.
+ One could even go so far as to have calculations running while more data
+ is being loaded from disk, so that the system can do path loss calculations
+ while also doing IO.
+ However, the author believes that this would effectively require a complete
+ re-write of SPLAT, which doesn't currently support any sort of dynamic
+ loading of terrain data at all.
+ 
 \end_layout
 
 \begin_layout Subsubsection
