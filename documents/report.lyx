@@ -1,0 +1,600 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+A GPGPU Implementation of the Irregular Terrain with Obstructions Model
+\end_layout
+
+\begin_layout Author
+Andrew J.
+ Musselman
+\end_layout
+
+\begin_layout Date
+December 15, 2011
+\end_layout
+
+\begin_layout Abstract
+This document describes the results of my efforts to port the Irregular
+ Terrain with Obstructions Model to OpenCL so that it can be run in parallel.
+ It describes the design decisions I made in parallelizing this application,
+ and.........
+\end_layout
+
+\begin_layout Section
+Background
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Background"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+General Description
+\end_layout
+
+\begin_layout Standard
+The ITWOM is a mathematical model that attempts to predict how radio waves
+ will propagate over a given path with known elevations.
+ By repeating this process for a number of different paths over an area,
+ its possible to generate a coverage map that shows the theoretical signal
+ strength of a transmitter over a given area.
+ 
+\end_layout
+
+\begin_layout Subsection
+The ITWOM and the Longley-Rice Model
+\end_layout
+
+\begin_layout Standard
+The ITWOM is largely derived from the older Longley-Rice Model, with a number
+ of changes and corrections that its author, Sidney E.
+ Shumate, claims improve its overall accuracy.
+ Additionally, their changes allow the practical use of higher-resolution
+ elevation data.
+ Shumate also designed his code to work as a drop-in replacement for the
+ Longley-Rice Model.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "VTC_IWOTM"
+
+\end_inset
+
+ Since the two algorithms are so similar in terms of their overall structure
+ and control flow, exiting research into how one is parallelized might be
+ directly applicable to the other.
+ 
+\end_layout
+
+\begin_layout Subsection
+SPLAT!
+\end_layout
+
+\begin_layout Standard
+SPLAT is a command-line wrapper program for the ITWOM, Longley-Rice Model
+ and other RF-Propagation algorithms.
+ It takes in appropriately formatted elevation data and various parameters
+ about each of the transmitters or receivers that the user wishes to model.
+ It has the option of outputting a bitmap or a KML file for Google Earth
+ for graphically representation coverage information.
+ It also generates text files that contain information about each radio
+ site and nearby obstructions.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "splat_www"
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Section
+Existing Related Works
+\end_layout
+
+\begin_layout Standard
+There are a number the existing serial implementations of the Longley-Rice
+ Model, including a reference implementation maintained by the US Department
+ of Commerce
+\begin_inset CommandInset citation
+LatexCommand cite
+key "us_commerce"
+
+\end_inset
+
+.
+ This reference implementation is the basis of the ITWOM
+\begin_inset CommandInset citation
+LatexCommand cite
+key "VTC_IWOTM"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+Additionally, a pair of University of Arizona researchers have recently
+ made implementations of the Longley-Rice Model for both for IBM's Cell
+ processor and for Nvidia's Tesla C870 GPU
+\begin_inset CommandInset citation
+LatexCommand cite
+key "lrp_itm_gpu"
+
+\end_inset
+
+.
+ These researchers found that were able to reduce execution times to less
+ than a second.
+ They also found that the Telsa GPU was around 2-3 times as fast as the
+ IBM cell processor.
+ 
+\end_layout
+
+\begin_layout Section
+Program Description
+\end_layout
+
+\begin_layout Subsection
+SPLAT's Approach to Signal Loss Analysis Over an Area
+\end_layout
+
+\begin_layout Standard
+After loading the necessary terrain files, SPLAT chooses loops over all
+ points on the border of a square around the transmitter site.
+ For each point, it generates a path from the transmitter site to the point
+ on the border of this square.
+ This path consists of an array that represents the terrain heights between
+ the transmitter site and the point on the border of the square, along with
+ an overall length of the path and the number of points stored in the path.
+ Then, for each point on all of these paths, it calls ITWOM's point to point
+ path loss function for every possible point between the transmitter and
+ the point on the edge of the analysis area.
+ This point to point path loss function returns theoretical amount of signal
+ loss along that path, which SPLAT stores in the area's data structure.
+ In addition to storing the value, contain 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+let terrain data contain the elevation data of the area to be analyzed
+\end_layout
+
+\begin_layout Plain Layout
+
+let path loss data be a structure that stores the loss at each point in
+ the area
+\end_layout
+
+\begin_layout Plain Layout
+
+for each permiter point around the perimiter of the analysis area
+\end_layout
+
+\begin_layout Plain Layout
+
+	let path elevation[] = the elevation of all points between the transmitter
+ and the perimiter point
+\end_layout
+
+\begin_layout Plain Layout
+
+	for each point along path elevation
+\end_layout
+
+\begin_layout Plain Layout
+
+		if path loss data is not already analized at the point
+\end_layout
+
+\begin_layout Plain Layout
+
+			path loss data at the point = point_to_point(elevation[], point, paramters)
+\end_layout
+
+\begin_layout Plain Layout
+
+			mark path loss data at the point as analized
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Longely Rice and ITWOM Approach to Path Loss
+\end_layout
+
+\begin_layout Subsection
+Parallelization Strategies 
+\end_layout
+
+\begin_layout Standard
+For the most part, each path is independent of the others.
+ The results of one point to point calculation are not needed to calculate
+ others.
+ The only data dependency is the marking of points as having already been
+ analyzed.
+ Due to the geometry of each path, points closest will be hit multiple times,
+ so this check is still necessary to prevent duplication of effort.
+ Thus, functions that read from and write to the path loss data structure
+ must be synchronized between work items.
+\end_layout
+
+\begin_layout Subsubsection
+Generate Paths on the Device
+\end_layout
+
+\begin_layout Subsubsection
+Path at a Time
+\end_layout
+
+\begin_layout Subsubsection
+Block at a Time
+\end_layout
+
+\begin_layout Subsubsection
+Multidimensional Work Items
+\end_layout
+
+\begin_layout Subsubsection
+OpenCL Specific Issues
+\end_layout
+
+\begin_layout Standard
+OpenCL only allows a 
+\end_layout
+
+\begin_layout Section
+SPLAT Benchmark results
+\end_layout
+
+\begin_layout Subsection
+Test Procedure
+\end_layout
+
+\begin_layout Standard
+To establish a baseline benchmark for SPLAT, I ran a set number tests on
+ the existing SPLAT implementation.
+ For these tests, I modified SPLAT's build script to embed debug information
+ and generate runtime profiles, which may have hurt overall performance
+ somewhat.
+ 
+\end_layout
+
+\begin_layout Standard
+These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
+ SPLAT does not load terrain data for ocean areas.
+ Therefore, running SPLAT over a coastal area like the terrain surrounding
+ Cal Poly would result in SPLAT spending less time reading terrain data
+ from disk compared to inland areas.
+ Additionally, all of these tests assume a receiver at 10 feet above ground.
+ This may only stress part of the ITWOM, while leaving other parts of the
+ code unused.
+ 
+\end_layout
+
+\begin_layout Standard
+All of these tests were run on Tesla, a Cal Poly Computer Science department
+ server.
+ This computer is equipped with a pair of Intel Intel Xeon E5504 CPUs.
+ The build of SPLAT used was configured to analyze the largest possible
+ region, which the highest possible memory requirements.
+ Additionally, I elected to use the highest-resolution elevation data that
+ is available for use with SPLAT.
+ 
+\end_layout
+
+\begin_layout Standard
+I created a simple shell script to run these tests.
+ This script ran as a loop: for each integer between 1 and 100, the script
+ told SPLAT to simulate propagation of a given frequency from 50 foot high
+ antenna on the Cal Poly campus to a hypothetical receiver that was located
+ 10 feet off of the ground for all points within that integer miles radius
+ of the transmitter.
+ This would show how total runtime and the number of times specific functions
+ were called were effected by the amount of data to be processed.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+#!/bin/bash 
+\end_layout
+
+\begin_layout Plain Layout
+
+for((i=1; i<=100; i++)) 
+\end_layout
+
+\begin_layout Plain Layout
+
+do     
+\end_layout
+
+\begin_layout Plain Layout
+
+  echo "Run with $i miles:" > ./data/time_$i.out     
+\end_layout
+
+\begin_layout Plain Layout
+
+  (time 
+\end_layout
+
+\begin_layout Plain Layout
+
+   ../splat-1.4.0/splat-hd -d ../eledata/sdf/ -L 10 -R $i -t W6BHZ.qth) 
+\end_layout
+
+\begin_layout Plain Layout
+
+       1>./data/stdout_$i.out 
+\end_layout
+
+\begin_layout Plain Layout
+
+       2>> ./data/time_$i.out
+\end_layout
+
+\begin_layout Plain Layout
+
+  echo "Run with $i miles:" > ./data/gprof_$i.out     
+\end_layout
+
+\begin_layout Plain Layout
+
+  gprof ../splat-1.4.0/splat-hd >> ./data/gprof_$i.out 
+\end_layout
+
+\begin_layout Plain Layout
+
+done 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Running Time
+\end_layout
+
+\begin_layout Standard
+When comparing the radius to the execution time, I found that the execuation
+ time increases polynomially with the radius of the area.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename chart_radius.png
+	scale 80
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+However, the amount of terrain data that SPLAT has to load and process also
+ increases polynomially.
+ Therefore, it makes sense to compare the execution time to the total area
+ over which SPLAT is calculating signal strengths.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename chart_area.png
+	scale 80
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Beyond around 10,000 square miles, the execution seems to be growing only
+ slightly faster than linearly with area.
+ I suspect this gradual increase in the rate that execution time is increasing
+ by time is caused by the overhead of loading additional map tiles and stitching
+ the results of the ITOWM into a completed graph.
+ This would mean that the ITOWM has an experimental O(n).
+ 
+\end_layout
+
+\begin_layout Section
+Conclusions
+\end_layout
+
+\begin_layout Subsection
+Performance Data
+\end_layout
+
+\begin_layout Standard
+To Be Completed
+\end_layout
+
+\begin_layout Subsection
+Other Notes
+\end_layout
+
+\begin_layout Subsubsection
+OpenCL
+\end_layout
+
+\begin_layout Standard
+Open CL Promises 
+\end_layout
+
+\begin_layout Subsubsection
+SPLAT
+\end_layout
+
+\begin_layout Standard
+In the process of adapting SPLAT to use OpenCL, the author found SPLAT to
+ be difficult to use and almost unmaintainable.
+ With the exception of the ITWOM and Longley-Rice code, all of SPLAT's functiona
+lity is contained in a single file.
+ SPLAT uses global variables extensively, making it difficult to refactor
+ or re-use SPLAT's code.
+ 
+\end_layout
+
+\begin_layout Section
+Further Work
+\end_layout
+
+\begin_layout Subsection
+Implementing a Better Wrapper for ITWOM and Longely Rice
+\end_layout
+
+\begin_layout Standard
+As previously noted, SPLAT has a number of issues that make it a very difficult
+ piece of software to maintain and work with.
+ It should be straightforward to create a vastly improved set of 
+\begin_inset Quotes eld
+\end_inset
+
+wrapper
+\begin_inset Quotes erd
+\end_inset
+
+ code that handles the loading of the terrain data and other propagation
+ information and calling the existing ITWOM or Longely Rice Code.
+ Such a program might have the following new features:
+\end_layout
+
+\begin_layout Itemize
+Support for external elevation databases.
+ The USGS maintains a web service that provides elevation data from its
+ database for a user given area.
+ This would save the user from having to maintain a local elevation database.
+ 
+\end_layout
+
+\begin_layout Itemize
+Support for other GIS information for clutter and other properties.
+ Currently, SPLAT assumes a uniform amount of 
+\begin_inset Quotes eld
+\end_inset
+
+clutter
+\begin_inset Quotes erd
+\end_inset
+
+ above the ground throughout the mapped area.
+ With data sources like the Openstreetmap project and other geographical
+ databases, it should be possible to estimate the real height of 
+\begin_inset Quotes eld
+\end_inset
+
+clutter
+\begin_inset Quotes erd
+\end_inset
+
+ on a path-by-path basis.
+ This might improve the accuracy of propagation estimates in an area.
+\end_layout
+
+\begin_layout Itemize
+Support for dynamically loading terrain and elevation data.
+ SPLAT currently loads ALL elevation data before running a single propagation
+ calculation.
+ Since each path is independent with Longely Rice, terrain can be loaded
+ dynamically and discarded when no longer needed.
+ This could reduce the program's memory footprint over large areas and it
+ might even improve performance by allowing propagation calculations to
+ occure while other pieces of terrain are being loaded.
+ 
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "sources"
+options "bibtotoc,plainnat"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
