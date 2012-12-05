@@ -225,13 +225,22 @@ status open
 
 \begin_layout Plain Layout
 
-let terrain data contain the elevation data of the area to be analyzed
+let terrain data contain the 
 \end_layout
 
 \begin_layout Plain Layout
 
-let path loss data be a structure that stores the loss at each point in
- the area
+	elevation data of the area to be analyzed
+\end_layout
+
+\begin_layout Plain Layout
+
+let path loss data be a structure
+\end_layout
+
+\begin_layout Plain Layout
+
+	that stores the loss at each point in the area
 \end_layout
 
 \begin_layout Plain Layout
@@ -241,8 +250,12 @@ for each permiter point around the perimiter of the analysis area
 
 \begin_layout Plain Layout
 
-	let path elevation[] = the elevation of all points between the transmitter
- and the perimiter point
+	let path elevation[] = the elevation of all points 
+\end_layout
+
+\begin_layout Plain Layout
+
+		between the transmitter and the perimiter point
 \end_layout
 
 \begin_layout Plain Layout
@@ -276,6 +289,31 @@ for each permiter point around the perimiter of the analysis area
 
 \begin_layout Subsection
 Longely Rice and ITWOM Approach to Path Loss
+\end_layout
+
+\begin_layout Standard
+Both Longley Rice and the ITWOM have the same overall program structure.
+ In fact, the ITWOM source file that shipped with SPLAT contained both versions
+ of the Irregular Terrain Model.
+ Many of the functions were shared between them, and the ones that weren't
+ often shared the same parameters and purpose.
+ 
+\end_layout
+
+\begin_layout Standard
+Both algorithms first determine if the receiver site is in line of site
+ of transmitter.
+ Then, they call a separate set of calculations for each.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "longley1968prediction"
+
+\end_inset
+
+ As a result, the calculations within the path_to_path() function cannot
+ be easily parallelized.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -709,6 +747,7 @@ Support for dynamically loading terrain and elevation data.
  
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
+btprint "btPrintAll"
 bibfiles "sources"
 options "bibtotoc,plainnat"
 
