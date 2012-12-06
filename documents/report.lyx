@@ -225,13 +225,22 @@ status open
 
 \begin_layout Plain Layout
 
-let terrain data contain the elevation data of the area to be analyzed
+let terrain data contain the 
 \end_layout
 
 \begin_layout Plain Layout
 
-let path loss data be a structure that stores the loss at each point in
- the area
+	elevation data of the area to be analyzed
+\end_layout
+
+\begin_layout Plain Layout
+
+let path loss data be a structure
+\end_layout
+
+\begin_layout Plain Layout
+
+	that stores the loss at each point in the area
 \end_layout
 
 \begin_layout Plain Layout
@@ -241,8 +250,12 @@ for each permiter point around the perimiter of the analysis area
 
 \begin_layout Plain Layout
 
-	let path elevation[] = the elevation of all points between the transmitter
- and the perimiter point
+	let path elevation[] = the elevation of all points 
+\end_layout
+
+\begin_layout Plain Layout
+
+		between the transmitter and the perimiter point
 \end_layout
 
 \begin_layout Plain Layout
@@ -278,6 +291,31 @@ for each permiter point around the perimiter of the analysis area
 Longely Rice and ITWOM Approach to Path Loss
 \end_layout
 
+\begin_layout Standard
+Both Longley Rice and the ITWOM have the same overall program structure.
+ In fact, the ITWOM source file that shipped with SPLAT contained both versions
+ of the Irregular Terrain Model.
+ Many of the functions were shared between them, and the ones that weren't
+ often shared the same parameters and purpose.
+ 
+\end_layout
+
+\begin_layout Standard
+Both algorithms first determine if the receiver site is in line of site
+ of transmitter.
+ Then, they call a separate set of calculations for each.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "longley1968prediction"
+
+\end_inset
+
+ As a result, the calculations within the path_to_path() function cannot
+ be easily parallelized.
+ 
+\end_layout
+
 \begin_layout Subsection
 Parallelization Strategies 
 \end_layout
@@ -291,7 +329,7 @@ For the most part, each path is independent of the others.
  Due to the geometry of each path, points closest will be hit multiple times,
  so this check is still necessary to prevent duplication of effort.
  Thus, functions that read from and write to the path loss data structure
- must be synchronized between work items.
+ could benefit by being synchronized between work items.
 \end_layout
 
 \begin_layout Subsubsection
@@ -380,12 +418,52 @@ OpenCL also provides a callback functionality that allows host system code
 Multidimensional Work Items
 \end_layout
 
+\begin_layout Standard
+OpenCL also provides functionality to deal with multidimensional work items.
+ This means that the host system can pass arguments to the device in the
+ form of a multi-dimensional array.
+ This eliminates the need to loop over elements in a path on the device,
+ which makes the task more parallel.
+ However, this approach still requires sending each path to the device individua
+lly, which means that more data must be sent to the device than if the paths
+ were generated on the device itself.
+ 
+\end_layout
+
+\begin_layout Subsection
+Issues with Parallelization 
+\end_layout
+
 \begin_layout Subsubsection
-OpenCL Specific Issues
+Repeated Points
+\end_layout
+
+\begin_layout Subsubsection
+The qlrps() Function
 \end_layout
 
 \begin_layout Standard
-OpenCL only allows a 
+Both the Longley-Rice and ITWOM ITM algorithms use a function called qlrps()
+ to initialize several parts of an internal data structure.
+ This function does not take the terrain profile as an input.
+ In fact, it does not take any path-specific parameters as input.
+ Since all the parameters it takes as input are the same for all paths that
+ SPLAT is calculating, this results in the same code being repeated multiple
+ times with the same inputs, which might be considered a waste of resources.
+ In fact, University of Arizona researchers who were investigating a parallel
+ implementation of Longley-Rice modified the program so that this initialization
+ step was only needed once 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "lrp_itm_gpu"
+
+\end_inset
+
+.
+ To simplify implementation and to minimize the effects of modifications
+ that are not necessarily related to parallelization the author choose not
+ to modify this function beyond what was necessary run it in OpenCL.
+ 
 \end_layout
 
 \begin_layout Section
@@ -393,12 +471,16 @@ SPLAT Benchmark results
 \end_layout
 
 \begin_layout Subsection
+SPLAT Baseline Performance
+\end_layout
+
+\begin_layout Subsubsection
 Test Procedure
 \end_layout
 
 \begin_layout Standard
-To establish a baseline benchmark for SPLAT, I ran a set number tests on
- the existing SPLAT implementation.
+To establish a baseline benchmark for SPLAT, the author ran a set number
+ tests on the existing SPLAT implementation.
  For these tests, I modified SPLAT's build script to embed debug information
  and generate runtime profiles, which may have hurt overall performance
  somewhat.
@@ -423,13 +505,13 @@ All of these tests were run on Tesla, a Cal Poly Computer Science department
  This computer is equipped with a pair of Intel Intel Xeon E5504 CPUs.
  The build of SPLAT used was configured to analyze the largest possible
  region, which the highest possible memory requirements.
- Additionally, I elected to use the highest-resolution elevation data that
- is available for use with SPLAT.
+ Additionally, the author elected to use the highest-resolution elevation
+ data that is available for use with SPLAT.
  
 \end_layout
 
 \begin_layout Standard
-I created a simple shell script to run these tests.
+The author created a simple shell script to run these tests.
  This script ran as a loop: for each integer between 1 and 100, the script
  told SPLAT to simulate propagation of a given frequency from 50 foot high
  antenna on the Cal Poly campus to a hypothetical receiver that was located
@@ -505,13 +587,13 @@ done
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 Running Time
 \end_layout
 
 \begin_layout Standard
-When comparing the radius to the execution time, I found that the execuation
- time increases polynomially with the radius of the area.
+When comparing the radius to the execution time, The author found that the
+ execution time increases polynomially with the radius of the area.
 \end_layout
 
 \begin_layout Standard
@@ -545,11 +627,18 @@ However, the amount of terrain data that SPLAT has to load and process also
 \begin_layout Standard
 Beyond around 10,000 square miles, the execution seems to be growing only
  slightly faster than linearly with area.
- I suspect this gradual increase in the rate that execution time is increasing
- by time is caused by the overhead of loading additional map tiles and stitching
- the results of the ITOWM into a completed graph.
+ The authormsuspects this gradual increase in the rate that execution time
+ is increasing by time is caused by the overhead of loading additional map
+ tiles and stitching the results of the ITOWM into a completed graph.
  This would mean that the ITOWM has an experimental O(n).
- 
+\end_layout
+
+\begin_layout Subsubsection
+Running Makeup
+\end_layout
+
+\begin_layout Subsection
+Performance Changes with Parallelization 
 \end_layout
 
 \begin_layout Section
@@ -658,6 +747,7 @@ Support for dynamically loading terrain and elevation data.
  
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
+btprint "btPrintAll"
 bibfiles "sources"
 options "bibtotoc,plainnat"
 
