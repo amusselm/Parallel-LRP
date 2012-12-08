@@ -26,7 +26,7 @@
 \****************************************************************************/
 #include "psplatcombinedsize.h"
 
-//#include "itwom3.0.cl"
+#include "itwom3.0.cl"
 
 
 double arccos(double x, double y)
@@ -470,7 +470,7 @@ void PlotLRPath(struct site source, struct site destination,
 	struct	site temp;
    
    int max_north = dem[0].max_north;
-//	ReadPath(source,destination,&path,dem,mpi,ppd);
+	ReadPath(source,destination,&path,dem,mpi,ppd);
 
 //	four_thirds_earth=FOUR_THIRDS*EARTHRADIUS;
 
@@ -704,3 +704,21 @@ __kernel void Test_cl(   ){
    printf("Id is: %d\n",id);
 }
 
+__kernel void point_to_point_cl(
+   __global int *elev_size, //Number of terreain hieghts in the elev array
+   __global double *elev, //Elevation array
+   __global double *path_dist, //Total length of the path
+   __global double *tht_m, //Source altitude (meters) 
+   __global double *rht_m, //Destination Altitude 
+   __global double *eps_dielect, 
+   __global double *sgm_conductivity, 
+   __global double *eno_ns_surfref, 
+   __global double *frq_mhz, //Frequency in Mhz 
+   __global int *radio_climate,  
+   __global int *pol,//Polarity 
+   __global double *conf, 
+   __global double *rel,
+   __global double *dbloss,//Path loss results 
+   __global int *errnum){
+
+}
