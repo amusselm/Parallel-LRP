@@ -26,13 +26,10 @@ int main(int argc, char* argv[]){
 	double sgm_conductivity=0.005;
 	double eno_ns_surfref=301.0;
 	double frq_mhz=300.0;
-	double radio_climate=5;
-	double pol=0;
+	int radio_climate=5;
+	int pol=0;
 	double conf=0.50;
 	double rel=0.50;
-	double erp=0.0;
-
-
 
    /* Create a very even slope */
    for(int i = 0; i < ELEVSIZE; i++){
@@ -121,6 +118,104 @@ int main(int argc, char* argv[]){
       exit(1);   
    };
 
+   //EPS_dielect ... Some sort of diaeletric constant
+   cl_mem epsBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &eps_dielect,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //Ground Conductvity 
+   cl_mem sgmBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &sgm_conductivity,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //Surface Reflectivity 
+   cl_mem surfrefBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &eno_ns_surfref,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //Frequency (Mhz) 
+   cl_mem frqBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &frq_mhz,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //Frequency (Mhz) 
+   cl_mem frqBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &frq_mhz,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //Radio Climate 
+   cl_mem climateBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(int),
+      &radio_climate,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //Polarization 
+   cl_mem polBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(int),
+      &pol,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //conf (?) 
+   cl_mem confBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &conf,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //rel (?) 
+   cl_mem relBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double),
+      &rel,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
    /* Create a command queue */
    queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
    if(err < 0) {
