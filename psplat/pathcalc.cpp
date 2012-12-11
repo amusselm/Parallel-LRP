@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
    cl_mem elevBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
       sizeof(double*ELEVSIZE),
-      &elev,
+      elev,
       &err);
    if(err < 0) {
       perror("Couldn't create a buffer");
@@ -216,6 +216,19 @@ int main(int argc, char* argv[]){
       perror("Couldn't create a buffer");
       exit(1);   
    };
+
+   //dbloss - this is the result buffer
+   cl_mem dblossBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double)*ELEVSIZE,
+      signal,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+
    /* Create a command queue */
    queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
    if(err < 0) {
@@ -231,9 +244,87 @@ int main(int argc, char* argv[]){
    }
 
    /* Create Kernel arguments */
-   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &sourceBuffer);
+   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &elevSizeBuffer);
    if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:Source Code:%d",err);
+      fprintf(stderr,"Couldn't create a kernel argument:elevSize Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &elevBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:elev Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &pathDistBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:pathDist Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 3, sizeof(cl_mem), &sourceAltBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:scourceAlt Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &destAltBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:destAlt Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &epsBuffer  );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:eps Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 6, sizeof(cl_mem), &sgmBuffer  );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:sgm Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 7, sizeof(cl_mem), &surfrefBuffer  );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:surfref Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 8, sizeof(cl_mem), &frqBuffer  );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:frq Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 9, sizeof(cl_mem), &climateBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:climateBuffer Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 10, sizeof(cl_mem), &polBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:polBuffer Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 11, sizeof(cl_mem), &confBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:confBuffer Code:%d",err);
+      exit(1);
+   }
+ 
+   err = clSetKernelArg(kernel, 12, sizeof(cl_mem), &relBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:relBuffer Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 13, sizeof(cl_mem), &dblossBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:dbloss Code:%d",err);
       exit(1);
    }
 
