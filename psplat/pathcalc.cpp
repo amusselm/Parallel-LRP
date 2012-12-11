@@ -162,17 +162,6 @@ int main(int argc, char* argv[]){
       exit(1);   
    };
 
-   //Frequency (Mhz) 
-   cl_mem frqBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &frq_mhz,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
    //Radio Climate 
    cl_mem climateBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -358,5 +347,24 @@ int main(int argc, char* argv[]){
       perror("Couldn't read the buffer");
       exit(1);
    }
-  
+
+   //Program cleanup
+   clReleaseKernel(kernel);
+   clReleaseMemObject(elevSizeBuffer);
+   clReleaseMemObject(elevBuffer);
+   clReleaseMemObject(pathDistBuffer);
+   clReleaseMemObject(sourceAltBuffer);
+   clReleaseMemObject(destAltBuffer);
+   clReleaseMemObject(epsBuffer);
+   clReleaseMemObject(sgmBuffer);
+   clReleaseMemObject(surfrefBuffer);
+   clReleaseMemObject(frqBuffer);
+   clReleaseMemObject(climateBuffer);
+   clReleaseMemObject(polBuffer);
+   clReleaseMemObject(confBuffer);
+   clReleaseMemObject(relBuffer);
+   clReleaseMemObject(dblossBuffer);
+   clReleaseCommandQueue(queue);
+   clReleaseProgram(program);
+   clReleaseContext(context);
 }
