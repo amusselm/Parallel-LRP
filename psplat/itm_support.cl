@@ -470,7 +470,7 @@ void PlotLRPath(struct site source, struct site destination,
 	struct	site temp;
    
    int max_north = dem[0].max_north;
-	ReadPath(source,destination,&path,dem,mpi,ppd);
+//	ReadPath(source,destination,&path,dem,mpi,ppd);
 
 //	four_thirds_earth=FOUR_THIRDS*EARTHRADIUS;
 
