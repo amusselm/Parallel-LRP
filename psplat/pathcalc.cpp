@@ -9,13 +9,13 @@
 #include "clutil.h"
 #include "splat.h"
 
-const int ELEVSIZE 50;
-const int ELEVDIST 10000; /*Path Distance in meters, 10km */ 
+const int ELEVSIZE=50;
+const int ELEVDIST=10000; /*Path Distance in meters, 10km */ 
 /* This means a point every 200 meters, which may or may not be valid 
  * under the ITWOM. That doesn't matter since I'm using canned data anyways */
 
 int main(int argc, char* argv[]){
-   int numElevElements = ELEVSIZE;
+   size_t numElevElements = ELEVSIZE;
    double elevDistance = ELEVDIST;
    double elev[ELEVSIZE];
    double itm_elev[ELEVSIZE+2];/* Extra two for legnth and number of elements */
@@ -30,6 +30,8 @@ int main(int argc, char* argv[]){
 	int pol=0;
 	double conf=0.50;
 	double rel=0.50;
+   
+   int err;
 
    /* Create a very even slope */
    for(int i = 0; i < ELEVSIZE; i++){
@@ -77,7 +79,7 @@ int main(int argc, char* argv[]){
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double*ELEVSIZE),
+      sizeof(double)*ELEVSIZE,
       elev,
       &err);
    if(err < 0) {
@@ -100,7 +102,7 @@ int main(int argc, char* argv[]){
    cl_mem sourceAltBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
       sizeof(double),
-      &source,
+      &sourceAlt,
       &err);
    if(err < 0) {
       perror("Couldn't create a buffer");
@@ -318,7 +320,7 @@ int main(int argc, char* argv[]){
    }
 
    /* Enqueue kernel */
-   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &siteArrayCount, 
+   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &numElevElements, 
          NULL, 0, NULL, NULL); 
    if(err < 0) {
       fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
@@ -337,8 +339,8 @@ int main(int argc, char* argv[]){
          demBuffer, //CL buffer
          CL_TRUE, //Blocking read
          0, //Offset
-         sizeof(struct dem)*MAXPAGES, //size to read
-         dem, 
+         sizeof(double)*ELEVSIZE, //size to read
+         dblossBuffer, 
          0, 
          NULL, 
          NULL);
