@@ -721,6 +721,5 @@ __kernel void point_to_point_cl(
    __global double *dbloss// 13 - Path loss results 
    ){
       int id = get_global_id(0);
-      printf("Id is: %d\n",id);
-
+      dbloss[id] = id*id;
 }

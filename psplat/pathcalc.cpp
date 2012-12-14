@@ -349,6 +349,11 @@ int main(int argc, char* argv[]){
       perror("Couldn't read the buffer");
       exit(1);
    }
+   
+   printf("Results:\n");
+   for(int i=0; i<ELEVSIZE; i++){
+      printf("signal[i]: %lf\n",signal[i]);
+   }
 
    //Program cleanup
    clReleaseKernel(kernel);
