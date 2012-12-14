@@ -228,7 +228,7 @@ int main(int argc, char* argv[]){
    };
    
    /* create kernel */
-   kernel = clCreateKernel(program, "PlotLRPaths_cl", &err);
+   kernel = clCreateKernel(program, "point_to_point_cl", &err);
    if(err < 0) {
       perror("Couldn't create a kernel");
       exit(1);
@@ -336,16 +336,16 @@ int main(int argc, char* argv[]){
    /* Read the kernel's output */
    err = clEnqueueReadBuffer(
          queue,//Command Queue 
-         demBuffer, //CL buffer
+         dblossBuffer, //CL buffer
          CL_TRUE, //Blocking read
          0, //Offset
          sizeof(double)*ELEVSIZE, //size to read
-         dblossBuffer, 
+         signal, 
          0, 
          NULL, 
          NULL);
    if(err < 0) {
-      fprintf(stderr,"Error code %d",err);
+      fprintf(stderr,"Error code %d\n",err);
       perror("Couldn't read the buffer");
       exit(1);
    }

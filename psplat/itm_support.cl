@@ -705,20 +705,22 @@ __kernel void Test_cl(   ){
 }
 
 __kernel void point_to_point_cl(
-   __global int *elev_size, //Number of terreain hieghts in the elev array
-   __global double *elev, //Elevation array
-   __global double *path_dist, //Total length of the path
-   __global double *tht_m, //Source altitude (meters) 
-   __global double *rht_m, //Destination Altitude 
-   __global double *eps_dielect, 
-   __global double *sgm_conductivity, 
-   __global double *eno_ns_surfref, 
-   __global double *frq_mhz, //Frequency in Mhz 
-   __global int *radio_climate,  
-   __global int *pol,//Polarity 
-   __global double *conf, 
-   __global double *rel,
-   __global double *dbloss,//Path loss results 
-   __global int *errnum){
+   __global int *elev_size, //0 - Number of terreain hieghts in the elev array
+   __global double *elev, //1 - Eevation array
+   __global double *path_dist, //2 - Total length of the path
+   __global double *tht_m, //3 - Source altitude (meters) 
+   __global double *rht_m, //4 - Destination Altitude 
+   __global double *eps_dielect,//5 
+   __global double *sgm_conductivity,//6 
+   __global double *eno_ns_surfref,//7 
+   __global double *frq_mhz, //8 - Frequency in Mhz 
+   __global int *radio_climate, //9 
+   __global int *pol,//10 - Polarity 
+   __global double *conf,// 11 
+   __global double *rel,// 12
+   __global double *dbloss// 13 - Path loss results 
+   ){
+      int id = get_global_id(0);
+      printf("Id is: %d\n",id);
 
 }
