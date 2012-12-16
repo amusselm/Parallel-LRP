@@ -467,6 +467,14 @@ key "lrp_itm_gpu"
 \end_layout
 
 \begin_layout Section
+Implementation and Modifications to SPLAT
+\end_layout
+
+\begin_layout Subsection
+Removing All Instances of Static
+\end_layout
+
+\begin_layout Section
 SPLAT Benchmark results
 \end_layout
 
