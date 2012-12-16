@@ -3139,8 +3139,6 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    cl_command_queue queue;
    cl_int i, j;
 
-  
-
    //dpp == Degrees Per Pixel
    //Therefore, minwest is one "step" from min_west 
 	minwest=dpp+(double)min_west;
@@ -3402,9 +3400,8 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);   
    };
 
-   //We DO NOT WANT to copy all of the elevation to the device. 
    demBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_USE_HOST_PTR, 
+      CL_MEM_COPY_HOST_PTR, 
       sizeof(struct dem) * MAXPAGES,
       &dem,
       &err);

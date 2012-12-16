@@ -1,5 +1,6 @@
 #Modified from http://www.drdobbs.com/parallel/231002854
 PSPLAT=psplat
+PATHTEST=pathtest
 
 CC=g++
 
@@ -49,7 +50,13 @@ endif
 
 endif
 endif
-ALL: $(PSPLAT) 
+ALL: $(PSPLAT) $(PATHTEST)
+
+$(PATHTEST): $(PATHTEST).o clutil.o
+	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
+	
+$(PATHTEST).o: pathcalc.cpp 
+	$(CC) $(CFLAGS) -c -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
 
 $(PSPLAT): $(PSPLAT).o clutil.o itwomclwrapper.o 
 	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)

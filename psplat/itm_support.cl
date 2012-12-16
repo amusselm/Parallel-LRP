@@ -26,7 +26,7 @@
 \****************************************************************************/
 #include "psplatcombinedsize.h"
 
-//#include "itwom3.0.cl"
+#include "itwom3.0.cl"
 
 
 double arccos(double x, double y)
@@ -704,3 +704,22 @@ __kernel void Test_cl(   ){
    printf("Id is: %d\n",id);
 }
 
+__kernel void point_to_point_cl(
+   __global int *elev_size, //0 - Number of terreain hieghts in the elev array
+   __global double *elev, //1 - Eevation array
+   __global double *path_dist, //2 - Total length of the path
+   __global double *tht_m, //3 - Source altitude (meters) 
+   __global double *rht_m, //4 - Destination Altitude 
+   __global double *eps_dielect,//5 
+   __global double *sgm_conductivity,//6 
+   __global double *eno_ns_surfref,//7 
+   __global double *frq_mhz, //8 - Frequency in Mhz 
+   __global int *radio_climate, //9 
+   __global int *pol,//10 - Polarity 
+   __global double *conf,// 11 
+   __global double *rel,// 12
+   __global double *dbloss// 13 - Path loss results 
+   ){
+      int id = get_global_id(0);
+      dbloss[id] = id*id;
+}

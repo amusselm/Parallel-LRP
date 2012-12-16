@@ -8,6 +8,7 @@ use Data::Dumper;
 
 my $line;
 my $dataHash;
+my $parseCallProfile;
 
 
 while($line= <STDIN>){
@@ -17,8 +18,17 @@ while($line= <STDIN>){
             $dataHash->{'mile'} = $line;
       }
       
+   } 
+   if($line =~ /^ time/){
+      $parseCallProfile = 1;
+   }
+   if($parseCallProfile == 1){
+      print($line."\n");
+   }
+   if($line =~ /^ %/){
+      $parseCallProfile = 0;
    }
 
 
-   print Dumper($dataHash);
 }
+print Dumper($dataHash);
