@@ -75,4 +75,4 @@ itwomclwrapper.o:itwomclwrapper.cpp
 .PHONY: clean all
 
 clean:
-	rm $(PSPLAT) $(PSPLAT).o itwomclwrapper.o clutil.o
+	rm $(PSPLAT) $(PSPLAT).o itwomclwrapper.o clutil.o $(PATHTEST) $(PATHTEST).o
