@@ -60,7 +60,7 @@
 \begin_body
 
 \begin_layout Title
-A GPGPU Implementation of the Irregular Terrain with Obstructions Model
+An OpenCL Implementation of the Irregular Terrain with Obstructions Model
 \end_layout
 
 \begin_layout Author
@@ -317,19 +317,61 @@ key "longley1968prediction"
 \end_layout
 
 \begin_layout Subsection
-Parallelization Strategies 
+Issues with Parallelization 
 \end_layout
 
 \begin_layout Standard
 For the most part, each path is independent of the others.
  The results of one point to point calculation are not needed to calculate
  others.
- The only data dependency is the marking of points as having already been
+ However, there are some issues with the ITWOM code that might effect paralleliz
+ation.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Repeated Points
+\end_layout
+
+\begin_layout Standard
+The only data dependency is the marking of points as having already been
  analyzed.
  Due to the geometry of each path, points closest will be hit multiple times,
  so this check is still necessary to prevent duplication of effort.
  Thus, functions that read from and write to the path loss data structure
  could benefit by being synchronized between work items.
+\end_layout
+
+\begin_layout Subsubsection
+The qlrps() Function
+\end_layout
+
+\begin_layout Standard
+Both the Longley-Rice and ITWOM ITM algorithms use a function called qlrps()
+ to initialize several parts of an internal data structure.
+ This function does not take the terrain profile as an input.
+ In fact, it does not take any path-specific parameters as input.
+ Since all the parameters it takes as input are the same for all paths that
+ SPLAT is calculating, this results in the same code being repeated multiple
+ times with the same inputs, which might be considered a waste of resources.
+ In fact, University of Arizona researchers who were investigating a parallel
+ implementation of Longley-Rice modified the program so that this initialization
+ step was only needed once 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "lrp_itm_gpu"
+
+\end_inset
+
+.
+ To simplify implementation and to minimize the effects of modifications
+ that are not necessarily related to parallelization the author choose not
+ to modify this function beyond what was necessary run it in OpenCL.
+ 
+\end_layout
+
+\begin_layout Subsection
+Parallelization Strategies 
 \end_layout
 
 \begin_layout Subsubsection
@@ -430,48 +472,30 @@ lly, which means that more data must be sent to the device than if the paths
  
 \end_layout
 
-\begin_layout Subsection
-Issues with Parallelization 
-\end_layout
-
-\begin_layout Subsubsection
-Repeated Points
-\end_layout
-
-\begin_layout Subsubsection
-The qlrps() Function
+\begin_layout Section
+Implementation and Modifications to SPLAT and the ITM
 \end_layout
 
 \begin_layout Standard
-Both the Longley-Rice and ITWOM ITM algorithms use a function called qlrps()
- to initialize several parts of an internal data structure.
- This function does not take the terrain profile as an input.
- In fact, it does not take any path-specific parameters as input.
- Since all the parameters it takes as input are the same for all paths that
- SPLAT is calculating, this results in the same code being repeated multiple
- times with the same inputs, which might be considered a waste of resources.
- In fact, University of Arizona researchers who were investigating a parallel
- implementation of Longley-Rice modified the program so that this initialization
- step was only needed once 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "lrp_itm_gpu"
-
-\end_inset
-
-.
- To simplify implementation and to minimize the effects of modifications
- that are not necessarily related to parallelization the author choose not
- to modify this function beyond what was necessary run it in OpenCL.
+In order translate the ITWOM code to OpenCL and run it in parallel, a number
+ of changes had to be made to both the ITWOM code and SPLAT.
+ Some of these changes, such as removing the instances of static that appear
+ in the ITWOM code are necessary due to limitations of the OpenCL programming
+ language.
+ Parts of SPLAT required some refactoring due to SPLAT's prodigious abuse
+ of global variables and to create the necessary buffers for OpenCL to read
+ data from and write data to.
  
 \end_layout
 
-\begin_layout Section
-Implementation and Modifications to SPLAT
-\end_layout
-
-\begin_layout Subsection
-Removing All Instances of Static
+\begin_layout Standard
+Additionally, the author had to add code that compiled the OpenCL code and
+ set up the devices that would run this code.
+ These steps would add some overhead to the process, which is an unavoidable
+ cost of using OpenCL for parallelization.
+ This might put OpenCL at a disadvantage to other parallelization techniques
+ on some systems.
+ 
 \end_layout
 
 \begin_layout Section
@@ -602,12 +626,56 @@ Running Time
 \begin_layout Standard
 When comparing the radius to the execution time, The author found that the
  execution time increases polynomially with the radius of the area.
+ This relationship is shown in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:timevradius"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_radius.png
 	scale 80
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Graph of execution time versus the radius of the area being analyzed.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:timevradius"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
 
 \end_inset
 
@@ -619,13 +687,55 @@ However, the amount of terrain data that SPLAT has to load and process also
  increases polynomially.
  Therefore, it makes sense to compare the execution time to the total area
  over which SPLAT is calculating signal strengths.
- 
+ This relationship is showed in the graph in
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:timevarea"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_area.png
 	scale 80
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Execution time versus total area that is being analyzed.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:timevarea"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
 
 \end_inset
 
@@ -643,6 +753,11 @@ Beyond around 10,000 square miles, the execution seems to be growing only
 
 \begin_layout Subsubsection
 Running Makeup
+\end_layout
+
+\begin_layout Standard
+This section will describe which functions consumed the most runtime.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -713,8 +828,8 @@ wrapper
 
 \begin_layout Itemize
 Support for external elevation databases.
- The USGS maintains a web service that provides elevation data from its
- database for a user given area.
+ The USGS, Google and others maintain web services that provides elevation
+ data from its database for a user given area.
  This would save the user from having to maintain a local elevation database.
  
 \end_layout
@@ -752,7 +867,17 @@ Support for dynamically loading terrain and elevation data.
  This could reduce the program's memory footprint over large areas and it
  might even improve performance by allowing propagation calculations to
  occure while other pieces of terrain are being loaded.
- 
+\end_layout
+
+\begin_layout Subsection
+Apply GPGPUs and OpenCL to Other Propagation Models
+\end_layout
+
+\begin_layout Standard
+There are other propagation models that take into account 
+\end_layout
+
+\begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
 btprint "btPrintAll"
