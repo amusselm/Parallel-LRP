@@ -73,10 +73,9 @@ December 15, 2011
 \end_layout
 
 \begin_layout Abstract
-This document describes the results of my efforts to port the Irregular
- Terrain with Obstructions Model to OpenCL so that it can be run in parallel.
- It describes the design decisions I made in parallelizing this application,
- and.........
+This document describes the results of efforts to port the Irregular Terrain
+ with Obstructions Model to OpenCL so that it can be run in parallel.
+ It describes various methods 
 \end_layout
 
 \begin_layout Section
@@ -215,10 +214,23 @@ After loading the necessary terrain files, SPLAT chooses loops over all
  the point on the edge of the analysis area.
  This point to point path loss function returns theoretical amount of signal
  loss along that path, which SPLAT stores in the area's data structure.
- In addition to storing the value, contain 
+ This is described using psuedocode in Algorithm
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "alg:splat-description"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
+\begin_inset Float algorithm
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
 \begin_inset listings
 inline false
 status open
@@ -290,6 +302,27 @@ for each permiter point around the perimiter of the analysis area
 \end_inset
 
 
+\begin_inset Caption
+
+\begin_layout Plain Layout
+General description of SPLAT's area analysis
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:splat-description"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -354,6 +387,57 @@ is used, it might be possible to avoid this duplication of effort by synchronizi
 ng reads and writes to the global data structure.
  If one of the other approaches is used, the host code will have to throw
  some results away after reading from the device.
+ This is shown by 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "fig:paths-and-grids"
+
+\end_inset
+
+.
+ 
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename paths_and_grid.png
+	width 5cm
+	height 5cm
+	keepAspectRatio
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Graphic representing how paths converge near the transmitter.
+ Each intersection in the grid contains variables for both an elevation
+ value for input and a signal loss value as output.
+ The transmitter site is represented with a yellow 'X'.
+ Note how some points, like the one that is two rows up and one column to
+ the right of the transmitter are close to multiple paths.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:paths-and-grids"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -574,10 +658,27 @@ The author created a simple shell script to run these tests.
  of the transmitter.
  This would show how total runtime and the number of times specific functions
  were called were effected by the amount of data to be processed.
- 
+ This shell script is shown in Algorithm 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "alg:Shell-script-used"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
+\begin_inset Float algorithm
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
 \begin_inset listings
 inline false
 status open
@@ -635,6 +736,31 @@ do
 \begin_layout Plain Layout
 
 done 
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Shell script used to run tests
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:Shell-script-used"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -770,8 +896,8 @@ Beyond around 10,000 square miles, the execution seems to be growing only
  slightly faster than linearly with area.
  The author suspects this gradual increase in the rate that execution time
  is increasing by time is caused by the overhead of loading additional map
- tiles and stitching the results of the ITOWM into a completed graph.
- This would mean that the ITOWM has an experimental O(n), where n is the
+ tiles and stitching the results of the ITWOM into a completed graph.
+ This would mean that the ITWOM has an experimental O(n), where n is the
  number of points to be analyzed.
  
 \end_layout
