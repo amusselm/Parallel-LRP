@@ -445,31 +445,31 @@ int PutMask(double lat, double lon, int value,__global struct dem *dem, int mpi,
 		return -1;
 }
 
-void PlotLRPath(struct site source, struct site destination, 
-   unsigned char mask_value, struct LR LR, 
-   __global struct dem *dem, 
-   const int mpi, 
-   const double ppd,
-   const double clutter, const double max_range, 
-   const unsigned char got_elevation_pattern, 
-   const unsigned char dbm)
-{
+//void PlotLRPath(struct site source, struct site destination, 
+//   unsigned char mask_value, struct LR LR, 
+//   __global struct dem *dem, 
+//   const int mpi, 
+//   const double ppd,
+//   const double clutter, const double max_range, 
+//   const unsigned char got_elevation_pattern, 
+//   const unsigned char dbm)
+//{
 	/* This function plots the RF path loss between source and
 	   destination points based on the ITWOM propagation model,
 	   taking into account antenna pattern data, if available. */
 
-	int	x, y, ifs, ofs, errnum;
-	char	block=0, strmode[100];
-	double	loss, azimuth, pattern=0.0, xmtr_alt,
-		dest_alt, xmtr_alt2, dest_alt2, cos_rcvr_angle,
-		cos_test_angle=0.0, test_alt, elevation=0.0,
-		distance=0.0, four_thirds_earth, rxp, dBm,
-		field_strength=0.0;
-   double elev[ARRAYSIZE+10]; /* Formerly a global variable */
-   path_t path;
-	struct	site temp;
+//	int	x, y, ifs, ofs, errnum;
+//	char	block=0, strmode[100];
+//	double	loss, azimuth, pattern=0.0, xmtr_alt,
+//		dest_alt, xmtr_alt2, dest_alt2, cos_rcvr_angle,
+//		cos_test_angle=0.0, test_alt, elevation=0.0,
+//		distance=0.0, four_thirds_earth, rxp, dBm,
+//		field_strength=0.0;
+//   double elev[ARRAYSIZE+10]; /* Formerly a global variable */
+//   path_t path;
+//	struct	site temp;
    
-   int max_north = dem[0].max_north;
+//   int max_north = dem[0].max_north;
 //	ReadPath(source,destination,&path,dem,mpi,ppd);
 
 //	four_thirds_earth=FOUR_THIRDS*EARTHRADIUS;
@@ -675,28 +675,192 @@ void PlotLRPath(struct site source, struct site destination,
   //              dem,mpi,ppd);
 	//	}
 	//}
+//}
+
+void PlotLRPath(struct site source, double altitude, 
+   unsigned char mask_value, struct LR LR, 
+   const path_t path,
+   const int mpi, 
+   const double ppd,
+   const double clutter, const double max_range, 
+   const unsigned char got_elevation_pattern, 
+   const unsigned char dbm,
+   int path_point,
+   double *loss_result)
+{
+	/* This function plots the RF path loss between source and
+	   destination points based on the ITWOM propagation model,
+	   taking into account antenna pattern data, if available. */
+   int y = path_point;
+
+	int	x, ifs, ofs, errnum;
+	char	block=0, strmode[100];
+	double	loss, azimuth, pattern=0.0, xmtr_alt,
+		dest_alt, xmtr_alt2, dest_alt2, cos_rcvr_angle,
+		cos_test_angle=0.0, test_alt, elevation=0.0,
+		distance=0.0, four_thirds_earth, rxp, dBm,
+		field_strength=0.0;
+   double elev[ARRAYSIZE+10]; /* Formerly a global variable */
+	struct	site temp;
+
+	four_thirds_earth=FOUR_THIRDS*EARTHRADIUS;
+
+	/* Copy elevations plus clutter along path into the elev[] array. */
+
+	for (x=1; x<path.length-1; x++){
+		elev[x+2]=(path.elevation[x]==0.0?path.elevation[x]*METERS_PER_FOOT:(clutter+path.elevation[x])*METERS_PER_FOOT);
+      printf("Path is: %d\n",elev[x+2]);
+   }
+
+
+	/* Copy ending points without clutter */
+
+	elev[2]=path.elevation[0]*METERS_PER_FOOT;
+	elev[path.length+1]=path.elevation[path.length-1]*METERS_PER_FOOT;
+
+	/* Since the only energy the propagation model considers
+	   reaching the destination is based on what is scattered
+	   or deflected from the first obstruction along the path,
+	   we first need to find the location and elevation angle
+	   of that first obstruction (if it exists).  This is done
+	   using a 4/3rds Earth radius to match the radius used by
+	   the irregular terrain propagation model.  This information
+	   is required for properly integrating the antenna's elevation
+	   pattern into the calculation for overall path loss. */
+
+	if(y<(path.length-1) && path.distance[y]<=max_range)
+	{
+		/* Process this point only if it
+		   has not already been processed. */
+      /* THIS NEEDS TO BE SYNCHRONIZED ACROSS THREADS! */
+      distance=5280.0*path.distance[y];
+      xmtr_alt=four_thirds_earth+source.alt+path.elevation[0];
+      dest_alt=four_thirds_earth+altitude+path.elevation[y];
+      dest_alt2=dest_alt*dest_alt;
+      xmtr_alt2=xmtr_alt*xmtr_alt;
+
+      /* Calculate the cosine of the elevation of
+         the receiver as seen by the transmitter. */
+
+      cos_rcvr_angle=((xmtr_alt2)+(distance*distance)-(dest_alt2))/(2.0*xmtr_alt*distance);
+
+      if (cos_rcvr_angle>1.0)
+         cos_rcvr_angle=1.0;
+
+      if (cos_rcvr_angle<-1.0)
+         cos_rcvr_angle=-1.0;
+
+      if (got_elevation_pattern)
+      {
+         /* Determine the elevation angle to the first obstruction
+            along the path IF elevation pattern data is available
+            or an output (.ano) file has been designated. */
+
+         for (x=2, block=0; (x<y && block==0); x++)
+         {
+            distance=5280.0*path.distance[x];
+
+            test_alt=four_thirds_earth+(path.elevation[x]==0.0?path.elevation[x]:path.elevation[x]+clutter);
+
+            /* Calculate the cosine of the elevation
+               angle of the terrain (test point)
+               as seen by the transmitter. */
+
+            cos_test_angle=((xmtr_alt2)+(distance*distance)-(test_alt*test_alt))/(2.0*xmtr_alt*distance);
+
+            if (cos_test_angle>1.0)
+               cos_test_angle=1.0;
+
+            if (cos_test_angle<-1.0)
+               cos_test_angle=-1.0;
+
+            /* Compare these two angles to determine if
+               an obstruction exists.  Since we're comparing
+               the cosines of these angles rather than
+               the angles themselves, the sense of the
+               following "if" statement is reversed from
+               what it would be if the angles themselves
+               were compared. */
+
+            if (cos_rcvr_angle>=cos_test_angle)
+               block=1;
+         }
+
+         if (block)
+            elevation=((acos(cos_test_angle))/DEG2RAD)-90.0;
+         else
+            elevation=((acos(cos_rcvr_angle))/DEG2RAD)-90.0;
+      }
+
+      /* Determine attenuation for each point along
+         the path using ITWOM's point_to_point mode
+         starting at y=2 (number_of_points = 1), the
+         shortest distance terrain can play a role in
+         path loss. */
+
+      elev[0]=y-1;  /* (number of points - 1) */
+
+      /* Distance between elevation samples */
+
+      elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
+
+      point_to_point(elev,source.alt*METERS_PER_FOOT, 
+      altitude*METERS_PER_FOOT, LR.eps_dielect,
+      LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
+      LR.radio_climate, LR.pol, LR.conf, LR.rel, &loss,
+      strmode, &errnum);
+
+      temp.lat=path.lat[y];
+      temp.lon=path.lon[y];
+
+      azimuth=(Azimuth(source,temp));
+
+      /* Integrate the antenna's radiation
+         pattern into the overall path loss. */
+
+      x=(int)rint(10.0*(10.0-elevation));
+
+      if (x>=0 && x<=1000)
+      {
+         azimuth=rint(azimuth);
+
+         pattern=(double)LR.antenna_pattern[(int)azimuth][x];
+
+         if (pattern!=0.0)
+         {
+            pattern=20.0*log10(pattern);
+            loss-=pattern;
+         }
+      }
+      *loss_result = loss;
+   }
 }
 
 __kernel void PlotLRPaths_cl(
    __global struct site *source,
-   __global struct site *destination,
+   __global double *altitude,
    __global unsigned char *mask_value,
    __global struct LR *LR,
-   __global struct dem *dem,
+   __global path_t *paths,
    __constant const int *mpi,
    __constant const double *ppd,
    __constant  const double *clutter,
    __constant const double *max_range,
    __global unsigned char *got_elevation_pattern,
-   __global unsigned char *dbm
+   __global unsigned char *dbm,
+   __global double *loss,
+   __global size_t *siteArraySize
    ){
-   int id = get_global_id(0);
-   printf("Id is: %d\n",id);
-   printf("Testbar!");
+   int pathId = get_global_id(0);
+   int pointId = get_global_id(1);
+
+   double pointLoss;
     
-   PlotLRPath(*source,destination[id],
-     *mask_value,*LR,dem,*mpi,*ppd,*clutter,*max_range,* got_elevation_pattern,
-     *dbm);
+   PlotLRPath(*source,*altitude,
+     *mask_value,*LR,paths[pathId],*mpi,*ppd,*clutter,*max_range,
+      *got_elevation_pattern,*dbm,pointId,&pointLoss);
+
+   loss[pathId*(*siteArraySize)+pointId] = pointLoss;
 }
 
 __kernel void Test_cl(   ){
