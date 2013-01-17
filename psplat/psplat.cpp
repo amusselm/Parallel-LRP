@@ -3372,7 +3372,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       &source,
       &err);
    if(err < 0) {
-      perror("Couldn't create a buffer");
+      fprintf(stderr,"Couldn't create a buffer (source): error code: %d\n",err);
       exit(1);   
    };
    
@@ -3382,7 +3382,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       &altitude,
       &err);
    if(err < 0) {
-      perror("Couldn't create a buffer");
+      fprintf(stderr,"Couldn't create a buffer (alt): error code: %d\n",err);
       exit(1);   
    };
 
@@ -3392,9 +3392,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       &LR,
       &err);
    if(err < 0) {
-      perror("Couldn't create a buffer");
+      fprintf(stderr,"Couldn't create a buffer (LR): error code: %d\n",err);
       exit(1);   
    };
+
+   fprintf(stderr,"How big? %ld\n",sizeof(path_t)*siteArrayCount);
 
    cl_mem pathsBuffer = clCreateBuffer(context,
       CL_MEM_COPY_HOST_PTR,
@@ -3402,7 +3404,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       pathBuffer,
       &err);  
    if(err < 0) {
-      perror("Couldn't create a buffer");
+      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
       exit(1);   
    }
 
