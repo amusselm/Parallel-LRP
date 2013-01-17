@@ -419,7 +419,7 @@ Graphic representing how paths converge near the transmitter.
  value for input and a signal loss value as output.
  The transmitter site is represented with a yellow 'X'.
  Note how some points, like the one that is two rows up and one column to
- the right of the transmitter are close to multiple paths.
+ the right of the transmitter, are close to multiple paths.
  
 \begin_inset CommandInset label
 LatexCommand label
