@@ -851,9 +851,9 @@ __kernel void PlotLRPaths_cl(
 
    double pointLoss;
     
-   PlotLRPath(*source,*altitude,
-     *LR,paths[pathId],*clutter,*max_range,
-      *got_elevation_pattern,*dbm,pointId,&pointLoss);
+   //PlotLRPath(*source,*altitude,
+   //  *LR,paths[pathId],*clutter,*max_range,
+   //   *got_elevation_pattern,*dbm,pointId,&pointLoss);
 
    loss[pathId*(*pathArraySize)+pointId] = pointLoss;
 }
@@ -889,5 +889,6 @@ __kernel void point_to_point_cl(
       point_to_point(itm_elev,*tht_m, *rht_m, *eps_dielect, *sgm_conductivity, 
          *eno_ns_surfref, *frq_mhz, *radio_climate, *pol, *conf, *rel, &loss,
          strmode,&errnum);
+      printf("Loss at %ld: %lf\n",id,loss);
       dbloss[id] = loss;
 }

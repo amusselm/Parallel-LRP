@@ -9,34 +9,20 @@
 #include "clutil.h"
 #include "splat.h"
 
+//Declration of point to point for serial ITWOM
+void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode, int &errnum);
+
 const int ELEVSIZE=50;
 const int ELEVDIST=10000; /*Path Distance in meters, 10km */ 
 /* This means a point every 200 meters, which may or may not be valid 
  * under the ITWOM. That doesn't matter since I'm using canned data anyways */
 
-int main(int argc, char* argv[]){
-   size_t numElevElements = ELEVSIZE;
-   double elevDistance = ELEVDIST;
-   double elev[ELEVSIZE];
-   double itm_elev[ELEVSIZE+2];/* Extra two for legnth and number of elements */
-   double signal[ELEVSIZE]; /* Array to store the results */
-   double sourceAlt=10; /* Source Altitude (meters) */
-   double destAlt=10; /* Source Altitude (meters) */
-   double eps_dielect=15.0;
-	double sgm_conductivity=0.005;
-	double eno_ns_surfref=301.0;
-	double frq_mhz=300.0;
-	int radio_climate=5;
-	int pol=0;
-	double conf=0.50;
-	double rel=0.50;
-   
+void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
+                  double sourceAlt, double destAlt, double eps_dielect, 
+                  double sgm_conductivity, double eno_ns_surfref, 
+                  double frq_mhz, int radio_climate, int pol, double conf,
+                  double rel){
    int err;
-
-   /* Create a very even slope */
-   for(int i = 0; i < ELEVSIZE; i++){
-      elev[i]=i;
-   }
 
    /* OpenCL structures */
    cl_device_id device;
@@ -69,7 +55,7 @@ int main(int argc, char* argv[]){
    cl_mem elevSizeBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
       sizeof(int),
-      &numElevElements,
+      &numElev,
       &err);
    if(err < 0) {
       perror("Couldn't create a buffer");
@@ -91,7 +77,7 @@ int main(int argc, char* argv[]){
    cl_mem pathDistBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
       sizeof(double),
-      &elevDistance,
+      &dist,
       &err);
    if(err < 0) {
       perror("Couldn't create a buffer");
@@ -320,7 +306,7 @@ int main(int argc, char* argv[]){
    }
 
    /* Enqueue kernel */
-   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &numElevElements, 
+   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &numElev, 
          NULL, 0, NULL, NULL); 
    if(err < 0) {
       fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
@@ -350,13 +336,10 @@ int main(int argc, char* argv[]){
       exit(1);
    }
 
-   //do the point_to_point in serial
-   
    printf("Results:\n");
    for(int i=0; i<ELEVSIZE; i++){
-      printf("signal[i]: %lf\n",signal[i]);
+      printf("signal[%d]: %lf, height:%lf\n",i,signal[i],elev[i]);
    }
-
    //Program cleanup
    clReleaseKernel(kernel);
    clReleaseMemObject(elevSizeBuffer);
@@ -376,4 +359,44 @@ int main(int argc, char* argv[]){
    clReleaseCommandQueue(queue);
    clReleaseProgram(program);
    clReleaseContext(context);
+}
+
+int main(int argc, char* argv[]){
+   size_t numElevElements = ELEVSIZE;
+   double elevDistance = ELEVDIST;
+   double elev[ELEVSIZE];
+   double itm_elev[ELEVSIZE+2];/* Extra two for legnth and number of elements */
+   double signal[ELEVSIZE]; /* Array to store the results */
+   double signal_serial[ELEVSIZE]; /* Array to store the results (from the non Cl)*/
+   double sourceAlt=10; /* Source Altitude (meters) */
+   double destAlt=10; /* Source Altitude (meters) */
+   double eps_dielect=15.0;
+	double sgm_conductivity=0.005;
+	double eno_ns_surfref=301.0;
+	double frq_mhz=300.0;
+	int radio_climate=5;
+	int pol=0;
+	double conf=0.50;
+	double rel=0.50;
+   
+
+   /* Create a very even slope */
+   for(int i = 0; i < ELEVSIZE; i++){
+      elev[i]=i;
+   }
+   //do the point_to_point in paraell
+   allPoints_cl(numElevElements,elevDistance,elev,signal,sourceAlt,destAlt,
+                eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,radio_climate,
+                pol,conf,rel);
+
+   //do the point_to_point in serial
+   for(int i=0; i<ELEVSIZE; i++){
+
+   }
+   
+   printf("Results:\n");
+   for(int i=0; i<ELEVSIZE; i++){
+      printf("signal[i]: %lf\n",signal[i]);
+   }
+
 }
