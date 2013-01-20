@@ -26,13 +26,13 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
    double loss;
    char strmode[10000];
    int errnum;
+   for(int i = 0; i < numElev; i++){
+      itm_elev[i] = elev[0]; 
+   }
    for(int i = 1; i <= numElev; i++){
       itm_elev[0] = i; /* Number of points */ 
       itm_elev[1] = dist; /* Distance between points */
    
-      for(int j = 0; j < i; j++){   
-         itm_elev[j+2] = elev[i]; 
-      }
       point_to_point(itm_elev,sourceAlt, destAlt, eps_dielect, sgm_conductivity,
          eno_ns_surfref, frq_mhz, radio_climate, pol, conf, rel, loss,
          strmode,errnum);
