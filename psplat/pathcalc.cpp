@@ -17,6 +17,29 @@ const int ELEVDIST=10000; /*Path Distance in meters, 10km */
 /* This means a point every 200 meters, which may or may not be valid 
  * under the ITWOM. That doesn't matter since I'm using canned data anyways */
 
+void allPoints(size_t numElev, double dist, double *elev, double *signal,
+                  double sourceAlt, double destAlt, double eps_dielect, 
+                  double sgm_conductivity, double eno_ns_surfref, 
+                  double frq_mhz, int radio_climate, int pol, double conf,
+                  double rel){
+   double itm_elev[ARRAYSIZE+2];
+   double loss;
+   char strmode[10000];
+   int errnum;
+   for(int i = 1; i <= numElev; i++){
+      itm_elev[0] = i; /* Number of points */ 
+      itm_elev[1] = dist; /* Distance between points */
+   
+      for(int j = 0; j < i; j++){   
+         itm_elev[j+2] = elev[i]; 
+      }
+      point_to_point(itm_elev,sourceAlt, destAlt, eps_dielect, sgm_conductivity,
+         eno_ns_surfref, frq_mhz, radio_climate, pol, conf, rel, loss,
+         strmode,errnum);
+      signal[i] = loss;
+   }
+}
+
 void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
                   double sourceAlt, double destAlt, double eps_dielect, 
                   double sgm_conductivity, double eno_ns_surfref, 
@@ -336,10 +359,6 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);
    }
 
-   printf("Results:\n");
-   for(int i=0; i<ELEVSIZE; i++){
-      printf("signal[%d]: %lf, height:%lf\n",i,signal[i],elev[i]);
-   }
    //Program cleanup
    clReleaseKernel(kernel);
    clReleaseMemObject(elevSizeBuffer);
@@ -390,13 +409,19 @@ int main(int argc, char* argv[]){
                 pol,conf,rel);
 
    //do the point_to_point in serial
-   for(int i=0; i<ELEVSIZE; i++){
+   allPoints(numElevElements,elevDistance,elev,signal_serial,sourceAlt,destAlt,
+                eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,
+                radio_climate,
+                pol,conf,rel);
 
-   }
    
    printf("Results:\n");
    for(int i=0; i<ELEVSIZE; i++){
-      printf("signal[i]: %lf\n",signal[i]);
+      double difference = signal[i]-signal_serial[i];
+      double max = signal[i]>signal_serial[i] ? signal[i] : signal_serial[i];
+      double percent = difference/max;
+      printf("signal[%d]: %lf, signal_serial[%d]:%lf, difference:%lf, %lf\n",
+            i,signal[i],i,signal_serial[i],difference,percent);
    }
 
 }

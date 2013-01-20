@@ -52,7 +52,7 @@ endif
 endif
 ALL: $(PSPLAT) $(PATHTEST)
 
-$(PATHTEST): $(PATHTEST).o clutil.o
+$(PATHTEST): $(PATHTEST).o clutil.o itwom3.0.o
 	$(CC) $(CFLAGS) -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
 	
 $(PATHTEST).o: pathcalc.cpp 
@@ -70,7 +70,8 @@ clutil.o: clutil.cpp
 itwomclwrapper.o:itwomclwrapper.cpp 
 	$(CC) $(CFLAGS) -c -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
    
-
+itwom3.0.o:itwom3.0.cpp
+	$(CC) $(CFLAGS) -c -o $@ $^ $(INC_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LIBS)
 
 .PHONY: clean all
 
