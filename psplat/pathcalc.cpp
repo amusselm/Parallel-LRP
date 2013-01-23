@@ -23,12 +23,15 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
                   double frq_mhz, int radio_climate, int pol, double conf,
                   double rel){
    double itm_elev[ARRAYSIZE+2];
-   double loss;
+   double loss = 0;
    char strmode[10000];
    int errnum;
+
    for(int i = 0; i < numElev; i++){
-      itm_elev[i] = elev[0]; 
+      itm_elev[i+2] = elev[i]; 
    }
+
+
    for(int i = 1; i <= numElev; i++){
       itm_elev[0] = i; /* Number of points */ 
       itm_elev[1] = dist; /* Distance between points */
