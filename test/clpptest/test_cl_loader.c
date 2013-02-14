@@ -106,7 +106,7 @@ int main() {
    size_t local_size, global_size;
 
    /* Data and buffers */
-   int output;
+   double output;
    cl_mem  output_buffer;
    cl_int num_groups;
 
@@ -169,7 +169,7 @@ int main() {
       exit(1);
    }
 
-   printf("Output is: %d\n",output);
+   printf("Output is: %lf\n",output);
 
    /* Deallocate resources */
    clReleaseKernel(kernel);
