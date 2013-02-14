@@ -14,3 +14,7 @@ double getResult() {
 __kernel void test(__global double* result) {
    *result = getResult();//This proves that the code ran
 }
+
+__kernel void test2(__global double* result) {
+  *result = 31337.77; 
+}

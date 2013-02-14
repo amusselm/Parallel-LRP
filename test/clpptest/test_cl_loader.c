@@ -142,7 +142,7 @@ int main() {
 
    /* Create a kernel */
    //kernel = clCreateKernel(program, KERNEL_FUNC, &err);
-   kernel = clCreateKernel(program, "test", &err);
+   kernel = clCreateKernel(program, "test2", &err);
    if(err < 0) {
       perror("Couldn't create a kernel");
       exit(1);
