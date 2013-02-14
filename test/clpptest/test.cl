@@ -1,4 +1,4 @@
-#define TEST_NUM 10.32
+#include "test_cl_header.h"
 
 //elevation=((acos(cos_test_angle))/DEG2RAD)-90.0
 // ^ double   ^returns double  ^ double  ^double ^--also a double
