@@ -707,7 +707,6 @@ void PlotLRPath(struct site source, double altitude,
 
 	for (x=1; x<path.length-1; x++){
 		elev[x+2]=(path.elevation[x]==0.0?path.elevation[x]*METERS_PER_FOOT:(clutter+path.elevation[x])*METERS_PER_FOOT);
-      printf("Path is: %d\n",elev[x+2]);
    }
 
 
@@ -728,67 +727,12 @@ void PlotLRPath(struct site source, double altitude,
 
 	if(y<(path.length-1) && path.distance[y]<=max_range)
 	{
-		/* Process this point only if it
-		   has not already been processed. */
-      /* THIS NEEDS TO BE SYNCHRONIZED ACROSS THREADS! */
       distance=5280.0*path.distance[y];
       xmtr_alt=four_thirds_earth+source.alt+path.elevation[0];
       dest_alt=four_thirds_earth+altitude+path.elevation[y];
       dest_alt2=dest_alt*dest_alt;
       xmtr_alt2=xmtr_alt*xmtr_alt;
 
-      /* Calculate the cosine of the elevation of
-         the receiver as seen by the transmitter. */
-
-      cos_rcvr_angle=((xmtr_alt2)+(distance*distance)-(dest_alt2))/(2.0*xmtr_alt*distance);
-
-      if (cos_rcvr_angle>1.0)
-         cos_rcvr_angle=1.0;
-
-      if (cos_rcvr_angle<-1.0)
-         cos_rcvr_angle=-1.0;
-
-      if (got_elevation_pattern)
-      {
-         /* Determine the elevation angle to the first obstruction
-            along the path IF elevation pattern data is available
-            or an output (.ano) file has been designated. */
-
-         for (x=2, block=0; (x<y && block==0); x++)
-         {
-            distance=5280.0*path.distance[x];
-
-            test_alt=four_thirds_earth+(path.elevation[x]==0.0?path.elevation[x]:path.elevation[x]+clutter);
-
-            /* Calculate the cosine of the elevation
-               angle of the terrain (test point)
-               as seen by the transmitter. */
-
-            cos_test_angle=((xmtr_alt2)+(distance*distance)-(test_alt*test_alt))/(2.0*xmtr_alt*distance);
-
-            if (cos_test_angle>1.0)
-               cos_test_angle=1.0;
-
-            if (cos_test_angle<-1.0)
-               cos_test_angle=-1.0;
-
-            /* Compare these two angles to determine if
-               an obstruction exists.  Since we're comparing
-               the cosines of these angles rather than
-               the angles themselves, the sense of the
-               following "if" statement is reversed from
-               what it would be if the angles themselves
-               were compared. */
-
-            if (cos_rcvr_angle>=cos_test_angle)
-               block=1;
-         }
-
-         if (block)
-            elevation=((acos(cos_test_angle))/DEG2RAD)-90.0;
-         else
-            elevation=((acos(cos_rcvr_angle))/DEG2RAD)-90.0;
-      }
 
       /* Determine attenuation for each point along
          the path using ITWOM's point_to_point mode
@@ -808,28 +752,7 @@ void PlotLRPath(struct site source, double altitude,
       LR.radio_climate, LR.pol, LR.conf, LR.rel, &loss,
       strmode, &errnum);
 
-      temp.lat=path.lat[y];
-      temp.lon=path.lon[y];
 
-      azimuth=(Azimuth(source,temp));
-
-      /* Integrate the antenna's radiation
-         pattern into the overall path loss. */
-
-      x=(int)rint(10.0*(10.0-elevation));
-
-      if (x>=0 && x<=1000)
-      {
-         azimuth=rint(azimuth);
-
-         pattern=(double)LR.antenna_pattern[(int)azimuth][x];
-
-         if (pattern!=0.0)
-         {
-            pattern=20.0*log10(pattern);
-            loss-=pattern;
-         }
-      }
       *loss_result = loss;
    }
 }
