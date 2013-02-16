@@ -681,7 +681,7 @@ void PlotLRPath(struct site source, double altitude,
    struct LR LR, 
    const path_t path,
    const double clutter, const double max_range, 
-   const unsigned char got_elevation_pattern, 
+   const unsigned char got_elevation_pattern,
    const unsigned char dbm,
    int path_point,
    double *loss_result)
@@ -704,15 +704,12 @@ void PlotLRPath(struct site source, double altitude,
 	four_thirds_earth=FOUR_THIRDS*EARTHRADIUS;
 
 	/* Copy elevations plus clutter along path into the elev[] array. */
-
 	for (x=1; x<path.length-1; x++){
 		elev[x+2]=(path.elevation[x]==0.0?path.elevation[x]*METERS_PER_FOOT:(clutter+path.elevation[x])*METERS_PER_FOOT);
-      printf("Path is: %d\n",elev[x+2]);
    }
 
 
 	/* Copy ending points without clutter */
-
 	elev[2]=path.elevation[0]*METERS_PER_FOOT;
 	elev[path.length+1]=path.elevation[path.length-1]*METERS_PER_FOOT;
 
@@ -730,16 +727,13 @@ void PlotLRPath(struct site source, double altitude,
 	{
 		/* Process this point only if it
 		   has not already been processed. */
-      /* THIS NEEDS TO BE SYNCHRONIZED ACROSS THREADS! */
       distance=5280.0*path.distance[y];
       xmtr_alt=four_thirds_earth+source.alt+path.elevation[0];
       dest_alt=four_thirds_earth+altitude+path.elevation[y];
       dest_alt2=dest_alt*dest_alt;
       xmtr_alt2=xmtr_alt*xmtr_alt;
-
       /* Calculate the cosine of the elevation of
          the receiver as seen by the transmitter. */
-
       cos_rcvr_angle=((xmtr_alt2)+(distance*distance)-(dest_alt2))/(2.0*xmtr_alt*distance);
 
       if (cos_rcvr_angle>1.0)
@@ -753,7 +747,7 @@ void PlotLRPath(struct site source, double altitude,
          /* Determine the elevation angle to the first obstruction
             along the path IF elevation pattern data is available
             or an output (.ano) file has been designated. */
-
+/*
          for (x=2, block=0; (x<y && block==0); x++)
          {
             distance=5280.0*path.distance[x];
@@ -764,6 +758,7 @@ void PlotLRPath(struct site source, double altitude,
                angle of the terrain (test point)
                as seen by the transmitter. */
 
+/*
             cos_test_angle=((xmtr_alt2)+(distance*distance)-(test_alt*test_alt))/(2.0*xmtr_alt*distance);
 
             if (cos_test_angle>1.0)
@@ -780,14 +775,19 @@ void PlotLRPath(struct site source, double altitude,
                what it would be if the angles themselves
                were compared. */
 
+/*
             if (cos_rcvr_angle>=cos_test_angle)
                block=1;
          }
 
-         if (block)
+*/
+//If these lines are uncommented, it will break the intel OpenCL compiler. 
+         if (block){
             elevation=((acos(cos_test_angle))/DEG2RAD)-90.0;
-         else
-            elevation=((acos(cos_rcvr_angle))/DEG2RAD)-90.0;
+         }
+         else {
+//            elevation=((acos(cos_rcvr_angle))/DEG2RAD)-90.0;
+         }
       }
 
       /* Determine attenuation for each point along
@@ -796,10 +796,11 @@ void PlotLRPath(struct site source, double altitude,
          shortest distance terrain can play a role in
          path loss. */
 
-      elev[0]=y-1;  /* (number of points - 1) */
+ //     elev[0]=y-1;  /* (number of points - 1) */
 
       /* Distance between elevation samples */
 
+/*
       elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
 
       point_to_point(elev,source.alt*METERS_PER_FOOT, 
@@ -812,9 +813,11 @@ void PlotLRPath(struct site source, double altitude,
       temp.lon=path.lon[y];
 
       azimuth=(Azimuth(source,temp));
+*/
 
       /* Integrate the antenna's radiation
          pattern into the overall path loss. */
+/*
 
       x=(int)rint(10.0*(10.0-elevation));
 
@@ -831,6 +834,7 @@ void PlotLRPath(struct site source, double altitude,
          }
       }
       *loss_result = loss;
+*/
    }
 }
 
@@ -851,9 +855,11 @@ __kernel void PlotLRPaths_cl(
 
    double pointLoss;
     
-   //PlotLRPath(*source,*altitude,
-   //  *LR,paths[pathId],*clutter,*max_range,
-   //   *got_elevation_pattern,*dbm,pointId,&pointLoss);
+   PlotLRPath(*source,*altitude,
+     *LR,paths[pathId],*clutter,*max_range,
+      *got_elevation_pattern,
+      *dbm,pointId,
+      &pointLoss);
 
    loss[pathId*(*pathArraySize)+pointId] = pointLoss;
 }
