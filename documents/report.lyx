@@ -565,6 +565,13 @@ OpenCL also provides a callback functionality that allows host system code
 
 \begin_layout Subsubsection
 Multidimensional Work Items
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -581,6 +588,36 @@ lly, which means that more data must be sent to the device than if the paths
 
 \begin_layout Section
 Implementation and Modifications to SPLAT and the ITM
+\end_layout
+
+\begin_layout Standard
+The author initially attempted to implement the ITM in parallel by generating
+ all paths on the device, as decried in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:path-on-device"
+
+\end_inset
+
+.
+ However, due to technical issues that were perhaps related to the potential
+ compiler bug mentioned in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:IntelCLBUg"
+
+\end_inset
+
+, this implementation did not work.
+ Then, the author switched to the multidimensional work-item approach described
+ in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -617,6 +654,13 @@ Finally, due to some of the limitations of OpenCL, a number of features
  radiation pattern of an antenna to avoid triggering a potential Intel OpenCL
  compiler bug.
  
+\begin_inset CommandInset label
+LatexCommand label
+name "implementation"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -634,9 +678,9 @@ Test Procedure
 \begin_layout Standard
 To establish a baseline benchmark for SPLAT, the author ran a set number
  tests on the existing SPLAT implementation.
- For these tests, I modified SPLAT's build script to embed debug information
- and generate runtime profiles, which may have hurt overall performance
- somewhat.
+ For these tests, the author modified SPLAT's build script to embed debug
+ information and generate runtime profiles, which may have hurt overall
+ performance somewhat.
  
 \end_layout
 
@@ -647,8 +691,6 @@ These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
  Cal Poly would result in SPLAT spending less time reading terrain data
  from disk compared to inland areas.
  Additionally, all of these tests assume a receiver at 10 feet above ground.
- This may only stress part of the ITWOM, while leaving other parts of the
- code unused.
  
 \end_layout
 
@@ -687,10 +729,6 @@ reference "alg:Shell-script-used"
 wide false
 sideways false
 status open
-
-\begin_layout Plain Layout
-
-\end_layout
 
 \begin_layout Plain Layout
 \begin_inset listings
@@ -955,7 +993,7 @@ OpenCL
 \end_layout
 
 \begin_layout Standard
-Open CL Promises 
+The 
 \end_layout
 
 \begin_layout Subsubsection
@@ -970,6 +1008,201 @@ lity is contained in a single file.
  SPLAT uses global variables extensively, making it difficult to re-factor
  or re-use SPLAT's code.
  
+\end_layout
+
+\begin_layout Subsubsection
+Potential Intel OpenCL Bug
+\end_layout
+
+\begin_layout Standard
+As mentioned in section 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "implementation"
+
+\end_inset
+
+, the author believes that he might have found a bug in the OpenCL Compiler.
+ In the device-side code there is a function called PlotLRPath(), which
+ is described in 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "alg:PlotLRPath-reduced"
+
+\end_inset
+
+.
+ The mere presence of certain lines within that function causes any kernel
+ that is defined in the same file to fail, regardless if that kernel calls
+ the suspect function or not.
+ As stated in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "implementation"
+
+\end_inset
+
+, the author was able to avoid the issue by simply removing the suspect
+ line and all other calculations necessary to account for the antenna's
+ vertical radiation pattern.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:IntelCLBUg"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float algorithm
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+void PlotLRPath(
+\end_layout
+
+\begin_layout Plain Layout
+
+	struct site source, 
+\end_layout
+
+\begin_layout Plain Layout
+
+	double altitude,    
+\end_layout
+
+\begin_layout Plain Layout
+
+	struct LR LR,    
+\end_layout
+
+\begin_layout Plain Layout
+
+	const path_t path,
+\end_layout
+
+\begin_layout Plain Layout
+
+	const double clutter, 
+\end_layout
+
+\begin_layout Plain Layout
+
+	const double max_range,    
+\end_layout
+
+\begin_layout Plain Layout
+
+	const unsigned char got_elevation_pattern,    
+\end_layout
+
+\begin_layout Plain Layout
+
+	const unsigned char dbm,    
+\end_layout
+
+\begin_layout Plain Layout
+
+	int path_point,    
+\end_layout
+
+\begin_layout Plain Layout
+
+	double *loss_result) 
+\end_layout
+
+\begin_layout Plain Layout
+
+{ /* This function plots the RF path loss between source and destination
+ points based on the ITWOM propagation model, taking into account antenna
+ pattern data, if available.
+ */   
+\end_layout
+
+\begin_layout Plain Layout
+
+...
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+if (block){             
+\end_layout
+
+\begin_layout Plain Layout
+
+	elevation=((acos(cos_test_angle))/DEG2RAD)-90.0;          
+\end_layout
+
+\begin_layout Plain Layout
+
+}          
+\end_layout
+
+\begin_layout Plain Layout
+
+else { 
+\end_layout
+
+\begin_layout Plain Layout
+
+	elevation=((acos(cos_rcvr_angle))/DEG2RAD)-90.0;
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+...
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+A portion of the PlotLRPath() function that is believed to trigger a failure
+ due to a potential bug in the Intel OpenCL Compiler 
+\begin_inset CommandInset label
+LatexCommand label
+name "alg:PlotLRPath-reduced"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
