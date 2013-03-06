@@ -679,7 +679,7 @@ int PutMask(double lat, double lon, int value,__global struct dem *dem, int mpi,
 
 void PlotLRPath(struct site source, double altitude, 
    struct LR LR, 
-   const path_t path,
+   const path_m path,
    const double clutter, const double max_range, 
    const unsigned char got_elevation_pattern, 
    const unsigned char dbm,
@@ -725,9 +725,9 @@ void PlotLRPath(struct site source, double altitude,
 	   is required for properly integrating the antenna's elevation
 	   pattern into the calculation for overall path loss. */
 
-	if(y<(path.length-1) && path.distance[y]<=max_range)
+	if(y<(path.length-1) && path.distance*y<=max_range)
 	{
-      distance=5280.0*path.distance[y];
+      distance=5280.0*path.distance*y;
       xmtr_alt=four_thirds_earth+source.alt+path.elevation[0];
       dest_alt=four_thirds_earth+altitude+path.elevation[y];
       dest_alt2=dest_alt*dest_alt;
@@ -744,7 +744,7 @@ void PlotLRPath(struct site source, double altitude,
 
       /* Distance between elevation samples */
 
-      elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
+      elev[1]=METERS_PER_MILE*(path.distance);
 
       point_to_point(elev,source.alt*METERS_PER_FOOT, 
       altitude*METERS_PER_FOOT, LR.eps_dielect,
@@ -761,7 +761,7 @@ __kernel void PlotLRPaths_cl(
    __global struct site *source,//0 - Transmitter site
    __global double *altitude,//1 - Receiver Altitude
    __global struct LR *LR,//2 - Propigation attributes
-   __global path_t *paths,//3 - Array of Paths
+   __global path_m *paths,//3 - Array of Paths
    __constant  const double *clutter,//4 - Clutter Height
    __constant const double *max_range,//5
    __global unsigned char *got_elevation_pattern,//6
@@ -774,9 +774,9 @@ __kernel void PlotLRPaths_cl(
 
    double pointLoss;
     
-   //PlotLRPath(*source,*altitude,
-   //  *LR,paths[pathId],*clutter,*max_range,
-   //   *got_elevation_pattern,*dbm,pointId,&pointLoss);
+   PlotLRPath(*source,*altitude,
+     *LR,paths[pathId],*clutter,*max_range,
+      *got_elevation_pattern,*dbm,pointId,&pointLoss);
 
    loss[pathId*(*pathArraySize)+pointId] = pointLoss;
 }

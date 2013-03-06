@@ -155,5 +155,10 @@ typedef struct path {
    int length;
 } path_t;
 
+typedef struct path_m {	
+   double elevation[ARRAYSIZE];
+   double distance;
+   int length;
+} path_m;
 
 #endif
