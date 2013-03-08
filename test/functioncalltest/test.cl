@@ -14,7 +14,7 @@ __kernel void test(__global double* result) {
    struct LR aLRStruct;
    double foo;
 
-   PlotLRPath_test(aLRStruct,&foo); 
+//   PlotLRPath_test(aLRStruct,&foo); 
    *result = foo;
 }
 
