@@ -679,7 +679,7 @@ int PutMask(double lat, double lon, int value,__global struct dem *dem, int mpi,
 
 void PlotLRPath_test(struct site source, 
    double altitude, 
-   struct LR LRM, 
+   struct LR_min LRM, 
    const path_m path,
    const double clutter, const double max_range, 
    const unsigned char got_elevation_pattern, 
@@ -691,7 +691,7 @@ void PlotLRPath_test(struct site source,
 }
 
 void PlotLRPath(struct site source, double altitude, 
-   struct LR LR, 
+   struct LR_min LR, 
    const path_m path,
    const double clutter, const double max_range, 
    const unsigned char got_elevation_pattern, 
@@ -773,7 +773,7 @@ void PlotLRPath(struct site source, double altitude,
 __kernel void PlotLRPaths_cl(
    __global struct site *source,//0 - Transmitter site
    __global double *altitude,//1 - Receiver Altitude
-   __global struct LR *LR,//2 - Propigation attributes
+   __global struct LR_min *LR,//2 - Propigation attributes
    __global path_m *paths,//3 - Array of Paths
    __constant  const double *clutter,//4 - Clutter Height
    __constant const double *max_range,//5
@@ -786,13 +786,16 @@ __kernel void PlotLRPaths_cl(
    int pointId = get_global_id(1);
 
    double pointLoss;
+   printf("Run!\n");
     
+   /*
    PlotLRPath_test(*source,
       *altitude,
      *LR,
       paths[pathId],*clutter,*max_range,
       *got_elevation_pattern,*dbm,pointId,
       &pointLoss);
+   */
 
    loss[pathId*(*pathArraySize)+pointId] = pointLoss;
 }

@@ -3245,6 +3245,17 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    //Yes, that should be static, because this can be called by multiple tx
    // sites
 	FILE *fd=NULL;
+   struct LR_min minimalLR;
+
+   minimalLR.eps_dielect = LR.eps_dielect;
+   minimalLR.sgm_conductivity = LR.sgm_conductivity;
+   minimalLR.eno_ns_surfref = LR.eno_ns_surfref;
+   minimalLR.frq_mhz = LR.frq_mhz;
+   minimalLR.conf = LR.conf;
+   minimalLR.rel = LR.rel;
+   minimalLR.erp = LR.erp;
+   minimalLR.radio_climate = LR.radio_climate;
+   minimalLR.pol = LR.pol;
 
    /* OpenCL structures */
    cl_device_id device;
@@ -3501,8 +3512,8 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
    cl_mem LRBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(struct LR),
-      &LR,
+      sizeof(struct LR_min),
+      &minimalLR,
       &err);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a buffer (LR): error code: %d\n",err);
@@ -3670,6 +3681,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);
    }
 
+   fprintf(stderr,"Eh?\n");
    //Segfault happens here, due to the loss Result not being a valid hunk of mem
    /* Read the kernel's output */
    err = clEnqueueReadBuffer(
