@@ -1,0 +1,1 @@
+This is a simple test that is intended to test the passing of const structs. So far, I've been unable to reproduce the issues I'm having in the main codebase with this testacse. 
