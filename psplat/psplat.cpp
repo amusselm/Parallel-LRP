@@ -488,6 +488,118 @@ double ElevationAngle(struct site source, struct site destination)
 	return ((180.0*(acos(((b*b)+(dx*dx)-(a*a))/(2.0*b*dx)))/PI)-90.0);
 }
 
+void ReadPath_im(struct site source, struct site destination, 
+                 int *length, double* dist, double* elevation)
+{
+	/* This function generates a sequence of latitude and
+	   longitude positions between source and destination
+	   locations along a great circle path, and stores
+	   elevation and distance information for points
+	   along that path in the "path" structure. */
+
+	int	c;
+	double	azimuth, distance, lat1, lon1, beta, den, num,
+		lat2, lon2, total_distance, dx, dy, path_length,
+		miles_per_sample, samples_per_radian=68755.0;
+	struct	site tempsite;
+
+	lat1=source.lat*DEG2RAD;
+	lon1=source.lon*DEG2RAD;
+
+	lat2=destination.lat*DEG2RAD;
+	lon2=destination.lon*DEG2RAD;
+
+   //This is SO broken
+	if (ppd==1200.0)
+		samples_per_radian=68755.0;
+
+	if (ppd==3600.0)
+		samples_per_radian=206265.0;
+
+	azimuth=Azimuth(source,destination)*DEG2RAD;
+
+	total_distance=Distance(source,destination);
+
+	if (total_distance>(30.0/ppd))		/* > 0.5 pixel distance */
+	{
+		dx=samples_per_radian*acos(cos(lon1-lon2));
+		dy=samples_per_radian*acos(cos(lat1-lat2));
+
+		path_length=sqrt((dx*dx)+(dy*dy));		/* Total number of samples */
+
+		miles_per_sample=total_distance/path_length;	/* Miles per sample */
+	}
+
+	else
+	{
+		c=0;
+		dx=0.0;
+		dy=0.0;
+		path_length=0.0;
+		miles_per_sample=0.0;
+		total_distance=0.0;
+
+		lat1=lat1/DEG2RAD;
+		lon1=lon1/DEG2RAD;
+
+		elevation[c]=GetElevation(source);
+		*dist=0.0;
+	}
+
+	for (distance=0.0, c=0; (total_distance!=0.0 && distance<=total_distance && c<ARRAYSIZE); c++, distance=miles_per_sample*(double)c)
+	{
+		beta=distance/3959.0;
+		lat2=asin(sin(lat1)*cos(beta)+cos(azimuth)*sin(beta)*cos(lat1));
+		num=cos(beta)-(sin(lat1)*sin(lat2));
+		den=cos(lat1)*cos(lat2);
+
+		if (azimuth==0.0 && (beta>HALFPI-lat1))
+			lon2=lon1+PI;
+
+		else if (azimuth==HALFPI && (beta>HALFPI+lat1))
+				lon2=lon1+PI;
+
+		else if (fabs(num/den)>1.0)
+				lon2=lon1;
+
+		else
+		{
+			if ((PI-azimuth)>=0.0)
+				lon2=lon1-arccos(num,den);
+			else
+				lon2=lon1+arccos(num,den);
+		}
+	
+		while (lon2<0.0)
+			lon2+=TWOPI;
+
+		while (lon2>TWOPI)
+			lon2-=TWOPI;
+ 
+		lat2=lat2/DEG2RAD;
+		lon2=lon2/DEG2RAD;
+
+		tempsite.lat=lat2;
+		tempsite.lon=lon2;
+		elevation[c]=GetElevation(tempsite);
+		*dist=distance;
+	}
+
+	/* Make sure exact destination point is recorded at aPath->length-1 */
+
+	if (c<ARRAYSIZE)
+	{
+		elevation[c]=GetElevation(destination);
+		c++;
+	}
+
+	if (c<ARRAYSIZE)
+		*length=c;
+	else
+		*length=ARRAYSIZE-1;
+}
+
+
 void ReadPath_m(struct site source, struct site destination, path_m *aPath)
 {
 	/* This function generates a sequence of latitude and
@@ -3226,6 +3338,8 @@ void PlotLOSMap(struct site source, double altitude)
 
 void PlotLRMap(struct site source, double altitude, char *plo_filename)
 {
+
+   fprintf(stderr,"Eh?\n");
 	/* This function performs a 360 degree sweep around the
 	   transmitter site (source location), and plots the
 	   Irregular Terrain Model attenuation on the SPLAT!
@@ -3246,6 +3360,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    // sites
 	FILE *fd=NULL;
    struct LR_min minimalLR;
+
 
    minimalLR.eps_dielect = LR.eps_dielect;
    minimalLR.sgm_conductivity = LR.sgm_conductivity;
@@ -3329,10 +3444,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    //The acctual count of sites in the array. This may be smaller than the acctual array size, but not bigger!
    size_t siteArrayCount = 0;
 
-   //Output from OpenCL
-   double *lossBuffer = new double[siteArraySize*ARRAYSIZE];
-   struct site *siteArray = new struct site[siteArraySize];
-   path_m *pathBuffer = new path_m[siteArraySize];
+   double lossBuffer[SITEARRAY][ARRAYSIZE];
+   double pathElev[SITEARRAY*ARRAYSIZE];
+   double distance[SITEARRAY];
+   int length[SITEARRAY];
+   struct site siteArray[SITEARRAY];
    
 
 	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
@@ -3345,7 +3461,10 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.alt=altitude;
 
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
+      ReadPath_im(source,edge,
+                  &length[siteArrayCount],
+                  &distance[siteArrayCount],
+                  &pathElev[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
 
@@ -3378,8 +3497,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=min_west;
 		edge.alt=altitude;
 
+      ReadPath_im(source,edge,
+                  &length[siteArrayCount],
+                  &distance[siteArrayCount],
+                  &pathElev[siteArrayCount]);
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
       //Foo1?
@@ -3414,8 +3536,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=lon;
 		edge.alt=altitude;
 
+      ReadPath_im(source,edge,
+                  &length[siteArrayCount],
+                  &distance[siteArrayCount],
+                  &pathElev[siteArrayCount]);
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
       //Foo2?
@@ -3447,8 +3572,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=max_west;
 		edge.alt=altitude;
 
+      ReadPath_im(source,edge,
+                  &length[siteArrayCount],
+                  &distance[siteArrayCount],
+                  &pathElev[siteArrayCount]);
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
       //Foo3?
@@ -3471,6 +3599,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    fprintf(stderr,"Site Array Size: %d \n",siteArraySize);
    fprintf(stderr,"Site Array Count: %ld \n",siteArrayCount);
    assert(siteArrayCount <= siteArraySize);
+
    //Create OpenCL devices/etc...
    cl_uint numPlatforms;
    cl_uint numDevices[MAX_DEVICE];
@@ -3522,13 +3651,34 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
    cl_mem pathsBuffer = clCreateBuffer(context,
       CL_MEM_COPY_HOST_PTR,
-      sizeof(path_m)*siteArrayCount,
-      pathBuffer,
+      sizeof(double)*ARRAYSIZE*siteArrayCount,
+      pathElev,
       &err);  
    if(err < 0) {
       fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
       exit(1);   
    }
+
+   cl_mem distanceBuffer = clCreateBuffer(context,
+      CL_MEM_COPY_HOST_PTR,
+      sizeof(double)*siteArrayCount,
+      distance,
+      &err);  
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
+      exit(1);   
+   }
+
+   cl_mem lengthBuffer = clCreateBuffer(context,
+      CL_MEM_COPY_HOST_PTR,
+      sizeof(int)*siteArrayCount,
+      length,
+      &err);  
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
+      exit(1);   
+   }
+
 
    cl_mem clutterBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -3625,6 +3775,18 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    }
 
    err = clSetKernelArg(kernel, 3, sizeof(cl_mem), &pathsBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:paths Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &distanceBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:paths Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &lengthBuffer);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:paths Code:%d",err);
       exit(1);

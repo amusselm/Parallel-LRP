@@ -12,6 +12,7 @@
 /* Smaller number of pages for testing */
 #define MAXPAGES 1
 
+
 /**
  * Bunch of preproscessor definations. These exist so that both host and device
  * code know how big the statically allocated arrays are
@@ -51,6 +52,7 @@
 #if HD_MODE==1
 	#if MAXPAGES==1
 	#define ARRAYSIZE 5092 
+   #define SITEARRAY 14400
 	#endif
 
 	#if MAXPAGES==4
