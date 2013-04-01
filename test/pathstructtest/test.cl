@@ -11,14 +11,17 @@ void PlotLRPath_test(
    double *loss_result
    )
 {
-   *loss_result = 1337.2;
+   *loss_result = testPath.distance;
 }
 
 __kernel void test(__global double* result) {
-   path_m testPath;
+   path_m testPath[2];
    double foo;
+   testPath[0].distance = 123.4;
+   testPath[1].distance = 567.8;
+   printf("Run!\n");
 
-   PlotLRPath_test(testPath,&foo); 
+   PlotLRPath_test(testPath[1],&foo); 
    *result = foo;
 }
 
