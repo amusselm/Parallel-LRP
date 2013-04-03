@@ -488,7 +488,8 @@ double ElevationAngle(struct site source, struct site destination)
 	return ((180.0*(acos(((b*b)+(dx*dx)-(a*a))/(2.0*b*dx)))/PI)-90.0);
 }
 
-void ReadPath_m(struct site source, struct site destination, path_m *aPath)
+void ReadPath_im(struct site source, struct site destination, 
+                 double pathArray[], double *distOutput, int* length)
 {
 	/* This function generates a sequence of latitude and
 	   longitude positions between source and destination
@@ -541,8 +542,8 @@ void ReadPath_m(struct site source, struct site destination, path_m *aPath)
 		lat1=lat1/DEG2RAD;
 		lon1=lon1/DEG2RAD;
 
-		aPath->elevation[c]=GetElevation(source);
-		aPath->distance=0.0;
+		pathArray[c]=GetElevation(source);
+		*distOutput=0.0;
 	}
 
 	for (distance=0.0, c=0; (total_distance!=0.0 && distance<=total_distance && c<ARRAYSIZE); c++, distance=miles_per_sample*(double)c)
@@ -580,22 +581,23 @@ void ReadPath_m(struct site source, struct site destination, path_m *aPath)
 
 		tempsite.lat=lat2;
 		tempsite.lon=lon2;
-		aPath->elevation[c]=GetElevation(tempsite);
-		aPath->distance=distance;
+		pathArray[c]=GetElevation(tempsite);
+		*distOutput=distance;
 	}
 
-	/* Make sure exact destination point is recorded at aPath->length-1 */
+	/* Make sure exact destination point is recorded at pathArray[length-1] */
 
 	if (c<ARRAYSIZE)
 	{
-		aPath->elevation[c]=GetElevation(destination);
+		pathArray[c]=GetElevation(destination);
 		c++;
 	}
 
 	if (c<ARRAYSIZE)
-		aPath->length=c;
+		*length=c;
 	else
-		aPath->length=ARRAYSIZE-1;
+		*length=ARRAYSIZE-1;
+
 }
 
 void ReadPath_l(struct site source, struct site destination, struct path *aPath)
@@ -3331,8 +3333,11 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
    //Output from OpenCL
    double *lossBuffer = new double[siteArraySize*ARRAYSIZE];
+   double *pathBuffer = new double[siteArraySize*ARRAYSIZE]; 
+   double *distance = new double[siteArraySize];
+   int *length = new int[siteArraySize];
    struct site *siteArray = new struct site[siteArraySize];
-   path_m *pathBuffer = new path_m[siteArraySize];
+   //path_m *pathBuffer = new path_m[siteArraySize];
    
 
 	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
@@ -3345,7 +3350,10 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.alt=altitude;
 
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
+      ReadPath_im(source,edge,
+                  &pathBuffer[siteArrayCount*ARRAYSIZE],
+                  &distance[siteArrayCount],
+                  &length[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
 
@@ -3379,7 +3387,10 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.alt=altitude;
 
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
+      ReadPath_im(source,edge,
+                  &pathBuffer[siteArrayCount*ARRAYSIZE],
+                  &distance[siteArrayCount],
+                  &length[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
       //Foo1?
@@ -3415,7 +3426,10 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.alt=altitude;
 
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
+      ReadPath_im(source,edge,
+                  &pathBuffer[siteArrayCount*ARRAYSIZE],
+                  &distance[siteArrayCount],
+                  &length[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
       //Foo2?
@@ -3448,7 +3462,10 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.alt=altitude;
 
       //I hope this adds edge to the array
-      ReadPath_m(source,edge,&pathBuffer[siteArrayCount]);
+      ReadPath_im(source,edge,
+                  &pathBuffer[siteArrayCount*ARRAYSIZE],
+                  &distance[siteArrayCount],
+                  &length[siteArrayCount]);
       siteArray[siteArrayCount] = edge;
       siteArrayCount++;
       //Foo3?
@@ -3699,6 +3716,12 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       fprintf(stderr,"Couldn't read the buffer\n");
       exit(1);
    }
+
+   delete lossBuffer;
+   delete pathBuffer;
+   delete distance;
+   delete length;
+   delete siteArray;
 
 	if (fd!=NULL)
 		fclose(fd);
