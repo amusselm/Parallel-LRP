@@ -774,19 +774,21 @@ __kernel void PlotLRPaths_cl(
    __global struct site *source,//0 - Transmitter site
    __global double *altitude,//1 - Receiver Altitude
    __global struct LR_min *LR,//2 - Propigation attributes
-   __global path_m *paths,//3 - Array of Paths
-   __constant  const double *clutter,//4 - Clutter Height
-   __constant const double *max_range,//5
-   __global unsigned char *got_elevation_pattern,//6
-   __global unsigned char *dbm,//7
-   __global double *loss,//8 - Loss Results
-   __global size_t *pathArraySize //9 - Size of each path 
+   __global double *paths,//3 - Array of Paths
+   __global double *pathDist,//4- Array of Path distances
+   __global int *pathLength,//5- Array of Path distances
+   __constant  const double *clutter,//6 - Clutter Height
+   __constant const double *max_range,//7
+   __global unsigned char *got_elevation_pattern,//8
+   __global unsigned char *dbm,//9
+   __global double *loss,//10 - Loss Results
+   __global size_t *pathArraySize //11 - Size of each path 
    ){
    int pathId = get_global_id(0);
    int pointId = get_global_id(1);
 
    double pointLoss;
-   printf("Run!\n");
+   printf("pathLength:%d, pathDist:%lf\n",pathLength[pathId],pathDist[pathId]);
     
    /*
    PlotLRPath_test(*source,

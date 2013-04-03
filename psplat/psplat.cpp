@@ -3539,13 +3539,33 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
    cl_mem pathsBuffer = clCreateBuffer(context,
       CL_MEM_COPY_HOST_PTR,
-      sizeof(path_m)*siteArrayCount,
+      sizeof(double)*siteArrayCount,
       pathBuffer,
       &err);  
    if(err < 0) {
       fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
       exit(1);   
    }
+
+   cl_mem distanceBuffer = clCreateBuffer(context,
+      CL_MEM_COPY_HOST_PTR,
+      sizeof(double)*siteArrayCount,
+      distance,
+      &err);  
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
+      exit(1);   
+   }  
+
+   cl_mem lengthBuffer = clCreateBuffer(context,
+      CL_MEM_COPY_HOST_PTR,
+      sizeof(double)*siteArrayCount,
+      length,
+      &err);  
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
+      exit(1);   
+   }  
 
    cl_mem clutterBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -3647,37 +3667,49 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &clutterBuffer);
+   err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &distanceBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:distance Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &lengthBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:length Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 6, sizeof(cl_mem), &clutterBuffer);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:clutter Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &max_rangeBuffer);
+   err = clSetKernelArg(kernel, 7, sizeof(cl_mem), &max_rangeBuffer);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:max_range Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 6, sizeof(cl_mem), &got_elevation_patternBuffer);
+   err = clSetKernelArg(kernel, 8, sizeof(cl_mem), &got_elevation_patternBuffer);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:got_ele Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 7, sizeof(cl_mem), &dbmBuffer);
+   err = clSetKernelArg(kernel, 9, sizeof(cl_mem), &dbmBuffer);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:dbm Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 8, sizeof(cl_mem), &lossResultBuffer);
+   err = clSetKernelArg(kernel, 10, sizeof(cl_mem), &lossResultBuffer);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:lossResult Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 9, sizeof(cl_mem), &pathArraySizeBuffer);
+   err = clSetKernelArg(kernel, 11, sizeof(cl_mem), &pathArraySizeBuffer);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:pathArraySize Code:%d",err);
       exit(1);
