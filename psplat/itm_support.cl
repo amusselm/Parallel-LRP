@@ -788,7 +788,7 @@ __kernel void PlotLRPaths_cl(
    int pointId = get_global_id(1);
 
    double pointLoss;
-   printf("pathLength:%d, pathDist:%lf\n",pathLength[pathId],pathDist[pathId]);
+   printf("Altitude:%lf \n",*altitude);
     
    /*
    PlotLRPath_test(*source,

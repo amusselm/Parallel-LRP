@@ -528,6 +528,7 @@ void ReadPath_im(struct site source, struct site destination,
 		path_length=sqrt((dx*dx)+(dy*dy));		/* Total number of samples */
 
 		miles_per_sample=total_distance/path_length;	/* Miles per sample */
+      *distOutput = miles_per_sample;
 	}
 
 	else
@@ -3516,6 +3517,8 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       fprintf(stderr,"Couldn't create a buffer (source): error code: %d\n",err);
       exit(1);   
    };
+
+   fprintf(stderr,"Altitude is: %lf\n",altitude);
    
    cl_mem altBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -3538,8 +3541,8 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    };
 
    cl_mem pathsBuffer = clCreateBuffer(context,
-      CL_MEM_COPY_HOST_PTR,
-      sizeof(double)*siteArrayCount,
+      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+      sizeof(double)*siteArrayCount*ARRAYSIZE,
       pathBuffer,
       &err);  
    if(err < 0) {
@@ -3548,7 +3551,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    }
 
    cl_mem distanceBuffer = clCreateBuffer(context,
-      CL_MEM_COPY_HOST_PTR,
+      CL_MEM_READ_ONLY  | CL_MEM_COPY_HOST_PTR,
       sizeof(double)*siteArrayCount,
       distance,
       &err);  
@@ -3559,7 +3562,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
    cl_mem lengthBuffer = clCreateBuffer(context,
       CL_MEM_COPY_HOST_PTR,
-      sizeof(double)*siteArrayCount,
+      sizeof(int)*siteArrayCount,
       length,
       &err);  
    if(err < 0) {
