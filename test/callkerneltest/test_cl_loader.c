@@ -128,14 +128,14 @@ int main() {
    //paraellizm. That's okay, this is only a test. 
    global_size = 1;
 
-   output_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY |
+   input_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY |
          CL_MEM_COPY_HOST_PTR, sizeof(double), &input, &err);
    if(err < 0) {
       perror("Couldn't create a buffer");
       exit(1);   
    };
 
-   input_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |
+   output_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE |
          CL_MEM_COPY_HOST_PTR, sizeof(output), &output, &err);
    if(err < 0) {
       perror("Couldn't create a buffer");
