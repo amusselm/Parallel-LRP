@@ -35,6 +35,7 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
    for(int i = 1; i <= numElev; i++){
       itm_elev[0] = i; /* Number of points */ 
       itm_elev[1] = dist; /* Distance between points */
+      printf("Dist is: %lf\n",dist);
    
       point_to_point(itm_elev,sourceAlt, destAlt, eps_dielect, sgm_conductivity,
          eno_ns_surfref, frq_mhz, radio_climate, pol, conf, rel, loss,
@@ -77,6 +78,7 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
 
    program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
 
+/*
    //The size of the array
    cl_mem elevSizeBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -87,6 +89,7 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       perror("Couldn't create a buffer");
       exit(1);   
    };
+*/
 
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
@@ -99,6 +102,7 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);   
    };
 
+/*
    //The overall distance of the path
    cl_mem pathDistBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -220,11 +224,12 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);   
    };
 
+*/
    //dbloss - this is the result buffer
    cl_mem dblossBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      CL_MEM_READ_WRITE, 
       sizeof(double)*ELEVSIZE,
-      signal,
+      NULL,
       &err);
    if(err < 0) {
       perror("Couldn't create a buffer");
@@ -247,7 +252,7 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
    }
 
    /* Create Kernel arguments */
-   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &elevSizeBuffer);
+   err = clSetKernelArg(kernel, 0, sizeof(cl_int),(void*)&numElev);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:elevSize Code:%d",err);
       exit(1);
@@ -259,67 +264,68 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &pathDistBuffer);
+   printf("dist is (host side): %lf\n",dist);
+   err = clSetKernelArg(kernel, 2, sizeof(cl_double), (void*)&dist);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:pathDist Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 3, sizeof(cl_mem), &sourceAltBuffer );
+   err = clSetKernelArg(kernel, 3, sizeof(cl_double),(void*)&sourceAlt );
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:scourceAlt Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &destAltBuffer );
+   err = clSetKernelArg(kernel, 4, sizeof(cl_double),(void*)&destAlt );
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:destAlt Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &epsBuffer  );
+   err = clSetKernelArg(kernel, 5, sizeof(cl_double), (void*)&eps_dielect);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:eps Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 6, sizeof(cl_mem), &sgmBuffer  );
+   err = clSetKernelArg(kernel, 6, sizeof(cl_double), (void*)&sgm_conductivity);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:sgm Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 7, sizeof(cl_mem), &surfrefBuffer  );
+   err = clSetKernelArg(kernel, 7, sizeof(cl_double), &eno_ns_surfref);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:surfref Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 8, sizeof(cl_mem), &frqBuffer  );
+   err = clSetKernelArg(kernel, 8, sizeof(cl_double), (void*)&frq_mhz );
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:frq Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 9, sizeof(cl_mem), &climateBuffer );
+   err = clSetKernelArg(kernel, 9, sizeof(cl_int), (void*)&radio_climate);
    if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:climateBuffer Code:%d",err);
+      fprintf(stderr,"Couldn't create a kernel argument:climate Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 10, sizeof(cl_mem), &polBuffer );
+   err = clSetKernelArg(kernel, 10, sizeof(cl_int), &pol);
    if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:polBuffer Code:%d",err);
+      fprintf(stderr,"Couldn't create a kernel argument:pol Code:%d",err);
       exit(1);
    }
 
-   err = clSetKernelArg(kernel, 11, sizeof(cl_mem), &confBuffer );
+   err = clSetKernelArg(kernel, 11, sizeof(cl_double),(void*)&conf );
    if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:confBuffer Code:%d",err);
+      fprintf(stderr,"Couldn't create a kernel argument:conf Code:%d",err);
       exit(1);
    }
  
-   err = clSetKernelArg(kernel, 12, sizeof(cl_mem), &relBuffer );
+   err = clSetKernelArg(kernel, 12, sizeof(cl_double), (void*)&rel);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:relBuffer Code:%d",err);
       exit(1);
@@ -364,8 +370,11 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
 
    //Program cleanup
    clReleaseKernel(kernel);
+   /*
    clReleaseMemObject(elevSizeBuffer);
+   */
    clReleaseMemObject(elevBuffer);
+   /*
    clReleaseMemObject(pathDistBuffer);
    clReleaseMemObject(sourceAltBuffer);
    clReleaseMemObject(destAltBuffer);
@@ -377,6 +386,7 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
    clReleaseMemObject(polBuffer);
    clReleaseMemObject(confBuffer);
    clReleaseMemObject(relBuffer);
+   */
    clReleaseMemObject(dblossBuffer);
    clReleaseCommandQueue(queue);
    clReleaseProgram(program);

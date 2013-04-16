@@ -808,19 +808,19 @@ __kernel void Test_cl(   ){
 }
 
 __kernel void point_to_point_cl(
-   __global int *elev_size, //0 - Number of terreain hieghts in the elev array
+   int elev_size, //0 - Number of terreain hieghts in the elev array
    __global double *elev, //1 - Eevation array
-   __global double *path_dist, //2 - Total length of the path
-   __global double *tht_m, //3 - Source altitude (meters) 
-   __global double *rht_m, //4 - Destination Altitude 
-   __global double *eps_dielect,//5 
-   __global double *sgm_conductivity,//6 
-   __global double *eno_ns_surfref,//7 
-   __global double *frq_mhz, //8 - Frequency in Mhz 
-   __global int *radio_climate, //9 
-   __global int *pol,//10 - Polarity 
-   __global double *conf,// 11 
-   __global double *rel,// 12
+   double path_dist, //2 - Total length of the path
+   double tht_m, //3 - Source altitude (meters) 
+   double rht_m, //4 - Destination Altitude 
+   double eps_dielect,//5 
+   double sgm_conductivity,//6 
+    double eno_ns_surfref,//7 
+    double frq_mhz, //8 - Frequency in Mhz 
+    int radio_climate, //9 
+    int pol,//10 - Polarity 
+    double conf,// 11 
+    double rel,// 12
    __global double *dbloss// 13 - Path loss results 
    ){
       int id = get_global_id(0);
@@ -828,13 +828,18 @@ __kernel void point_to_point_cl(
       double loss;
       char strmode[10000];
       int errnum;
+      
+      printf("pathdist is: %lf",path_dist);
+      printf("elev_size: %d",elev_size);
+
+      printf("elev at %d is %lf\n",id,elev[id]);
       itm_elev[0] = id*1.00;
-      itm_elev[1] = *path_dist;
-      for(int i = 0; i < *elev_size; i++){
+      itm_elev[1] = path_dist;
+      for(int i = 0; i < elev_size; i++){
          itm_elev[i+2]=elev[i];
       }
-      point_to_point(itm_elev,*tht_m, *rht_m, *eps_dielect, *sgm_conductivity, 
-         *eno_ns_surfref, *frq_mhz, *radio_climate, *pol, *conf, *rel, &loss,
+      point_to_point(itm_elev,tht_m, rht_m, eps_dielect, sgm_conductivity, 
+         eno_ns_surfref, frq_mhz, radio_climate, pol, conf, rel, &loss,
          strmode,&errnum);
       dbloss[id] = loss;
 }
