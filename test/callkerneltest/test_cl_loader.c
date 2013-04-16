@@ -94,23 +94,20 @@ cl_program build_program(cl_context ctx, cl_device_id dev, const char* filename)
    return program;
 }
 
-int main() {
-
+double runCode(double input,double input2){
    /* OpenCL structures */
    cl_device_id device;
    cl_context context;
    cl_program program;
    cl_kernel kernel;
    cl_command_queue queue;
-   cl_int i, j, err;
-   size_t local_size, global_size;
-
-   /* Data and buffers */
-   double input = 23.3;
+   cl_int  err;
+   size_t global_size;
    double output;
+
+
    cl_mem  output_buffer;
    cl_mem  input_buffer;
-   cl_int num_groups;
 
    /* Create device and context */
    device = create_device();
@@ -162,7 +159,12 @@ int main() {
       fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
    }
 
-   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &output_buffer);
+   err = clSetKernelArg(kernel, 1, sizeof(cl_double), (void*)&input2);
+   if(err < 0) {
+      fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
+   }
+
+   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer);
    if(err < 0) {
       fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
    }
@@ -183,7 +185,6 @@ int main() {
       exit(1);
    }
 
-   printf("Output is: %lf\n",output);
 
    /* Deallocate resources */
    clReleaseKernel(kernel);
@@ -191,5 +192,19 @@ int main() {
    clReleaseCommandQueue(queue);
    clReleaseProgram(program);
    clReleaseContext(context);
+   
+   return output;
+
+}
+
+int main() {
+
+
+   /* Data and buffers */
+   double input = 2.3;
+   double input2 = 31338.3;
+   double output = runCode(input,input2);
+
+   printf("Output is: %lf\n",output);
    return 0;
 }
