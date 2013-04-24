@@ -69,5 +69,21 @@ while($line= <STDIN>){
    }
 }
 
+print("\"Radius\"");
+print(",");
+foreach my $key (keys %$results){
+   print("\"$key\"");
+   print(",");
+}
+print("\n");
+for(my $i = 1; $i <= $maxMile; $i++){
+   print($i);
+   print(",");
+   foreach my $key (keys %$results){
+      print($results->{$key}[$i]->{'timePercent'});
+      print(",");
+   }
+   print("\n");
+}
 
-print Dumper($results);
+#print Dumper($results);
