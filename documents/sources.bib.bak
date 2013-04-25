@@ -10,6 +10,39 @@
   year           = 2011
 }
 
+@TechReport{longley1968prediction,
+  Author         = {Longley, A.G. and Rice, P.L.},
+  Title          = {Prediction of tropospheric radio transmission loss
+                   over irregular terrain. A computer method-1968},
+  Institution    = {DTIC Document},
+  year           = 1968
+}
+
+@InProceedings{VTC_IWOTM,
+  Author         = {Shumate, S.E.},
+  Title          = {Longley-Rice and ITU-P.1546 Combined: A New
+                   International Terrain-Specific Propagation Model},
+  BookTitle      = {Vehicular Technology Conference Fall (VTC 2010-Fall),
+                   2010 IEEE 72nd},
+  Volume         = {},
+  Number         = {},
+  Pages          = {1 -5},
+  doi            = {10.1109/VETECF.2010.5594342},
+  issn           = {1090-3038},
+  keywords       = {FM vehicular reception;ITM
+                   software;ITU-P.1546;ITWOM;NTIA-ITS Longley-Rice
+                   methodology;analog-and-digital
+                   reception;interference;international terrain specific
+                   propagation model;irregular terrain
+                   methodology;satellite radar terrain;terrain-specific
+                   international radio reception signal strength
+                   prediction model;mobile computing;mobile
+                   radio;radiofrequency interference;radiowave
+                   propagation;},
+  month          = {sept.},
+  year           = 2010
+}
+
 @Article{lrp_itm_gpu,
   Author         = {Yang Song and Akoglu, A.},
   Title          = {Parallel Implementation of the Irregular Terrain Model
@@ -44,37 +77,5 @@
                    and Information Administration Institute for
                    Telecommunication Sciences},
   url            = {http://flattop.its.bldrdoc.gov/itm.html}
-}
-
-@InProceedings{VTC_IWOTM,
-  Author         = {Shumate, S.E.},
-  Title          = {Longley-Rice and ITU-P.1546 Combined: A New
-                   International Terrain-Specific Propagation Model},
-  BookTitle      = {Vehicular Technology Conference Fall (VTC 2010-Fall),
-                   2010 IEEE 72nd},
-  Volume         = {},
-  Number         = {},
-  Pages          = {1 -5},
-  doi            = {10.1109/VETECF.2010.5594342},
-  issn           = {1090-3038},
-  keywords       = {FM vehicular reception;ITM
-                   software;ITU-P.1546;ITWOM;NTIA-ITS Longley-Rice
-                   methodology;analog-and-digital
-                   reception;interference;international terrain specific
-                   propagation model;irregular terrain
-                   methodology;satellite radar terrain;terrain-specific
-                   international radio reception signal strength
-                   prediction model;mobile computing;mobile
-                   radio;radiofrequency interference;radiowave
-                   propagation;},
-  month          = {sept.},
-  year           = 2010
-}
-
-@Misc{usgs_elev,
-  Author         = {{United States Geological Survey}},
-  Title          = {USGS {W}ebservice},
-  HowPublished   = {World Wide Web},
-  url            = {http://gisdata.usgs.gov/XMLWebServices/TNM_Elevation_Service.php}
 }
 

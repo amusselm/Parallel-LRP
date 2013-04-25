@@ -600,7 +600,8 @@ reference "sub:path-on-device"
 \end_inset
 
 .
- However, due to technical issues that were perhaps related to the potential
+ However this implementation did not work.
+ The author attributes the failure of this method to a combination the potential
  compiler bug mentioned in section 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -608,8 +609,16 @@ reference "sub:IntelCLBUg"
 
 \end_inset
 
-, this implementation did not work.
- Then, the author switched to the multidimensional work-item approach described
+ and the difficulty of passing the complex data structure that contains
+ elevation data from the host to the device.
+ Because the host and device have completely separate memory spaces, pointers
+ that are valid in the host process will not be valid in any of the device's
+ memory spaces unless they have been explicitly set as a kernel argument.
+ 
+\end_layout
+
+\begin_layout Standard
+The author switched to the multidimensional work-item approach described
  in section 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -618,6 +627,7 @@ reference "sub:Multidimensional-Work-Items"
 \end_inset
 
 .
+ 
 \end_layout
 
 \begin_layout Standard
@@ -1011,7 +1021,7 @@ lity is contained in a single file.
 \end_layout
 
 \begin_layout Subsubsection
-Potential Intel OpenCL Bug
+Potential Intel OpenCL Bugs
 \end_layout
 
 \begin_layout Standard
@@ -1205,8 +1215,31 @@ name "alg:PlotLRPath-reduced"
 
 \end_layout
 
+\begin_layout Standard
+The author also found and was able to find and actually isolate a separate
+ and possibly unrelated bug in the Intel OpenCL compiler.
+ In this case, passing a variable that is a struct that contains a two dimension
+al array to a function causes the causes the Intel OpenCL compiler to fail
+ silently, resulting in a device-side program that fails to run at all.
+ This failure happens even if the code that contains the two dimensional
+ array isn't called by the kernel that is run.
+ The mere presence of a function call that includes a struct that contains
+ a two dimensional array is sufficient.
+ The author found that the issue did not exist with AMD's Open CL compiler
+ and libraries.
+ 
+\end_layout
+
 \begin_layout Section
 Further Work
+\end_layout
+
+\begin_layout Subsection
+ITWOM and Longely Rice Code Cleanup
+\end_layout
+
+\begin_layout Standard
+The Longely Rice propagation model was initially implemented 
 \end_layout
 
 \begin_layout Subsection
