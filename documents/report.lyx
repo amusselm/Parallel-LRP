@@ -24,9 +24,11 @@
 \output_sync 0
 \bibtex_command default
 \index_command default
+\float_placement h
 \paperfontsize default
+\spacing single
 \use_hyperref false
-\papersize default
+\papersize letterpaper
 \use_geometry false
 \use_amsmath 1
 \use_esint 1
@@ -94,8 +96,9 @@ General Description
 \end_layout
 
 \begin_layout Standard
-The ITWOM is a mathematical model that attempts to predict how radio waves
- will propagate over a given path with known elevations.
+The Irregular Terrain With Obstructions Model (ITWOM) is a mathematical
+ model that attempts to predict how radio waves will propagate over a given
+ path with known elevations.
  By repeating this process for a number of different paths over an area,
  its possible to generate a coverage map that shows the theoretical signal
  strength of a transmitter over a given area.
@@ -104,11 +107,50 @@ The ITWOM is a mathematical model that attempts to predict how radio waves
 
 \begin_layout Subsection
 The ITWOM and the Longley-Rice Model
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:lr-background"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-The ITWOM is largely derived from the older Longley-Rice Model, with a number
- of changes and corrections that its author, Sidney E.
+The Longley-Rice propagation model was initially developed by Anita G.
+ Longley and Phillip Rice in the 1960's, following a serise of studies in
+ the topic.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "longley1968prediction"
+
+\end_inset
+
+ It was initially implemented using the Fortran IV programming language
+ on a Control Data Corporation CDC-3600.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "longley1968prediction"
+
+\end_inset
+
+ This code was later ported to C by the United States Department of Commerce.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "us_commerce"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The Irregular Terrain With Obstructions Model (ITWOM) is derived from the
+ older Longley-Rice Model, with a number of changes and corrections that
+ its author, Sidney E.
  Shumate, claims improve its overall accuracy.
  Additionally, their changes allow the practical use of higher-resolution
  elevation data.
@@ -121,8 +163,8 @@ key "VTC_IWOTM"
 \end_inset
 
  Since the two algorithms are so similar in terms of their overall structure
- and control flow, exiting research into how one is parallelized might be
- directly applicable to the other.
+ and control flow, exiting research into how one is parallelized is directly
+ applicable to the other.
  
 \end_layout
 
@@ -626,12 +668,8 @@ reference "sub:IntelCLBUg"
  Because the host and device have completely separate memory spaces, pointers
  that are valid in the host process will not be valid in any of the device's
  memory spaces unless they have been explicitly set as a kernel argument.
- 
-\end_layout
-
-\begin_layout Standard
-The author switched to the multidimensional work-item approach described
- in section 
+ As a result, the author switched to the multidimensional work-item approach
+ described in section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:Multidimensional-Work-Items"
@@ -728,6 +766,7 @@ All of these tests were run on Tesla, a Cal Poly Computer Science department
  server.
  This computer is equipped with a pair of Intel Xeon E5504 CPUs, each of
  which have 4 CPU cores.
+ As a result, the machine has a total of 8 CPU cores.
  The build of SPLAT used was configured to analyze the largest possible
  region, which the highest possible memory requirements.
  Additionally, the author elected to use the highest-resolution elevation
@@ -1086,7 +1125,8 @@ reference "sub:Test-Procedure-stock"
 
 , if all 8 CPU cores on Tesla could be used for the ITWOM calculations,
  the time it takes to plot path losses over an an area with a radius of
- 100 miles could be decreased form over 12,500 seconds to roughly 2100 seconds.
+ 100 miles could be decreased form over 12,500 seconds to roughly 2,100
+ seconds.
  This is a 83% improvement.
  
 \end_layout
@@ -1094,11 +1134,11 @@ reference "sub:Test-Procedure-stock"
 \begin_layout Standard
 Further incremental performance improvements might be possible by adding
  additional cores.
- If there are 14400 cores, that is, one for every path that is generated
+ If there are 14,400 cores, that is, one for every path that is generated
  from the terrain data, than the time it takes complete this task drops
  to around 590 seconds, for a 95% improvement versus the stock time or a
  28% improvement over the 8 core version.
- However, clustering and networking would be required to to allocate 14400
+ However, clustering and networking would be required to to allocate 14,400
  CPU Cores to the task.
  This overhead would likely eat into any further performance gains.
  
@@ -1132,6 +1172,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_theoretical_percent.png
+	scale 50
 
 \end_inset
 
@@ -1177,6 +1218,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_theoretical_seconds.png
+	scale 50
 
 \end_inset
 
@@ -1206,6 +1248,34 @@ name "fig:theoretical-runtime"
 \end_inset
 
 
+\end_layout
+
+\begin_layout Subsubsection
+Performance Benchmarks
+\end_layout
+
+\begin_layout Standard
+This section is to be completed....
+\end_layout
+
+\begin_layout Subsection
+Verification of Results
+\end_layout
+
+\begin_layout Standard
+Although SPLAT has an option for outputting the raw signal loss data, it's
+ implemented in such a way as to require file output functionality in the
+ code that calculates the loss at each point.
+ Since the author's parallelization efforts required moving this code to
+ the device side, this functionality was removed from the parallel version
+ of SPLAT used for these tests.
+ However, the author did write a single-path test driver to verify functionality
+ of the ITWOM code.
+ 
+\end_layout
+
+\begin_layout Standard
+(This section to be completed...)
 \end_layout
 
 \begin_layout Section
@@ -1465,7 +1535,43 @@ ITWOM and Longely Rice Code Cleanup
 \end_layout
 
 \begin_layout Standard
-The Longely Rice propagation model was initially implemented 
+As mentioned in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:lr-background"
+
+\end_inset
+
+, the code that implements the Longely-Rice model and the ITWOM have had
+ a long history of different entities modifying it.
+ In fact, Anita G.
+ Longely and Phillip Rice's paper describing the model warns, 
+\begin_inset Quotes eld
+\end_inset
+
+the program was written for a Control Data Corporation CDC-3600 computer
+ and may require slight modification for use with other computers
+\begin_inset Quotes erd
+\end_inset
+
+.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "longley1968prediction"
+
+\end_inset
+
+ Through this long history of modifications, many practices that many modern
+ developers would consider to be archaic have remained.
+ For example, the terrain profile array used in the Longly-Rice code stores
+ the number of elements in the array at the first index in the array and
+ the distance between points in the array as the second index in the array.
+ Additionally, most of the comments and documentation that appears in the
+ original Longely-Rice report have been stripped from the newer versions.
+ Correcting these issues would greatly improve the maintainability of the
+ Longley-Rice code as well as any wrapper program that uses it.
+  
 \end_layout
 
 \begin_layout Subsection
@@ -1528,7 +1634,7 @@ Support for dynamically loading terrain and elevation data.
  dynamically and discarded when no longer needed.
  This could reduce the program's memory footprint over large areas and it
  might even improve performance by allowing propagation calculations to
- occure while other pieces of terrain are being loaded.
+ occur while other pieces of terrain are being loaded.
 \end_layout
 
 \begin_layout Subsection
