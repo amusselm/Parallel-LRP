@@ -472,6 +472,13 @@ key "lrp_itm_gpu"
 
 \begin_layout Subsection
 Parallelization Strategies 
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Parallelization-Strategies"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsubsection
@@ -503,15 +510,20 @@ However, this comes at a cost of greater complexity of the code that is
  because there is that much more code that has to be adapted to run in OpenCL
  and synchronization of work items that are accessing the same data structure
  becomes more of an issue.
- Additionally, this approach does not allow parallelization of the path
- loss calculations along a given path.
  
 \end_layout
 
 \begin_layout Standard
 The author initially attempted to implement this approach before encountering
- difficulties with the OpenCL language.
- 
+ difficulties, and switching to the multidimensional work-items approach
+ described in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsubsection
@@ -683,6 +695,13 @@ SPLAT Baseline Performance
 
 \begin_layout Subsubsection
 Test Procedure
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Test-Procedure-stock"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -707,7 +726,8 @@ These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
 \begin_layout Standard
 All of these tests were run on Tesla, a Cal Poly Computer Science department
  server.
- This computer is equipped with a pair of Intel Intel Xeon E5504 CPUs.
+ This computer is equipped with a pair of Intel Xeon E5504 CPUs, each of
+ which have 4 CPU cores.
  The build of SPLAT used was configured to analyze the largest possible
  region, which the highest possible memory requirements.
  Additionally, the author elected to use the highest-resolution elevation
@@ -944,10 +964,6 @@ name "fig:timevarea"
 
 \end_layout
 
-\begin_layout Plain Layout
-
-\end_layout
-
 \end_inset
 
 
@@ -969,17 +985,227 @@ Running Makeup
 \end_layout
 
 \begin_layout Standard
-This section will describe which functions consumed the most runtime.
+For all but the smallest areas, the vast majority of SPLAT's computing time
+ is spent running the ITWOM calculations.
+ Generally, as the radius of analysis increases, so does the proportion
+ of time that SPLAT spends on the ITWOM calculations.
+ However, there are some points where the proportion of time SPLAT spends
+ on the ITWOM calculations briefly decreases.
+ This pattern is shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:percentvsradius"
+
+\end_inset
+
+.
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_execuation_makeup.png
+	scale 45
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+A graph showing the how much of the total execution time of SPLAT is dedicated
+ to the ITWOM path loss calculations as related to the maximum radius of
+ each given path.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:percentvsradius"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
 Performance Changes with Parallelization 
 \end_layout
 
+\begin_layout Subsubsection
+Maximum Theoretical Performance Gain
+\end_layout
+
 \begin_layout Standard
-This section will compare parallel and non parallel versions of SPLAT.
+Since the signal loss is at each point is calculated independently of the
+ others, we might be able to estimate the maximum theoretical performance
+ gain by simply dividing the time spent on the ITWOM operations by the number
+ of equivalent compute cores available.
+ This approach is unrealistically optimistic in that it ignores any overhead
+ associated with compiling the OpenCL code, copying data to and from each
+ device, and copying output data into SPLAT's global data structures.
+ Nor does it account for any performance loss due to changes that may be
+ necessary due to device or host memory limitations or the increased use
+ of memory on the host.
+ This approach is only valid when comparing single-thread performance to
+ a number of equivalent processor cores.
+ For example, the differing performance characteristics of a CPU and a GPU
+ might make this approach invalid for estimating the maximum performance
+ of SPLAT if its ITWOM operations were to be run on a GPU.
  
+\end_layout
+
+\begin_layout Standard
+Based on the data gathered by the benchmark described in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Test-Procedure-stock"
+
+\end_inset
+
+, if all 8 CPU cores on Tesla could be used for the ITWOM calculations,
+ the time it takes to plot path losses over an an area with a radius of
+ 100 miles could be decreased form over 12,500 seconds to roughly 2100 seconds.
+ This is a 83% improvement.
+ 
+\end_layout
+
+\begin_layout Standard
+Further incremental performance improvements might be possible by adding
+ additional cores.
+ If there are 14400 cores, that is, one for every path that is generated
+ from the terrain data, than the time it takes complete this task drops
+ to around 590 seconds, for a 95% improvement versus the stock time or a
+ 28% improvement over the 8 core version.
+ However, clustering and networking would be required to to allocate 14400
+ CPU Cores to the task.
+ This overhead would likely eat into any further performance gains.
+ 
+\end_layout
+
+\begin_layout Standard
+The theoretical running times calculated by this method are shown in figure
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:theoretical-runtime"
+
+\end_inset
+
+ and the theoretical performance gains are shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:theoretical-percent"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_theoretical_percent.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Chart showing the theoretical performance improvement with 8 and 14400 CPU
+ cores assigned to the ITWOM calculations within SPLAT.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:theoretical-percent"
+
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_theoretical_seconds.png
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Graph displaying theoretical run times for a parallelized version of SPLAT
+ along side actual benchmark results
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:theoretical-runtime"
+
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
