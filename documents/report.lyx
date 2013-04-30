@@ -71,13 +71,19 @@ Andrew J.
 \end_layout
 
 \begin_layout Date
-December 15, 2011
+April 30, 2012
 \end_layout
 
 \begin_layout Abstract
 This document describes the results of efforts to port the Irregular Terrain
- with Obstructions Model to OpenCL so that it can be run in parallel.
- It describes various methods 
+ with Obstructions Model (ITWOM) for radio-frequency propagation prediction
+ to the OpenCL programming language so that it can be run in parallel.
+ It describes various approaches that could be taken to parallelize the
+ use of the ITWOM, the modifications necessary to the SPLAT wrapper program
+ and the ITOWM code itself necessary for parallelization and gives some
+ theoretical estimates to the maximum performance gain that might be possible
+ by parallelizing this application.
+ 
 \end_layout
 
 \begin_layout Section
@@ -118,7 +124,7 @@ name "sub:lr-background"
 
 \begin_layout Standard
 The Longley-Rice propagation model was initially developed by Anita G.
- Longley and Phillip Rice in the 1960's, following a serise of studies in
+ Longley and Phillip Rice in the 1960s, following a series of studies on
  the topic.
  
 \begin_inset CommandInset citation
@@ -284,7 +290,7 @@ let terrain data contain the
 
 \begin_layout Plain Layout
 
-	elevation data of the area to be analyzed
+    elevation data of the area to be analyzed
 \end_layout
 
 \begin_layout Plain Layout
@@ -294,47 +300,52 @@ let path loss data be a structure
 
 \begin_layout Plain Layout
 
-	that stores the loss at each point in the area
+    that stores the loss at each point in the area
 \end_layout
 
 \begin_layout Plain Layout
 
-for each permiter point around the perimiter of the analysis area
+for each permiter point around the perimiter of 
 \end_layout
 
 \begin_layout Plain Layout
 
-	let path elevation[] = the elevation of all points 
+the analysis area
 \end_layout
 
 \begin_layout Plain Layout
 
-		between the transmitter and the perimiter point
+    let path elevation[] = the elevation of all points 
 \end_layout
 
 \begin_layout Plain Layout
 
-	for each point along path elevation
+        between the transmitter and the perimiter point
 \end_layout
 
 \begin_layout Plain Layout
 
-		if path loss data is not already analized at the point
+    for each point along path elevation
 \end_layout
 
 \begin_layout Plain Layout
 
-			path loss data at the point = 
+        if path loss data is not already analized at the point
 \end_layout
 
 \begin_layout Plain Layout
 
-				point_to_point(elevation[], point, paramters)
+            path loss data at the point = 
 \end_layout
 
 \begin_layout Plain Layout
 
-			mark path loss data at the point as analized
+                point_to_point(elevation[], point, paramters)
+\end_layout
+
+\begin_layout Plain Layout
+
+            mark path loss data at the point as analized
 \end_layout
 
 \begin_layout Plain Layout
@@ -439,8 +450,23 @@ reference "fig:paths-and-grids"
 .
  
 \begin_inset Float figure
+placement H
 wide false
 sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
 status open
 
 \begin_layout Plain Layout
@@ -466,6 +492,11 @@ Graphic representing how paths converge near the transmitter.
 \begin_inset CommandInset label
 LatexCommand label
 name "fig:paths-and-grids"
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -655,8 +686,8 @@ reference "sub:path-on-device"
 
 .
  However this implementation did not work.
- The author attributes the failure of this method to a combination the potential
- compiler bug mentioned in section 
+ The author attributes the failure of this method to a combination of the
+ potential compiler bug mentioned in section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:IntelCLBUg"
@@ -705,9 +736,9 @@ Additionally, the author had to add code that compiled the OpenCL code and
 \begin_layout Standard
 Finally, due to some of the limitations of OpenCL, a number of features
  had to be removed from SPLAT in order to make it work using OpenCL.
- Because OpenCL lacks a direct file input and output functionality the author
- decided to remove a feature that allowed storing of signal loss results
- in a log file in addition to being displayed in the final output.
+ Because OpenCL lacks a direct file input and output functionality, the
+ author decided to remove a feature that allowed storing of signal loss
+ results in a log file in addition to being displayed in the final output.
  Had SPLAT handled the output of the contents of this log file differently,
  this measure would not have been necessary.
  Additionally, the author removed a feature that computes loss based vertical
@@ -837,7 +868,27 @@ do
 
 \begin_layout Plain Layout
 
-   ../splat-1.4.0/splat-hd -d ../eledata/sdf/ -L 10 -R $i -t W6BHZ.qth) 
+   ../splat-1.4.0/splat-hd 
+\end_layout
+
+\begin_layout Plain Layout
+
+          -d ../eledata/sdf/ 
+\end_layout
+
+\begin_layout Plain Layout
+
+          -L 10 
+\end_layout
+
+\begin_layout Plain Layout
+
+          -R $i 
+\end_layout
+
+\begin_layout Plain Layout
+
+          -t W6BHZ.qth) 
 \end_layout
 
 \begin_layout Plain Layout
@@ -878,7 +929,11 @@ name "alg:Shell-script-used"
 
 \end_inset
 
-
+.
+ The options given to SPLAT are: -d for the directory that contains the
+ elevation data, -L for the height of the receiver (in feet), -R for the
+ radius in miles and -t for a file that describes the transmitter's location.
+ 
 \end_layout
 
 \end_inset
@@ -919,13 +974,23 @@ sideways false
 status open
 
 \begin_layout Plain Layout
-
-\end_layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
 
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_radius.png
-	scale 80
+	scale 60
 
 \end_inset
 
@@ -938,6 +1003,11 @@ Graph of execution time versus the radius of the area being analyzed.
 \begin_inset CommandInset label
 LatexCommand label
 name "fig:timevradius"
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -980,16 +1050,27 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_area.png
-	scale 80
+	scale 60
 
 \end_inset
 
 
-\end_layout
-
-\begin_layout Plain Layout
 \begin_inset Caption
 
 \begin_layout Plain Layout
@@ -998,6 +1079,11 @@ Execution time versus total area that is being analyzed.
 \begin_inset CommandInset label
 LatexCommand label
 name "fig:timevarea"
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -1054,6 +1140,20 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_execuation_makeup.png
 	scale 45
@@ -1061,9 +1161,6 @@ status open
 \end_inset
 
 
-\end_layout
-
-\begin_layout Plain Layout
 \begin_inset Caption
 
 \begin_layout Plain Layout
@@ -1085,7 +1182,8 @@ name "fig:percentvsradius"
 
 \end_layout
 
-\begin_layout Plain Layout
+\end_inset
+
 
 \end_layout
 
@@ -1176,6 +1274,20 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_theoretical_percent.png
 	scale 50
@@ -1183,9 +1295,6 @@ status open
 \end_inset
 
 
-\end_layout
-
-\begin_layout Plain Layout
 \begin_inset Caption
 
 \begin_layout Plain Layout
@@ -1199,6 +1308,11 @@ name "fig:theoretical-percent"
 \end_inset
 
  
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1222,6 +1336,20 @@ sideways false
 status open
 
 \begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_theoretical_seconds.png
 	scale 50
@@ -1229,9 +1357,6 @@ status open
 \end_inset
 
 
-\end_layout
-
-\begin_layout Plain Layout
 \begin_inset Caption
 
 \begin_layout Plain Layout
@@ -1244,6 +1369,11 @@ name "fig:theoretical-runtime"
 \end_inset
 
  
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -1479,9 +1609,17 @@ void PlotLRPath(
 
 \begin_layout Plain Layout
 
-{ /* This function plots the RF path loss between source and destination
- points based on the ITWOM propagation model, taking into account antenna
- pattern data, if available.
+{ /* This function plots the RF path loss between source
+\end_layout
+
+\begin_layout Plain Layout
+
+ and destination points based on the ITWOM propagation model, 
+\end_layout
+
+\begin_layout Plain Layout
+
+ taking into account antenna pattern data, if available.
  */   
 \end_layout
 
@@ -1690,9 +1828,8 @@ Support for dynamically loading terrain and elevation data.
 \begin_layout Standard
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
-btprint "btPrintAll"
 bibfiles "sources"
-options "bibtotoc,plainnat"
+options "bibtotoc,plain"
 
 \end_inset
 
