@@ -230,7 +230,7 @@ key "lrp_itm_gpu"
 .
  These researchers found that were able to reduce execution times to less
  than a second.
- They also found that the Telsa GPU was around 2-3 times as fast as the
+ They also found that the Tesla GPU was around 2-3 times as fast as the
  IBM cell processor.
  
 \end_layout
@@ -758,14 +758,20 @@ These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
  Cal Poly would result in SPLAT spending less time reading terrain data
  from disk compared to inland areas.
  Additionally, all of these tests assume a receiver at 10 feet above ground.
- 
 \end_layout
 
 \begin_layout Standard
 All of these tests were run on Tesla, a Cal Poly Computer Science department
  server.
  This computer is equipped with a pair of Intel Xeon E5504 CPUs, each of
- which have 4 CPU cores.
+ which have 4 CPU cores
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Int13"
+
+\end_inset
+
+.
  As a result, the machine has a total of 8 CPU cores.
  The build of SPLAT used was configured to analyze the largest possible
  region, which the highest possible memory requirements.
@@ -1299,7 +1305,51 @@ OpenCL
 \end_layout
 
 \begin_layout Standard
-The 
+The Khronos, who maintains the Open CL specification, describes OpenCL as
+ the 
+\begin_inset Quotes eld
+\end_inset
+
+first open, royalty-free standard for general-purpose parallel programming
+ of heterogeneous systems.
+ OpenCL provides a uniform programming environment for software developers
+ to write efficient, portable code for high-performance compute servers,
+ desktop computer systems and handheld devices using a diverse mix of multi-core
+ CPUs, GPUs, Cell-type architectures and other parallel processors such
+ as DSPs.
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "opencl_www"
+
+\end_inset
+
+In an ideal world, it should be possible to write code once and run it without
+ modification across multiple types of device.
+ The inherent differences in architecture between different device types
+ mean that 
+\begin_inset Quotes eld
+\end_inset
+
+true platform independence is still a goal (versus a reality)
+\begin_inset Quotes erd
+\end_inset
+
+.
+\begin_inset CommandInset citation
+LatexCommand cite
+after "41"
+key "hetero_book"
+
+\end_inset
+
+ Beyond that, the author has himself found that some implementations of
+ OpenCL may be incompatible with each other to the extent that code that
+ runs on one may not run on the other.
+ 
 \end_layout
 
 \begin_layout Subsubsection
@@ -1571,7 +1621,7 @@ key "longley1968prediction"
  original Longely-Rice report have been stripped from the newer versions.
  Correcting these issues would greatly improve the maintainability of the
  Longley-Rice code as well as any wrapper program that uses it.
-  
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -1635,15 +1685,6 @@ Support for dynamically loading terrain and elevation data.
  This could reduce the program's memory footprint over large areas and it
  might even improve performance by allowing propagation calculations to
  occur while other pieces of terrain are being loaded.
-\end_layout
-
-\begin_layout Subsection
-Apply GPGPUs and OpenCL to Other Propagation Models
-\end_layout
-
-\begin_layout Standard
-There are other approaches to modeling radio frequency propagation.
- 
 \end_layout
 
 \begin_layout Standard
