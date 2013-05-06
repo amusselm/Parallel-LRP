@@ -163,7 +163,32 @@ double runCode(double input,double input2){
       fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
    }
 
-   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &output_buffer);
+   err = clSetKernelArg(kernel, 2, sizeof(cl_double), (void*)&input2);
+   if(err < 0) {
+      fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
+   }
+
+   err = clSetKernelArg(kernel, 3, sizeof(cl_double), (void*)&input2);
+   if(err < 0) {
+      fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
+   }
+
+   err = clSetKernelArg(kernel, 4, sizeof(cl_double), (void*)&input2);
+   if(err < 0) {
+      fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
+   }
+
+   err = clSetKernelArg(kernel, 5, sizeof(cl_double), (void*)&input2);
+   if(err < 0) {
+      fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
+   }
+
+   err = clSetKernelArg(kernel, 6, sizeof(cl_double), (void*)&input2);
+   if(err < 0) {
+      fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
+   }
+
+   err = clSetKernelArg(kernel, 7, sizeof(cl_mem), &output_buffer);
    if(err < 0) {
       fprintf(stderr,"Error setting kernel arguments, code: %d \n",err);
    }
