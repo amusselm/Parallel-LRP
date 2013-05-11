@@ -3541,7 +3541,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    };
 
    cl_mem pathsBuffer = clCreateBuffer(context,
-      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
       sizeof(double)*siteArrayCount*ARRAYSIZE,
       pathBuffer,
       &err);  
