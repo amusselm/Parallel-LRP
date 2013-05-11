@@ -28,655 +28,6 @@
 
 #include "itwom3.0.cl"
 
-
-double arccos(double x, double y)
-{
-	/* This function implements the arc cosine function,
-	   returning a value between 0 and TWOPI. */
-
-	double result=0.0;
-
-	if (y>0.0)
-		result=acos(x/y);
-
-	if (y<0.0)
-		result=PI+acos(x/y);
-
-	return result;
-}
-
-
-/**
- *   This function returns the short path longitudinal
- *  difference between longitude1 and longitude2 
- *  as an angle between -180.0 and +180.0 degrees.
- *  If lon1 is west of lon2, the result is positive.
- *  If lon1 is east of lon2, the result is negative. 
-*/
-double LonDiff(double lon1, double lon2)
-{
-
-	double diff;
-
-	diff=lon1-lon2;
-
-	if (diff<=-180.0)
-		diff+=360.0;
-
-	if (diff>=180.0)
-		diff-=360.0;
-
-	return diff;
-}
-
-/**
- * This function returns the great circle distance
- *	in miles between any two site locations. 
- */
-double Distance(struct site site1, struct site site2)
-{
-
-	double	lat1, lon1, lat2, lon2, distance;
-
-	lat1=site1.lat*DEG2RAD;
-	lon1=site1.lon*DEG2RAD;
-	lat2=site2.lat*DEG2RAD;
-	lon2=site2.lon*DEG2RAD;
-
-	distance=3959.0*acos(sin(lat1)*sin(lat2)+cos(lat1)*cos(lat2)*cos((lon1)-(lon2)));
-
-	return distance;
-}
-
-/* This function returns the elevation (in feet) of any location
- *  represented by the digital elevation model data in memory.
- *  Function returns -5000.0 for locations not found in memory.  
- * @param location Location to get elevation data for 
- * @param dem Pointer to the elevation data structure
- * @param mpi maximum pixel index per degree
- * @param ppd pixels per degree (double)  
- *
- */
-double GetElevation(struct site location, __global struct dem *dem, 
-   int mpi, double ppd)
-{
-
-	char	found;
-	int	x, y, indx;
-	double	elevation;
-
-	for (indx=0, found=0; indx<MAXPAGES && found==0;)
-	{
-		x=(int)rint(ppd*(location.lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,location.lon)));
-
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
-			found=1;
-		else
-			indx++;
-	}
-
-	if (found)
-		elevation=3.28084*dem[indx].data[x][y];
-	else
-		elevation=-5000.0;
-	
-	return elevation;
-}
-
-/* This function returns the azimuth (in degrees) to the
- *  destination as seen from the location of the source. */
-double Azimuth(struct site source, struct site destination)
-{
-	double	dest_lat, dest_lon, src_lat, src_lon,
-		beta, azimuth, diff, num, den, fraction;
-
-	dest_lat=destination.lat*DEG2RAD;
-	dest_lon=destination.lon*DEG2RAD;
-
-	src_lat=source.lat*DEG2RAD;
-	src_lon=source.lon*DEG2RAD;
-		
-	/* Calculate Surface Distance */
-
-	beta=acos(sin(src_lat)*sin(dest_lat)+cos(src_lat)*cos(dest_lat)*cos(src_lon-dest_lon));
-
-	/* Calculate Azimuth */
-
-	num=sin(dest_lat)-(sin(src_lat)*cos(beta));
-	den=cos(src_lat)*sin(beta);
-	fraction=num/den;
-
-	/* Trap potential problems in acos() due to rounding */
-
-	if (fraction>=1.0)
-		fraction=1.0;
-
-	if (fraction<=-1.0)
-		fraction=-1.0;
-
-	/* Calculate azimuth */
-
-	azimuth=acos(fraction);
-
-	/* Reference it to True North */
-
-	diff=dest_lon-src_lon;
-
-	if (diff<=-PI)
-		diff+=TWOPI;
-
-	if (diff>=PI)
-		diff-=TWOPI;
-
-	if (diff>0.0)
-		azimuth=TWOPI-azimuth;
-
-	return (azimuth/DEG2RAD);		
-}
-
-/** 
- * This function generates a sequence of latitude and
- *  longitude positions between source and destination
- *  locations along a great circle path, and stores
- *  elevation and distance information for points
- *   along that path in the "path" structure. 
- * @param source 
- * @param destination
- * @param path The path structure to read information into
- * @param dem Terrain Elevation data structure
- */
-
-void ReadPath(struct site source, struct site destination, path_t *path, 
-   __global struct dem *dem,int mpi, double ppd)
-{
-
-//	int	c;
-//	double	azimuth, distance, lat1, lon1, beta, den, num,
-//		lat2, lon2, total_distance, dx, dy, path_length,
-//		miles_per_sample;
-//   double samples_per_radian = 68755.0;
-//	struct	site tempsite;
-
-//	lat1=source.lat*DEG2RAD;
-//	lon1=source.lon*DEG2RAD;
-//
-//	lat2=destination.lat*DEG2RAD;
-//	lon2=destination.lon*DEG2RAD;
-//
- //  /* This is so broken. These magic numbers are only present for 3 arc-second and
-  // 1 arc second resolution. */
-	//if (ppd==1200.0)
-	//	samples_per_radian=68755.0;
-
-//	if (ppd==3600.0)
-//		samples_per_radian=206265.0;
-//
-//	azimuth=Azimuth(source,destination)*DEG2RAD;
-//
-//	total_distance=Distance(source,destination);
-//
-//	if (total_distance>(30.0/ppd))		/* > 0.5 pixel distance */
-//	{
-//		dx=samples_per_radian*acos(cos(lon1-lon2));
-//		dy=samples_per_radian*acos(cos(lat1-lat2));
-//
-//		path_length=sqrt((dx*dx)+(dy*dy));		/* Total number of samples */
-//
-//		miles_per_sample=total_distance/path_length;	/* Miles per sample */
-//	}
-//
-//	else
-//	{
-//		c=0;
-//		dx=0.0;
-//		dy=0.0;
-//		path_length=0.0;
-//		miles_per_sample=0.0;
-//		total_distance=0.0;
-//
-//		lat1=lat1/DEG2RAD;
-//		lon1=lon1/DEG2RAD;
-//
-//		path->lat[c]=lat1;
-//		path->lon[c]=lon1;
-//		path->elevation[c]=GetElevation(source,dem,mpi,ppd);
-//		path->distance[c]=0.0;
-//	}
-//
-//	for (distance=0.0, c=0; (total_distance!=0.0 && distance<=total_distance && c<ARRAYSIZE); c++, distance=miles_per_sample*(double)c)
-//	{
-//		beta=distance/3959.0;
-//		lat2=asin(sin(lat1)*cos(beta)+cos(azimuth)*sin(beta)*cos(lat1));
-//		num=cos(beta)-(sin(lat1)*sin(lat2));
-//		den=cos(lat1)*cos(lat2);
-//
-//		if (azimuth==0.0 && (beta>HALFPI-lat1))
-//			lon2=lon1+PI;
-//
-//		else if (azimuth==HALFPI && (beta>HALFPI+lat1))
-//				lon2=lon1+PI;
-//
-//		else if (fabs(num/den)>1.0)
-//				lon2=lon1;
-//
-//		else
-//		{
-//			if ((PI-azimuth)>=0.0)
-//				lon2=lon1-arccos(num,den);
-//			else
-//				lon2=lon1+arccos(num,den);
-//		}
-//	
-//		while (lon2<0.0)
-//			lon2+=TWOPI;
-//
-//		while (lon2>TWOPI)
-//			lon2-=TWOPI;
-// 
-//		lat2=lat2/DEG2RAD;
-//		lon2=lon2/DEG2RAD;
-//
-//		path->lat[c]=lat2;
-//		path->lon[c]=lon2;
-//		tempsite.lat=lat2;
-//		tempsite.lon=lon2;
-//		path->elevation[c]=GetElevation(tempsite,dem,mpi,ppd);
-//		path->distance[c]=distance;
-//	}
-//
-//	/* Make sure exact destination point is recorded at path.length-1 */
-//
-//	if (c<ARRAYSIZE)
-//	{
-//		path->lat[c]=destination.lat;
-//		path->lon[c]=destination.lon;
-//		path->elevation[c]=GetElevation(destination,dem,mpi,ppd);
-//		path->distance[c]=total_distance;
-//		c++;
-//	}
-//
-//	if (c<ARRAYSIZE)
-//		path->length=c;
-//	else
-//		path->length=ARRAYSIZE-1;
-}
-
-
-
-/** 
- * Lines, text, markings, and coverage areas are stored in a
- *  mask that is combined with topology data when topographic
- *  maps are generated by SPLAT!.  This function sets bits in
- *  the mask based on the latitude and longitude of the area
- * pointed to. */
-int OrMask(double lat, double lon, int value,__global struct dem *dem,
-   int mpi, double ppd)
-{
-
-	int	x, y, indx;
-	char	found;
-
-	for (indx=0, found=0; indx<MAXPAGES && found==0;)
-	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
-
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
-			found=1;
-		else
-			indx++;
-	}
-   
-   /* Syncronization goes here! */
-
-	if (found)
-	{
-		dem[indx].mask[x][y]|=value;
-		return ((int)dem[indx].mask[x][y]);
-	}
-
-	else
-		return -1;
-}
-
-int GetMask(double lat, double lon, __global struct dem *dem,int mpi, double ppd)
-{
-	/* This function returns the mask bits based on the latitude
-	   and longitude given. */
-
-	return (OrMask(lat,lon,0,dem,mpi,ppd));
-}
-
-int PutSignal(double lat, double lon, unsigned char signal,__global struct dem *dem,
-   int mpi, double ppd)
-{
-	/* This function writes a signal level (0-255)
-	   at the specified location for later recall. */
-
-	int	x, y, indx;
-	char	found;
-
-	for (indx=0, found=0; indx<MAXPAGES && found==0;)
-	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
-
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
-			found=1;
-		else
-			indx++;
-	}
-
-	if (found)
-	{
-		dem[indx].signal[x][y]=signal;
-		return (dem[indx].signal[x][y]);
-	}
-
-	else
-		return 0;
-}
-
-/* This function reads the signal level (0-255) at the
- *  specified location that was previously written by the
- *  complimentary PutSignal() function. 
- * @param lat Latitude of the specified location
- * @param lon Longitude of the specified location
- * @param dem Pointer to the elevation data structure 
- * @param mpi maximum pixel index per degree
- * @param ppd pixels per degree
- */
-unsigned char GetSignal(double lat, double lon, __global struct dem *dem, 
-   int mpi, double ppd)
-{
-
-	int	x, y, indx;
-	char	found;
-
-	for (indx=0, found=0; indx<MAXPAGES && found==0;)
-	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
-
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
-			found=1;
-		else
-			indx++;
-	}
-
-	if (found)
-		return (dem[indx].signal[x][y]);
-	else
-		return 0;
-}
-
-
-/* Lines, text, markings, and coverage areas are stored in a
-   mask that is combined with topology data when topographic
-   maps are generated by SPLAT!.  This function sets and resets
-   bits in the mask based on the latitude and longitude of the
-   area pointed to. */
-int PutMask(double lat, double lon, int value,__global struct dem *dem, int mpi, 
-   double ppd)
-{
-
-	int	x, y, indx;
-	char	found;
-
-	for (indx=0, found=0; indx<MAXPAGES && found==0;)
-	{
-		x=(int)rint(ppd*(lat-dem[indx].min_north));
-		y=mpi-(int)rint(ppd*(LonDiff(dem[indx].max_west,lon)));
-
-		if (x>=0 && x<=mpi && y>=0 && y<=mpi)
-			found=1;
-		else
-			indx++;
-	}
-
-	if (found)
-	{
-		dem[indx].mask[x][y]=value;
-		return ((int)dem[indx].mask[x][y]);
-	}
-
-	else
-		return -1;
-}
-
-//void PlotLRPath(struct site source, struct site destination, 
-//   unsigned char mask_value, struct LR LR, 
-//   __global struct dem *dem, 
-//   const int mpi, 
-//   const double ppd,
-//   const double clutter, const double max_range, 
-//   const unsigned char got_elevation_pattern, 
-//   const unsigned char dbm)
-//{
-	/* This function plots the RF path loss between source and
-	   destination points based on the ITWOM propagation model,
-	   taking into account antenna pattern data, if available. */
-
-//	int	x, y, ifs, ofs, errnum;
-//	char	block=0, strmode[100];
-//	double	loss, azimuth, pattern=0.0, xmtr_alt,
-//		dest_alt, xmtr_alt2, dest_alt2, cos_rcvr_angle,
-//		cos_test_angle=0.0, test_alt, elevation=0.0,
-//		distance=0.0, four_thirds_earth, rxp, dBm,
-//		field_strength=0.0;
-//   double elev[ARRAYSIZE+10]; /* Formerly a global variable */
-//   path_t path;
-//	struct	site temp;
-   
-//   int max_north = dem[0].max_north;
-//	ReadPath(source,destination,&path,dem,mpi,ppd);
-
-//	four_thirds_earth=FOUR_THIRDS*EARTHRADIUS;
-
-	/* Copy elevations plus clutter along path into the elev[] array. */
-
-//	for (x=1; x<path.length-1; x++){
-//		elev[x+2]=(path.elevation[x]==0.0?path.elevation[x]*METERS_PER_FOOT:(clutter+path.elevation[x])*METERS_PER_FOOT);
- //     printf("Path is: %d\n",elev[x+2]);
-  // }
-//
-//
-//	/* Copy ending points without clutter */
-//
-//	elev[2]=path.elevation[0]*METERS_PER_FOOT;
-//	elev[path.length+1]=path.elevation[path.length-1]*METERS_PER_FOOT;
-//
-//	/* Since the only energy the propagation model considers
-//	   reaching the destination is based on what is scattered
-//	   or deflected from the first obstruction along the path,
-//	   we first need to find the location and elevation angle
-//	   of that first obstruction (if it exists).  This is done
-//	   using a 4/3rds Earth radius to match the radius used by
-//	   the irregular terrain propagation model.  This information
-//	   is required for properly integrating the antenna's elevation
-//	   pattern into the calculation for overall path loss. */
-//
-//	for (y=2; (y<(path.length-1) && path.distance[y]<=max_range); y++)
-//	{
-//		/* Process this point only if it
-//		   has not already been processed. */
- //     /* THIS NEEDS TO BE SYNCHRONIZED ACROSS THREADS! */
-//
-//		if ((GetMask(path.lat[y],path.lon[y],dem,mpi,ppd)&248)!=(mask_value<<3))
-//		{
-//			distance=5280.0*path.distance[y];
-//			xmtr_alt=four_thirds_earth+source.alt+path.elevation[0];
-//			dest_alt=four_thirds_earth+destination.alt+path.elevation[y];
-//			dest_alt2=dest_alt*dest_alt;
-//			xmtr_alt2=xmtr_alt*xmtr_alt;
-//
-//			/* Calculate the cosine of the elevation of
-//			   the receiver as seen by the transmitter. */
-//
-//			cos_rcvr_angle=((xmtr_alt2)+(distance*distance)-(dest_alt2))/(2.0*xmtr_alt*distance);
-//
-//			if (cos_rcvr_angle>1.0)
-//				cos_rcvr_angle=1.0;
-//
-//			if (cos_rcvr_angle<-1.0)
-//				cos_rcvr_angle=-1.0;
-//
-//			if (got_elevation_pattern)
-//			{
-//				/* Determine the elevation angle to the first obstruction
-//				   along the path IF elevation pattern data is available
-//				   or an output (.ano) file has been designated. */
-//
-//				for (x=2, block=0; (x<y && block==0); x++)
-//				{
-//					distance=5280.0*path.distance[x];
-//
-//					test_alt=four_thirds_earth+(path.elevation[x]==0.0?path.elevation[x]:path.elevation[x]+clutter);
-//
-//					/* Calculate the cosine of the elevation
-//					   angle of the terrain (test point)
-//					   as seen by the transmitter. */
-//
-//					cos_test_angle=((xmtr_alt2)+(distance*distance)-(test_alt*test_alt))/(2.0*xmtr_alt*distance);
-//
-//					if (cos_test_angle>1.0)
-//						cos_test_angle=1.0;
-//
-//					if (cos_test_angle<-1.0)
-//						cos_test_angle=-1.0;
-//
-//					/* Compare these two angles to determine if
-//					   an obstruction exists.  Since we're comparing
-//					   the cosines of these angles rather than
-//					   the angles themselves, the sense of the
-//					   following "if" statement is reversed from
-//				  	   what it would be if the angles themselves
-//					   were compared. */
-//
-//					if (cos_rcvr_angle>=cos_test_angle)
-//						block=1;
-//				}
-//
-//				if (block)
-//					elevation=((acos(cos_test_angle))/DEG2RAD)-90.0;
-//				else
-//					elevation=((acos(cos_rcvr_angle))/DEG2RAD)-90.0;
-//			}
-//
-//			/* Determine attenuation for each point along
-//			   the path using ITWOM's point_to_point mode
-//			   starting at y=2 (number_of_points = 1), the
-//			   shortest distance terrain can play a role in
-//			   path loss. */
-// 
-//			elev[0]=y-1;  /* (number of points - 1) */
-//
-//			/* Distance between elevation samples */
-//
-//			elev[1]=METERS_PER_MILE*(path.distance[y]-path.distance[y-1]);
-//
-         //point_to_point(elev,source.alt*METERS_PER_FOOT, 
-         //destination.alt*METERS_PER_FOOT, LR.eps_dielect,
-         //LR.sgm_conductivity, LR.eno_ns_surfref, LR.frq_mhz,
-         //LR.radio_climate, LR.pol, LR.conf, LR.rel, &loss,
-         //strmode, &errnum);
-
-//			temp.lat=path.lat[y];
-//			temp.lon=path.lon[y];
-//
-//			azimuth=(Azimuth(source,temp));
-//
-//			/* Integrate the antenna's radiation
-//			   pattern into the overall path loss. */
-//
-//			x=(int)rint(10.0*(10.0-elevation));
-//
-//			if (x>=0 && x<=1000)
-//			{
-//				azimuth=rint(azimuth);
-//
-//				pattern=(double)LR.antenna_pattern[(int)azimuth][x];
-//
-//				if (pattern!=0.0)
-//				{
-//					pattern=20.0*log10(pattern);
-//					loss-=pattern;
-//				}
-//			}
-//
-//			if (LR.erp!=0.0)
-//			{
-//				if (dbm)
-//				{
-//					/* dBm is based on EIRP (ERP + 2.14) */
-//
-//					rxp=LR.erp/(pow(10.0,(loss-2.14)/10.0));
-//
-//					dBm=10.0*(log10(rxp*1000.0));
-//
-//					/* Scale roughly between 0 and 255 */
-//
-//					ifs=200+(int)rint(dBm);
-//
-//					if (ifs<0)
-//						ifs=0;
-//
-//					if (ifs>255)
-//						ifs=255;
-//
-//					ofs=GetSignal(path.lat[y],path.lon[y],dem,mpi,ppd);
-//
-//					if (ofs>ifs)
-//						ifs=ofs;
-//
-//					PutSignal(path.lat[y],path.lon[y],(unsigned char)ifs,dem,mpi,ppd);
-//				}
-//
-//				else
-//				{
-//					field_strength=(139.4+(20.0*log10(LR.frq_mhz))-loss)+(10.0*log10(LR.erp/1000.0));
-//
-//					ifs=100+(int)rint(field_strength);
-//
-//					if (ifs<0)
-//						ifs=0;
-//
-//					if (ifs>255)
-//						ifs=255;
-//
-//					ofs=GetSignal(path.lat[y],path.lon[y],dem,mpi,ppd);
-//
-//					if (ofs>ifs)
-//						ifs=ofs;
-//
-//					PutSignal(path.lat[y],path.lon[y],(unsigned char)ifs,dem,mpi,ppd);
-//				}
-//			}
-//
-//			else
-//			{
-//				if (loss>255)
-//					ifs=255;
-//				else
-//					ifs=(int)rint(loss);
-//
-//				ofs=GetSignal(path.lat[y],path.lon[y],dem,mpi,ppd);
-//
-//				if (ofs<ifs && ofs!=0)
-//					ifs=ofs;
-//
-//				PutSignal(path.lat[y],path.lon[y],(unsigned char)ifs,dem,mpi,ppd);
-//			}
-//
-//			/* Mark this point as having been analyzed */
-//			PutMask(path.lat[y],path.lon[y],
- //               (GetMask(path.lat[y],path.lon[y],dem,mpi,ppd)&7)+(mask_value<<3), 
-  //              dem,mpi,ppd);
-	//	}
-	//}
-//}
-
 void PlotLRPath_test(struct site source, 
    double altitude, 
    struct LR_min LRM, 
@@ -692,7 +43,9 @@ void PlotLRPath_test(struct site source,
 
 void PlotLRPath(struct site source, double altitude, 
    struct LR_min LR, 
-   const path_m path,
+   const double distanceInput,
+   const int pathLength,
+   double *terrainAlt, 
    const double clutter, const double max_range, 
    const unsigned char got_elevation_pattern, 
    const unsigned char dbm,
@@ -718,15 +71,15 @@ void PlotLRPath(struct site source, double altitude,
 
 	/* Copy elevations plus clutter along path into the elev[] array. */
 
-	for (x=1; x<path.length-1; x++){
-		elev[x+2]=(path.elevation[x]==0.0?path.elevation[x]*METERS_PER_FOOT:(clutter+path.elevation[x])*METERS_PER_FOOT);
+	for (x=1; x<pathLength-1; x++){
+		elev[x+2]=(terrainAlt[x]==0.0?terrainAlt[x]*METERS_PER_FOOT:(clutter+terrainAlt[x])*METERS_PER_FOOT);
    }
 
 
 	/* Copy ending points without clutter */
 
-	elev[2]=path.elevation[0]*METERS_PER_FOOT;
-	elev[path.length+1]=path.elevation[path.length-1]*METERS_PER_FOOT;
+	elev[2]=terrainAlt[0]*METERS_PER_FOOT;
+	elev[pathLength+1]=terrainAlt[pathLength-1]*METERS_PER_FOOT;
 
 	/* Since the only energy the propagation model considers
 	   reaching the destination is based on what is scattered
@@ -738,11 +91,11 @@ void PlotLRPath(struct site source, double altitude,
 	   is required for properly integrating the antenna's elevation
 	   pattern into the calculation for overall path loss. */
 
-	if(y<(path.length-1) && path.distance*y<=max_range)
+	if(y<(pathLength-1) && distanceInput*y<=max_range)
 	{
-      distance=5280.0*path.distance*y;
-      xmtr_alt=four_thirds_earth+source.alt+path.elevation[0];
-      dest_alt=four_thirds_earth+altitude+path.elevation[y];
+      distance=5280.0*distanceInput*y;
+      xmtr_alt=four_thirds_earth+source.alt+terrainAlt[0];
+      dest_alt=four_thirds_earth+altitude+terrainAlt[y];
       dest_alt2=dest_alt*dest_alt;
       xmtr_alt2=xmtr_alt*xmtr_alt;
 
@@ -757,7 +110,7 @@ void PlotLRPath(struct site source, double altitude,
 
       /* Distance between elevation samples */
 
-      elev[1]=METERS_PER_MILE*(path.distance);
+      elev[1]=METERS_PER_MILE*(distanceInput);
 
       point_to_point(elev,source.alt*METERS_PER_FOOT, 
       altitude*METERS_PER_FOOT, LR.eps_dielect,
@@ -773,31 +126,31 @@ void PlotLRPath(struct site source, double altitude,
 __kernel void PlotLRPaths_cl(
    __global struct site *source,//0 - Transmitter site
    __global double *altitude,//1 - Receiver Altitude
-   __global struct LR_min *LR,//2 - Propigation attributes
-   __global double *paths,//3 - Array of Paths
-   __global double *pathDist,//4- Array of Path distances
-   __global int *pathLength,//5- Array of Path distances
-   __constant  const double *clutter,//6 - Clutter Height
-   __constant const double *max_range,//7
-   __global unsigned char *got_elevation_pattern,//8
-   __global unsigned char *dbm,//9
-   __global double *loss,//10 - Loss Results
-   __global size_t *pathArraySize //11 - Size of each path 
+   __global double *terrainAlt, // 2 - Path Terrain Altitude
+   __global double *distance,//3 - Distance Array
+   __global int *length, //4 - Path Array Length Array
+   __global struct LR_min *LR,//5 - Propigation attributes
+   __global double *paths,//6 - Array of Paths
+   __global double *pathDist,//7- Array of Path distances
+   __global int *pathLength,//8- Array of Path distances
+   __constant  const double *clutter,//9 - Clutter Height
+   __constant const double *max_range,//10
+   __global unsigned char *got_elevation_pattern,//11
+   __global unsigned char *dbm,//12
+   __global double *loss,//13 - Loss Results
+   __global size_t *pathArraySize //14 - Size of each path 
    ){
    int pathId = get_global_id(0);
    int pointId = get_global_id(1);
 
    double pointLoss;
-   printf("Altitude:%lf \n",*altitude);
     
-   /*
-   PlotLRPath_test(*source,
+   PlotLRPath(*source,
       *altitude,
      *LR,
       paths[pathId],*clutter,*max_range,
       *got_elevation_pattern,*dbm,pointId,
       &pointLoss);
-   */
 
    loss[pathId*(*pathArraySize)+pointId] = pointLoss;
 }
@@ -815,12 +168,12 @@ __kernel void point_to_point_cl(
    double rht_m, //4 - Destination Altitude 
    double eps_dielect,//5 
    double sgm_conductivity,//6 
-    double eno_ns_surfref,//7 
-    double frq_mhz, //8 - Frequency in Mhz 
-    int radio_climate, //9 
-    int pol,//10 - Polarity 
-    double conf,// 11 
-    double rel,// 12
+   double eno_ns_surfref,//7 
+   double frq_mhz, //8 - Frequency in Mhz 
+   int radio_climate, //9 
+   int pol,//10 - Polarity 
+   double conf,// 11 
+   double rel,// 12
    __global double *dbloss// 13 - Path loss results 
    ){
       int id = get_global_id(0);
@@ -828,11 +181,7 @@ __kernel void point_to_point_cl(
       double loss;
       char strmode[10000];
       int errnum;
-      
-      printf("pathdist is: %lf",path_dist);
-      printf("elev_size: %d",elev_size);
-
-      printf("elev at %d is %lf\n",id,elev[id]);
+     
       itm_elev[0] = id*1.00;
       itm_elev[1] = path_dist;
       for(int i = 0; i < elev_size; i++){

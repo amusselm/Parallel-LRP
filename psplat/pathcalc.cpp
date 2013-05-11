@@ -8,6 +8,7 @@
 
 #include "clutil.h"
 #include "splat.h"
+#include<unistd.h>
 
 //Declration of point to point for serial ITWOM
 void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode, int &errnum);
@@ -78,19 +79,6 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
 
    program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
 
-/*
-   //The size of the array
-   cl_mem elevSizeBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(int),
-      &numElev,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-*/
-
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -102,129 +90,6 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);   
    };
 
-/*
-   //The overall distance of the path
-   cl_mem pathDistBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &dist,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //Source transmitter altitude
-   cl_mem sourceAltBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &sourceAlt,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //Detination receiver altitude
-   cl_mem destAltBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &destAlt,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //EPS_dielect ... Some sort of diaeletric constant
-   cl_mem epsBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &eps_dielect,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //Ground Conductvity 
-   cl_mem sgmBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &sgm_conductivity,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //Surface Reflectivity 
-   cl_mem surfrefBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &eno_ns_surfref,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //Frequency (Mhz) 
-   cl_mem frqBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &frq_mhz,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //Radio Climate 
-   cl_mem climateBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(int),
-      &radio_climate,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //Polarization 
-   cl_mem polBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(int),
-      &pol,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //conf (?) 
-   cl_mem confBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &conf,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   //rel (?) 
-   cl_mem relBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &rel,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-*/
    //dbloss - this is the result buffer
    cl_mem dblossBuffer = clCreateBuffer(context, 
       CL_MEM_READ_WRITE, 
@@ -252,6 +117,7 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
    }
 
    /* Create Kernel arguments */
+   printf("Host numElev: %ld \n",numElev);
    err = clSetKernelArg(kernel, 0, sizeof(cl_int),(void*)&numElev);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:elevSize Code:%d",err);
@@ -271,18 +137,21 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);
    }
 
+   printf("sourceAlt is (host side): %lf\n",sourceAlt);
    err = clSetKernelArg(kernel, 3, sizeof(cl_double),(void*)&sourceAlt );
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:scourceAlt Code:%d",err);
       exit(1);
    }
 
+   printf("destAlt is (host side): %lf\n",destAlt);
    err = clSetKernelArg(kernel, 4, sizeof(cl_double),(void*)&destAlt );
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:destAlt Code:%d",err);
       exit(1);
    }
 
+   printf("eps_dielect is (host side): %lf\n",eps_dielect);
    err = clSetKernelArg(kernel, 5, sizeof(cl_double), (void*)&eps_dielect);
    if(err < 0) {
       fprintf(stderr,"Couldn't create a kernel argument:eps Code:%d",err);
@@ -370,23 +239,7 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
 
    //Program cleanup
    clReleaseKernel(kernel);
-   /*
-   clReleaseMemObject(elevSizeBuffer);
-   */
    clReleaseMemObject(elevBuffer);
-   /*
-   clReleaseMemObject(pathDistBuffer);
-   clReleaseMemObject(sourceAltBuffer);
-   clReleaseMemObject(destAltBuffer);
-   clReleaseMemObject(epsBuffer);
-   clReleaseMemObject(sgmBuffer);
-   clReleaseMemObject(surfrefBuffer);
-   clReleaseMemObject(frqBuffer);
-   clReleaseMemObject(climateBuffer);
-   clReleaseMemObject(polBuffer);
-   clReleaseMemObject(confBuffer);
-   clReleaseMemObject(relBuffer);
-   */
    clReleaseMemObject(dblossBuffer);
    clReleaseCommandQueue(queue);
    clReleaseProgram(program);
