@@ -9,10 +9,14 @@
 #include "clutil.h"
 #include "splat.h"
 #include<unistd.h>
+#include<assert.h>
 
 //Declration of point to point for serial ITWOM
 void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode, int &errnum);
 
+namespace foo{
+   void point_to_point_clcpy(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double *dbloss, char *strmode, int *errnum);
+}
 const int ELEVDIST_DFLT=1000; /* default distance between path elements, 1km */ 
 const int ELEVSIZE_DFLT=200; /* default number of path elevation samples */ 
 
@@ -24,6 +28,7 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
    if(numElev > ARRAYSIZE){
       throw;
    }
+   printf("Start Stock All Points\n");
    double itm_elev[ARRAYSIZE+2];
    double loss = 0;
    char strmode[10000];
@@ -43,6 +48,39 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
          strmode,errnum);
       signal[i] = loss;
    }
+   printf("End Stock All Points\n");
+}
+
+void allPoints_clcpy(size_t numElev, double dist, double *elev, double *signal,
+                  double sourceAlt, double destAlt, double eps_dielect, 
+                  double sgm_conductivity, double eno_ns_surfref, 
+                  double frq_mhz, int radio_climate, int pol, double conf,
+                  double rel){
+   printf("Start Deserialized All Points\n");
+   if(numElev > ARRAYSIZE){
+      throw;
+   }
+   double itm_elev[ARRAYSIZE+2];
+   double loss = 0;
+   char strmode[10000];
+   int errnum;
+
+   for(int i = 0; i < numElev; i++){
+      itm_elev[i+2] = elev[i]; 
+   }
+
+
+   for(int i = 1; i <= numElev; i++){
+      itm_elev[0] = i; /* Number of points */ 
+      itm_elev[1] = dist; /* Distance between points */
+   
+      
+      foo::point_to_point_clcpy(itm_elev,sourceAlt, destAlt, eps_dielect, sgm_conductivity,
+         eno_ns_surfref, frq_mhz, radio_climate, pol, conf, rel, &loss,
+         strmode,&errnum);
+      signal[i] = loss;
+   }
+   printf("End Deserialized All Points\n");
 }
 
 void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
@@ -288,7 +326,7 @@ int main(int argc, char* argv[]){
 
    int opt;
 
-   while ((opt = getopt(argc,argv,"d:t:r:f:v")) != -1){
+   while ((opt = getopt(argc,argv,"d:t:r:f:n:v")) != -1){
       switch(opt) {
          case 'v':
             verbose = 1;
@@ -301,6 +339,10 @@ int main(int argc, char* argv[]){
             break;
          case 'r':
             destAlt = atof(optarg);
+            break;
+         case 'n':
+            numElevElements = atoi(optarg);
+            assert(numElevElements <= ARRAYSIZE);
             break;
          case 'f': 
             frq_mhz = atof(optarg);
@@ -324,13 +366,18 @@ int main(int argc, char* argv[]){
    double *elev = new double [numElevElements];
    double *signal = new double [numElevElements]; /* Array to store the results */
    double *signal_serial = new double[numElevElements]; /* Array to store the results (from the non Cl)*/
-   
-   memset(signal,0,numElevElements);
-   memset(signal_serial,0,numElevElements);
+   double *signal_serial2 = new double[numElevElements]; /* Array to store the results (from the non Cl)*/
+
+   for(int i = 0; i < numElevElements; i++){
+      signal[i] = 0.0;
+      signal_serial[i] = 0.0;
+      signal_serial2[i] = 0.0;
+
+   }
 
    /* Create a very even slope */
    for(int i = 0; i < numElevElements; i++){
-      elev[i]=3*i;
+      elev[i]=0;
    }
    //do the point_to_point in paraell
    allPoints_cl(numElevElements,elevDistance,elev,signal,sourceAlt,destAlt,
@@ -343,17 +390,26 @@ int main(int argc, char* argv[]){
                 radio_climate,
                 pol,conf,rel);
 
+
+   allPoints_clcpy(numElevElements,elevDistance,elev,signal_serial2,sourceAlt,destAlt,
+                eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,
+                radio_climate,
+                pol,conf,rel);
+
    
    printf("Results:\n");
    for(int i=0; i<numElevElements; i++){
       double difference = signal[i]-signal_serial[i];
+      double difference2 = signal_serial[i]-signal_serial2[i];
       double max = signal[i]>signal_serial[i] ? signal[i] : signal_serial[i];
       double percent = difference/max;
-      printf("signal[%d]: %lf, signal_serial[%d]:%lf, difference:%lf, %lf\n",
-            i,signal[i],i,signal_serial[i],difference,percent);
+      printf("distance: %lf,signal[%d]: %lf, signal_serial[%d]:%lf, signal_serial2[%d]:%lf, difference:%lf, %lf, difference2: %lf\n",
+            i*elevDistance,i,signal[i],i,signal_serial[i],i,signal_serial2[i],difference,percent,difference2);
    }
 
    delete [] elev;
    delete [] signal;
    delete [] signal_serial;
+   delete [] signal_serial2;
+
 }

@@ -42,6 +42,7 @@
 #include <complex>
 #include <assert.h>
 #include <string.h>
+#include<stdio.h>
 
 #define THIRD (1.0/3.0)
 
@@ -418,6 +419,7 @@ double saalos(double d, prop_type &prop, propa_type &propa)
 		saalosv=arte;
 	}
 	return saalosv;
+
 }			
 
 
@@ -919,6 +921,8 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 	int rp;
 	double alosv;
 	
+
+
 	cd=0.0;
 	cr=0.0;
 	htg=prop.hg[0];
@@ -963,7 +967,17 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 	
 		s=0.78*q*exp(-pow(q/16.0,0.25));
 		q=exp(-mymin(10.0,prop.wn*s*sps));
-		r=q*(sps-prop_zgnd)/(sps+prop_zgnd);
+      printf("alos2 prop_zgnd: real: %lf imag; %lf\n",prop_zgnd.real(),prop_zgnd.imag());
+      complex<double> top = sps-prop_zgnd;
+      complex<double> bottom = sps+prop_zgnd;
+      printf("also2 sps: %lf\n",sps);
+      printf("alos2 top: real: %lf imag; %lf\n",top.real(),top.imag());
+      printf("alos2 bottom: real: %lf imag; %lf\n",bottom.real(),bottom.imag());
+
+		r=(top)/(bottom);
+      printf("alos2 r (pre mult): real: %lf imag; %lf\n",r.real(),r.imag());
+      r = r*q;
+      printf("alos2 r: real: %lf imag; %lf\n",r.real(),r.imag());
 		q=abq_alos(r);
 		q=mymin(q,1.0);		
 	
@@ -1008,6 +1022,7 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 		}
 	}
 	alosv = mymin(22.0,alosv);
+   printf("alosv: %lf\n",alosv);
 	return alosv;
 }
 
@@ -1408,8 +1423,8 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 				}
 				else if (int(prop.dist-prop.dl[0])>0.0)    /* if past 1st horiz */
 				{
-				q=adiff2(0.0,prop,propa);
-				prop.aref=adiff2(pd1,prop,propa);
+               q=adiff2(0.0,prop,propa);
+               prop.aref=adiff2(pd1,prop,propa);
 				}			
 				else
 				{
