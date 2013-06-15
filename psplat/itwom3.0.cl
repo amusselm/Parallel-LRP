@@ -72,9 +72,10 @@ inline tcomplex tcomplex_add_d(double a, tcomplex b){
 inline tcomplex tcomplex_sub_d(double a, tcomplex b){
    tcomplex tmp;
    tmp.tcreal = a - b.tcreal;
-   tmp.tcimag = b.tcimag;
+   tmp.tcimag = -1*b.tcimag;
    return tmp;
 }
+
 
 inline tcomplex tcomplex_mult_d(double a, tcomplex b){
    tcomplex tmp;
@@ -104,13 +105,10 @@ inline tcomplex tcomplex_div(tcomplex x, tcomplex y){
 }
 
 inline double tcomplex_abs(const tcomplex num){
-   return sqrt((num.tcreal*num.tcreal)*(num.tcimag*num.tcimag));
+   return sqrt((num.tcreal*num.tcreal)+(num.tcimag*num.tcimag));
 }
 
 
-/* code borrowed/adapted from 
- * https://github.com/inducer/pyopencl/blob/master/src/cl/pyopencl-complex.h
- */
 tcomplex tcomplex_sqrt(tcomplex a) 
 { 
    double re = a.tcreal; 
@@ -120,18 +118,17 @@ tcomplex tcomplex_sqrt(tcomplex a)
 
    if (mag == 0.f) { 
       result.tcreal = result.tcimag = 0.f; 
-   } else if (re > 0.f) { 
+   } 
+   else { 
       result.tcreal = sqrt(0.5f * (mag + re)); 
-      result.tcimag = im/result.tcreal/2.f; 
-   } else { 
       result.tcimag = sqrt(0.5f * (mag - re)); 
       if (im < 0.f) {
          result.tcimag = - result.tcimag; 
       }
-      result.tcreal = im/result.tcimag/2.f; 
    } 
    return result; 
 } 
+ 
 
 
 

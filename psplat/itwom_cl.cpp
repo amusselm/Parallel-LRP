@@ -1061,19 +1061,13 @@ double alos2(double d, struct prop_type *prop, const struct propa_type propa)
    
       s=0.78*q*exp(-pow(q/16.0,0.25));
       q=exp(-min(10.0,prop->wn*s*sps));
-      printf("alos2 prop_zgnd: real: %lf imag; %lf\n",prop_zgnd.tcreal,prop_zgnd.tcimag);
       //What I wouldn't give for some operator overloading...
       tcomplex top =tcomplex_sub_d(sps,prop_zgnd);
       tcomplex bottom =tcomplex_add_d(sps,prop_zgnd);
-      printf("also2 sps: %lf\n",sps);
-      printf("alos2 top: real: %lf imag; %lf\n",top.tcreal,top.tcimag);
-      printf("alos2 bottom: real: %lf imag; %lf\n",bottom.tcreal,bottom.tcimag);
       r=tcomplex_div(
             top,
             bottom);
-      printf("alos2 r (pre mult): real: %lf imag; %lf\n",r.tcreal,r.tcimag);
       r=tcomplex_mult_d(q,r);
-      printf("alos2 r: real: %lf imag; %lf\n",r.tcreal,r.tcimag);
       q=abq_alos(r);
       q=min(q,1.0);		
    
@@ -1125,7 +1119,6 @@ double alos2(double d, struct prop_type *prop, const struct propa_type propa)
       }
    }
    alosv = min(22.0,alosv);
-   printf("alosv: %lf\n",alosv);
    return alosv;
 }
 
