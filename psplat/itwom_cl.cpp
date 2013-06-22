@@ -1903,7 +1903,8 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, struct prop_type *prop,
    struct propa_type *propa, struct propv_type *propv)
 {
    int np, j;
-   double xl[2], dlb, q, za, zb, temp, rad, rae1, rae2;
+   double xl[2], dlb, za, zb, temp, rad, rae1, rae2;
+   double q = 0;
 
    prop->dist=pfl[0]*pfl[1];
    np=(int)pfl[0];
@@ -1923,34 +1924,47 @@ void qlrpfl2(double pfl[], int klimx, int mdvarx, struct prop_type *prop,
       /* for TRANSHORIZON; diffraction over a mutual horizon, or for one or more obstructions */
       if (dlb<1.5*prop->dist)  
       {	
+         printf("transhorizon\n");
          z1sq2(pfl,xl[0],0.9*prop->dl[0],&za,&q);
          z1sq2(pfl,prop->dist-0.9*prop->dl[1],xl[1],&q,&zb);
          prop->he[0]=prop->hg[0]+FORTRAN_DIM(pfl[2],za);
          prop->he[1]=prop->hg[1]+FORTRAN_DIM(pfl[np+2],zb);
+         printf("qlrpfl2 prop.he[0]: %lf, prop.he[1]: %lf\n",prop->he[0],prop->he[1]);
       }
       
       /* for a Line-of-Sight path */		
       else
       {			
+         printf("los\n");
+         printf("qlrpfl2 xl[0]: %lf, xl[1]: %lf\n",xl[0],xl[1]);
          z1sq2(pfl,xl[0],xl[1],&za,&zb);
          prop->he[0]=prop->hg[0]+FORTRAN_DIM(pfl[2],za);
          prop->he[1]=prop->hg[1]+FORTRAN_DIM(pfl[np+2],zb);
+         printf("qlrpfl2 prop.he[0]: %lf, prop.he[1]: %lf\n",prop->he[0],prop->he[1]);
+         printf("qlrpfl2 za: %lf, zb: %lf\n",za,zb);
 
-         for (j=0; j<2; j++)
+         for (j=0; j<2; j++){
             prop->dl[j]=sqrt(2.0*prop->he[j]/prop->gme)*exp(-0.07*sqrt(prop->dh/max(prop->he[j],5.0)));
+            printf("qlrpfl2 prop.dl[%d]: %lf\n",j,prop->dl[j]);
+         }
          
+         printf("qlrpfl2 prop.dist: %lf\n",prop->dist);
          /* for one or more obstructions only NOTE buried as in ITM FORTRAN and DLL, not functional  */
          if ((prop->dl[0]+prop->dl[1])<=prop->dist)
          {	
             /* q=pow(prop->dist/(dl[0]+dl[1])),2.0); */
             temp=prop->dist/(prop->dl[0]+prop->dl[1]);
+            printf("qlrpfl2 temp: %lf \n",temp);
             q=temp*temp;
          }
          
+         printf("qlrpfl2 q: %lf\n",q);
          for (j=0; j<2; j++)
          {
             prop->he[j]*=q;
             prop->dl[j]=sqrt(2.0*prop->he[j]/prop->gme)*exp(-0.07*sqrt(prop->dh/max(prop->he[j],5.0)));
+            printf("qlrpfl2 prop.he[%d]: %lf\n",j,prop->he[j]);
+            printf("qlrpfl2 prop.dl[%d]: %lf\n",j,prop->dl[j]);
          }
 
          /* this sets (or resets) prop->the, and is not in The Guide FORTRAN QLRPFL */
