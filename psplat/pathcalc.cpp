@@ -14,8 +14,8 @@
 //Declration of point to point for serial ITWOM
 void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode, int &errnum);
 
-const int ELEVDIST_DFLT=1000; /* default distance between path elements, 1km */ 
-const int ELEVSIZE_DFLT=200; /* default number of path elevation samples */ 
+const int ELEVDIST_DFLT=100; /* default distance between path elements, 100m */ 
+const int ELEVSIZE_DFLT=2000; /* default number of path elevation samples */ 
 
 void allPoints(size_t numElev, double dist, double *elev, double *signal,
                   double sourceAlt, double destAlt, double eps_dielect, 
@@ -243,6 +243,70 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
    clReleaseContext(context);
 }
 
+void generateTerrain(double* elev, int numElevElements, int profile, double profileAlt){
+   double startAlt;
+   double endAlt;
+   if(profileAlt < 0){
+      startAlt = abs(profileAlt); 
+      endAlt = 0;
+   }
+   else {
+      startAlt = 0;
+      endAlt = profileAlt;
+   }
+
+   /* Create a very even slope */
+   if(profile == 0){
+      double altStep = (endAlt-startAlt)/numElevElements;
+      for(int i = 0; i < numElevElements; i++){
+         elev[i]=startAlt+altStep*i;
+      }
+   }
+   /* Create a sawtooth */
+   else {
+      int numSections = profile+1;
+      int remainder = numElevElements%numSections;
+      int sectionElements = numElevElements/numSections;
+      double altStep = (endAlt-startAlt)/sectionElements;
+      for(int i = 0; i < numSections; i++){
+         for(int j = 0; j < sectionElements; j++){
+            elev[(i*sectionElements)+j] = startAlt+altStep*j; 
+         }
+      }
+      for(int k = remainder; k > 0; k--){
+         elev[(numElevElements-1)-k] = endAlt;
+      }
+   }
+}
+
+void printElev(double* elev, int numElevElements, int profile, double profileAlt, double elevDistance){
+   printf("Profile: %d Profile Altitude: %lf\n",profile,profileAlt);
+   for(int i = 0; i < numElevElements; i++){
+      printf("Point %d at %lf meters: %lf\n",i,elevDistance*i,elev[i]);
+   }
+}
+
+void printUsage(){
+   fprintf(stdout,"Usage: pathtest [-v] [-d distance] [-t txheight] [-r rxheight] [-n numpoints] [-f frequency] [-p profile] [-a terrainalt] [-h]\n");
+}
+
+void printHelp(){
+   printf("Pathtest - Tests the ITWOM model using generated data\n");
+   printf("Options:\n");
+   printf("-v :verbose, prints results and information\n");
+   printf("-d ### :distance, sets the distance between points in meters \n");
+   printf("-t ### :transmitter height, sets the transmitter height in meters \n");
+   printf("-r ### :receiver height, sets the receiver height in meters \n");
+   printf("-n ### :number of points, sets the number of points in the test path \n");
+   printf("-f ### :sets the frequency \n");
+   printf("-p ### :terrain profile where:\n");
+   printf("   0 = flat/constant slope up\n");
+   printf("   1 = one peak\n");
+   printf("   2 = two peaks\n");
+   printf("   3 = three peaks\n");
+   printf("-a ### :Peak terrain altitude (meters)\n");
+}
+
 void printAttrs(size_t numElevElements, 
    double elevDistance,
    double sourceAlt, /* Source Altitude (meters) */
@@ -287,10 +351,12 @@ int main(int argc, char* argv[]){
 	double rel=0.50;
 
    int verbose = 0;
+   int profile = 0; /* default to constant */
+   int profileAlt = 0; /* default to flat */
 
    int opt;
 
-   while ((opt = getopt(argc,argv,"d:t:r:f:n:v")) != -1){
+   while ((opt = getopt(argc,argv,"d:t:r:f:n:p:a:vh")) != -1){
       switch(opt) {
          case 'v':
             verbose = 1;
@@ -311,23 +377,43 @@ int main(int argc, char* argv[]){
          case 'f': 
             frq_mhz = atof(optarg);
             break;
+         case 'p':
+            profile = atoi(optarg);
+            if(profile > 3 || profile < 0){
+               fprintf(stderr,"Invalid Terain profile\n");
+               printUsage();
+               exit(EXIT_FAILURE);
+            }
+            break;
+         case 'a':
+            profileAlt = atof(optarg);
+            break;
+         case 'h':
+            printUsage();
+            printHelp();
+            exit(EXIT_SUCCESS);
+            break;
          default:
             fprintf(stderr,"Invalid Command Line Option");
+            printUsage();
             exit(EXIT_FAILURE);
             break;
       }
 
    }
 
+   double *elev = new double [numElevElements];
+   generateTerrain(elev,numElevElements,profile,profileAlt);
+
    if(verbose){
-   printAttrs(numElevElements, elevDistance,sourceAlt, destAlt,eps_dielect,
-      sgm_conductivity,
-      eno_ns_surfref,frq_mhz,radio_climate,pol,conf,rel);
+      printAttrs(numElevElements, elevDistance,sourceAlt, destAlt,eps_dielect,
+         sgm_conductivity,
+         eno_ns_surfref,frq_mhz,radio_climate,pol,conf,rel);
+      printElev(elev,numElevElements,profile,profileAlt,elevDistance);
 
    }
 
 
-   double *elev = new double [numElevElements];
    double *signal = new double [numElevElements]; /* Array to store the results */
    double *signal_serial = new double[numElevElements]; /* Array to store the results (from the non Cl)*/
 
@@ -336,10 +422,6 @@ int main(int argc, char* argv[]){
       signal_serial[i] = 0.0;
    }
 
-   /* Create a very even slope */
-   for(int i = 0; i < numElevElements; i++){
-      elev[i]=0;
-   }
    //do the point_to_point in paraell
    allPoints_cl(numElevElements,elevDistance,elev,signal,sourceAlt,destAlt,
                 eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,radio_climate,
