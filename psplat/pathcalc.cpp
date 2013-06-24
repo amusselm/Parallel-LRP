@@ -292,7 +292,7 @@ void printUsage(){
 
 void printResultsBoth(double* signal, double* signal_serial, int count, double elevDistance){
    printf("Results:\n");
-   for(int i=0; i<count; i++){
+   for(int i=1; i<count; i++){
       double difference = signal[i]-signal_serial[i];
       double max = signal[i]>signal_serial[i] ? signal[i] : signal_serial[i];
       double percent = difference/max;
@@ -303,14 +303,14 @@ void printResultsBoth(double* signal, double* signal_serial, int count, double e
 
 void printResultsSingle(double* signal, int count, double elevDistance){
    printf("Results:\n");
-   for(int i=0; i<count; i++){
+   for(int i=1; i<count; i++){
       printf("distance: %lf,signal[%d]: %lf\n",i*elevDistance,i,signal[i]);
    }
 }
 
 int resultsPass(double* signal, double* signal_serial, int count){
    int differenceFound = 0;
-   for(int i=0; i<count; i++){
+   for(int i=1; i<count; i++){
       double difference = signal[i]-signal_serial[i];
       if (abs(difference) > .0000000000000002){
          differenceFound = 1; 
