@@ -287,13 +287,44 @@ void printElev(double* elev, int numElevElements, int profile, double profileAlt
 }
 
 void printUsage(){
-   fprintf(stdout,"Usage: pathtest [-v] [-d distance] [-t txheight] [-r rxheight] [-n numpoints] [-f frequency] [-p profile] [-a terrainalt] [-h]\n");
+   fprintf(stdout,"Usage: pathtest [-v mode] [-d distance] [-t txheight] [-r rxheight] [-n numpoints] [-f frequency] [-p profile] [-a terrainalt] [-m mode] [-h]\n");
+}
+
+void printResultsBoth(double* signal, double* signal_serial, int count, double elevDistance){
+   printf("Results:\n");
+   for(int i=0; i<count; i++){
+      double difference = signal[i]-signal_serial[i];
+      double max = signal[i]>signal_serial[i] ? signal[i] : signal_serial[i];
+      double percent = difference/max;
+      printf("distance: %lf,signal[%d]: %lf, signal_serial[%d]:%lf, difference:%lf, %lf\n",
+            i*elevDistance,i,signal[i],i,signal_serial[i],difference,percent);
+   }
+}
+
+void printResultsSingle(double* signal, int count, double elevDistance){
+   printf("Results:\n");
+   for(int i=0; i<count; i++){
+      printf("distance: %lf,signal[%d]: %lf\n",i*elevDistance,i,signal[i]);
+   }
+}
+
+int resultsPass(double* signal, double* signal_serial, int count){
+   int differenceFound = 0;
+   for(int i=0; i<count; i++){
+      double difference = signal[i]-signal_serial[i];
+      if (abs(difference) > .0000000000000002){
+         differenceFound = 1; 
+      }
+   }
+   return !differenceFound;
 }
 
 void printHelp(){
    printf("Pathtest - Tests the ITWOM model using generated data\n");
    printf("Options:\n");
-   printf("-v :verbose, prints results and information\n");
+   printf("-v ###:verbose, prints results and information\n");
+   printf("   1 = Parameters and Pass/Fail\n");
+   printf("   2 = All of the above plus complete terrain profile and results\n");
    printf("-d ### :distance, sets the distance between points in meters \n");
    printf("-t ### :transmitter height, sets the transmitter height in meters \n");
    printf("-r ### :receiver height, sets the receiver height in meters \n");
@@ -305,6 +336,11 @@ void printHelp(){
    printf("   2 = two peaks\n");
    printf("   3 = three peaks\n");
    printf("-a ### :Peak terrain altitude (meters)\n");
+   printf("-m ### :Execution Mode\n");
+   printf("   0 = Run both parallel and serial and compare results\n");
+   printf("   1 = Run both parallel and serial and do not compare results\n");
+   printf("   2 = Run parallel only\n");
+   printf("   3 = Run serial only\n");
 }
 
 void printAttrs(size_t numElevElements, 
@@ -354,12 +390,17 @@ int main(int argc, char* argv[]){
    int profile = 0; /* default to constant */
    int profileAlt = 0; /* default to flat */
 
+   int mode = 0;
+   int runSerial = 1;
+   int runCl = 1;
+   int compareResults = 1;
+
    int opt;
 
-   while ((opt = getopt(argc,argv,"d:t:r:f:n:p:a:vh")) != -1){
+   while ((opt = getopt(argc,argv,"d:t:r:f:n:p:a:v:m:h")) != -1){
       switch(opt) {
          case 'v':
-            verbose = 1;
+            verbose = atoi(optarg);
             break;
          case 'd':
             elevDistance = atof(optarg);
@@ -373,6 +414,14 @@ int main(int argc, char* argv[]){
          case 'n':
             numElevElements = atoi(optarg);
             assert(numElevElements <= ARRAYSIZE);
+            break;
+         case 'm':
+            mode = atoi(optarg);
+            if(mode > 3 || mode < 0){
+               fprintf(stderr,"Invalid mode\n");
+               printUsage(); 
+               exit(EXIT_FAILURE);
+            }
             break;
          case 'f': 
             frq_mhz = atof(optarg);
@@ -402,6 +451,31 @@ int main(int argc, char* argv[]){
 
    }
 
+   switch (mode) {
+      case 3:
+         runSerial = 1;
+         runCl = 0;
+         compareResults = 0;
+         break;
+      case 2:
+         runSerial = 0;
+         runCl = 1;
+         compareResults = 0;
+         break;
+      case 1:
+         runSerial = 1;
+         runCl = 1;
+         compareResults = 0;
+         break;
+      case 0: 
+      default:
+         runSerial = 1;
+         runCl = 1;
+         compareResults = 1;
+         break;
+   }
+
+
    double *elev = new double [numElevElements];
    generateTerrain(elev,numElevElements,profile,profileAlt);
 
@@ -409,8 +483,9 @@ int main(int argc, char* argv[]){
       printAttrs(numElevElements, elevDistance,sourceAlt, destAlt,eps_dielect,
          sgm_conductivity,
          eno_ns_surfref,frq_mhz,radio_climate,pol,conf,rel);
-      printElev(elev,numElevElements,profile,profileAlt,elevDistance);
-
+      if(verbose > 1){
+         printElev(elev,numElevElements,profile,profileAlt,elevDistance);
+      }
    }
 
 
@@ -422,25 +497,46 @@ int main(int argc, char* argv[]){
       signal_serial[i] = 0.0;
    }
 
-   //do the point_to_point in paraell
-   allPoints_cl(numElevElements,elevDistance,elev,signal,sourceAlt,destAlt,
-                eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,radio_climate,
-                pol,conf,rel);
-
-   //do the point_to_point in serial
-   allPoints(numElevElements,elevDistance,elev,signal_serial,sourceAlt,destAlt,
-                eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,
-                radio_climate,
-                pol,conf,rel);
-
-   printf("Results:\n");
-   for(int i=0; i<numElevElements; i++){
-      double difference = signal[i]-signal_serial[i];
-      double max = signal[i]>signal_serial[i] ? signal[i] : signal_serial[i];
-      double percent = difference/max;
-      printf("distance: %lf,signal[%d]: %lf, signal_serial[%d]:%lf, difference:%lf, %lf\n",
-            i*elevDistance,i,signal[i],i,signal_serial[i],difference,percent);
+   if(runCl){
+      //do the point_to_point in paraell
+      allPoints_cl(numElevElements,elevDistance,elev,signal,sourceAlt,destAlt,
+                   eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,radio_climate,
+                   pol,conf,rel);
    }
+
+   if(runSerial){ 
+      //do the point_to_point in serial
+      allPoints(numElevElements,elevDistance,elev,signal_serial,sourceAlt,destAlt,
+                   eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,
+                   radio_climate,
+                   pol,conf,rel);
+   }
+
+   if(compareResults){
+      if(resultsPass(signal,signal_serial,numElevElements)){
+         printf("Results Pass!\n");
+      }
+      else{
+         printf("Results Fail!\n");
+      }
+   } 
+
+   if(verbose>1){
+      if(runSerial && runCl){
+         printResultsBoth(signal,signal_serial,numElevElements,elevDistance);
+      } 
+      else if (runSerial){
+         printResultsSingle(signal_serial,numElevElements,elevDistance);
+      }
+      else if (runCl){
+         printResultsSingle(signal,numElevElements,elevDistance);
+      }
+      else {
+         //This shouldn't happen
+         assert(false);
+      }
+   }
+
 
    delete [] elev;
    delete [] signal;
