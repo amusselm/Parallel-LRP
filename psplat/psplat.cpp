@@ -3506,6 +3506,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    //Call the OpenCL Kernel:
    
 
+   fprintf(stderr,"Building Program\n");
    program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
 
    cl_mem sourceBuffer = clCreateBuffer(context, 
@@ -3518,8 +3519,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);   
    };
 
-   fprintf(stderr,"Altitude is: %lf\n",altitude);
-   
+   //Receiver altitude
    cl_mem altBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
       sizeof(double),
@@ -3645,6 +3645,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);
    }
 
+   fprintf(stderr,"Creating Kernel Aargs\n");
    /* Create Kernel arguments */
    err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &sourceBuffer);
    if(err < 0) {
@@ -3718,6 +3719,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);
    }
 
+   fprintf(stderr,"Enqueue Kernel!\n");
    /* Enqueue kernel */
    unsigned int foo = 50;
    err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, &siteArrayCount, 

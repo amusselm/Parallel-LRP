@@ -130,15 +130,12 @@ __kernel void PlotLRPaths_cl(
    __global double *distance,//3 - Distance Array
    __global int *length, //4 - Path Array Length Array
    __global struct LR_min *LR,//5 - Propigation attributes
-   __global double *paths,//6 - Array of Paths
-   __global double *pathDist,//7- Array of Path distances
-   __global int *pathLength,//8- Array of Path distances
-   __constant  const double *clutter,//9 - Clutter Height
-   __constant const double *max_range,//10
-   __global unsigned char *got_elevation_pattern,//11
-   __global unsigned char *dbm,//12
-   __global double *loss,//13 - Loss Results
-   __global size_t *pathArraySize //14 - Size of each path 
+   __constant  const double *clutter,//6 - Clutter Height
+   __constant const double *max_range,//7
+   __global unsigned char *got_elevation_pattern,//8
+   __global unsigned char *dbm,//9
+   __global double *loss,//10 - Loss Results
+   __global size_t *pathArraySize //11 - Size of each path 
    ){
    int pathId = get_global_id(0);
    int pointId = get_global_id(1);
@@ -148,9 +145,9 @@ __kernel void PlotLRPaths_cl(
    PlotLRPath(*source,
       *altitude,
      *LR,
-      pathDist[pathId],
-      pathLength[pathId],
-      &paths[pathId],*clutter,*max_range,
+      distance[pathId],
+      length[pathId],
+      &terrainAlt[pathId],*clutter,*max_range,
       *got_elevation_pattern,*dbm,pointId,
       &pointLoss);
 
