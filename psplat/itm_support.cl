@@ -123,6 +123,26 @@ void PlotLRPath(struct site source, double altitude,
    }
 }
 
+__kernel void PlotLRPaths_cl_test(
+   __global struct site *source,//0 - Transmitter site
+   __global double *altitude,//1 - Receiver Altitude
+   __global double *terrainAlt, // 2 - Path Terrain Altitude
+   __global double *distance,//3 - Distance Array
+   __global int *length, //4 - Path Array Length Array
+   __global struct LR_min *LR,//5 - Propigation attributes
+   __constant  const double *clutter,//6 - Clutter Height
+   __constant const double *max_range,//7
+   __global unsigned char *got_elevation_pattern,//8
+   __global unsigned char *dbm,//9
+   __global double *loss,//10 - Loss Results
+   __global size_t *pathArraySize //11 - Size of each path 
+   ){
+   int pathId = get_global_id(0);
+   int pointId = get_global_id(1);
+
+   loss[pathId*(*pathArraySize)+pointId] = 133.37;
+}
+
 __kernel void PlotLRPaths_cl(
    __global struct site *source,//0 - Transmitter site
    __global double *altitude,//1 - Receiver Altitude

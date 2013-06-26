@@ -3639,7 +3639,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    };
    
    /* create kernel */
-   kernel = clCreateKernel(program, "PlotLRPaths_cl", &err);
+   kernel = clCreateKernel(program, "PlotLRPaths_cl_test", &err);
    if(err < 0) {
       perror("Couldn't create a kernel");
       exit(1);
@@ -3744,7 +3744,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
          CL_TRUE, //Blocking read
          0, //Offset
          sizeof(double)*siteArraySize*ARRAYSIZE,//size to read
-         dem, 
+         lossBuffer, 
          0, 
          NULL, 
          NULL);
