@@ -3283,6 +3283,7 @@ void copyLossResultSinglePath(double *lossResult, double pointDistance, int arra
          double dBm = 0.0;
          double ifs = 0.0; 
          double ofs = 0.0; 
+         printf("Loss at %lf, %lf is %lf\n",lat2,lon2,loss);
          
 			if (LR.erp!=0.0)
 			{
@@ -3777,12 +3778,13 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    };
    
    /* create kernel */
-   kernel = clCreateKernel(program, "PlotLRPaths_cl", &err);
+   kernel = clCreateKernel(program, "PlotLRPaths_cl_test", &err);
    if(err < 0) {
       perror("Couldn't create a kernel");
       exit(1);
    }
 
+   
    fprintf(stderr,"Creating Kernel Aargs\n");
    /* Create Kernel arguments */
    err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &sourceBuffer);
@@ -3857,11 +3859,16 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       exit(1);
    }
 
+
    fprintf(stderr,"Enqueue Kernel!\n");
    /* Enqueue kernel */
-   unsigned int foo = 50;
-   err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, &siteArrayCount, 
+
+   size_t workSize[2];
+   workSize[0]=siteArrayCount;
+   workSize[1]=ARRAYSIZE;
+   err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, workSize, 
          NULL, 0, NULL, NULL); 
+
    if(err < 0) {
       fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
       exit(1);
