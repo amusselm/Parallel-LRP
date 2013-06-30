@@ -3227,6 +3227,144 @@ void PlotLOSMap(struct site source, double altitude)
 	}
 }
 
+/**
+ * Copies the results from a single path into the dem datastructure
+ */
+void copyLossResultSinglePath(double *lossResult, double pointDistance, int arrayLength, int maxArraySize, struct site source, struct site destination,unsigned char mask_value){
+   double lat1=source.lat;
+	double lon1=source.lon;
+   double lat2;
+   double lon2;
+	double total_distance=Distance(source,destination);
+	double miles_per_sample=total_distance/arrayLength;	/* Miles per sample */
+	double azimuth=Azimuth(destination,source);
+
+   /* Note that max_range is in MILES */
+	for (int c=2; (c<(arrayLength-1) && miles_per_sample*c<=max_range); c++)
+	{
+      double distance = miles_per_sample*c;
+		double beta=distance/3959.0;
+		lat2=asin(sin(lat1)*cos(beta)+cos(azimuth)*sin(beta)*cos(lat1));
+		double num=cos(beta)-(sin(lat1)*sin(lat2));
+		double den=cos(lat1)*cos(lat2);
+
+		if (azimuth==0.0 && (beta>HALFPI-lat1))
+			lon2=lon1+PI;
+
+		else if (azimuth==HALFPI && (beta>HALFPI+lat1))
+				lon2=lon1+PI;
+
+		else if (fabs(num/den)>1.0)
+				lon2=lon1;
+
+		else
+		{
+			if ((PI-azimuth)>=0.0)
+				lon2=lon1-arccos(num,den);
+			else
+				lon2=lon1+arccos(num,den);
+		}
+	
+		while (lon2<0.0)
+			lon2+=TWOPI;
+
+		while (lon2>TWOPI)
+			lon2-=TWOPI;
+ 
+		lat2=lat2/DEG2RAD;
+		lon2=lon2/DEG2RAD;
+
+      /* If point hasn't already been analyzed */
+		if ((GetMask(lat2,lon2)&248)!=(mask_value<<3))
+      {
+         /* I assume this is another metric conversion*/
+         double innerDistance = 5280.0*pointDistance;  
+         double loss = lossResult[c]; 
+         double dBm = 0.0;
+         double ifs = 0.0; 
+         double ofs = 0.0; 
+         
+			if (LR.erp!=0.0)
+			{
+				if (dbm)
+				{
+					/* dBm is based on EIRP (ERP + 2.14) */
+
+					double rxp=LR.erp/(pow(10.0,(loss-2.14)/10.0));
+
+					dBm=10.0*(log10(rxp*1000.0));
+
+					/* Scale roughly between 0 and 255 */
+
+					ifs=200+(int)rint(dBm);
+
+					if (ifs<0)
+						ifs=0;
+
+					if (ifs>255)
+						ifs=255;
+
+					ofs=GetSignal(lat2,lon2);
+
+					if (ofs>ifs)
+						ifs=ofs;
+
+					PutSignal(lat2,lon2,(unsigned char)ifs);
+				}
+
+				else
+				{
+					double field_strength=(139.4+(20.0*log10(LR.frq_mhz))-loss)+(10.0*log10(LR.erp/1000.0));
+
+					ifs=100+(int)rint(field_strength);
+
+					if (ifs<0)
+						ifs=0;
+
+					if (ifs>255)
+						ifs=255;
+
+					ofs=GetSignal(lat2,lon2);
+
+					if (ofs>ifs)
+						ifs=ofs;
+
+					PutSignal(lat2,lon2,(unsigned char)ifs);
+				}
+			}
+
+			else
+			{
+				if (loss>255)
+					ifs=255;
+				else
+					ifs=(int)rint(loss);
+
+				ofs=GetSignal(lat2,lon2);
+
+				if (ofs<ifs && ofs!=0)
+					ifs=ofs;
+
+				PutSignal(lat2,lon2,(unsigned char)ifs);
+			}
+         /* Mark Point as being analyzed */ 
+         PutMask(lat2,lon2,(GetMask(lat2,lon2)&7)+(mask_value<<3));
+      }
+	}
+
+}
+
+/**
+ * Copies the results from the lossResult array back to the proper place in the 
+ * dem datastructure 
+ */
+void copyLossResult(double* lossResult, double *distanceArray,  int siteArraySize, int arraySize, struct site source, struct site *edgeArray, int *lengthArray,unsigned char mask_value){
+
+   for(int i = 0; i < siteArraySize; i++){
+      copyLossResultSinglePath(&lossResult[i*arraySize],distanceArray[i],lengthArray[i],arraySize,source,edgeArray[i],mask_value);
+   }
+} 
+
 void PlotLRMap(struct site source, double altitude, char *plo_filename)
 {
 	/* This function performs a 360 degree sweep around the
@@ -3639,7 +3777,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    };
    
    /* create kernel */
-   kernel = clCreateKernel(program, "PlotLRPaths_cl_test", &err);
+   kernel = clCreateKernel(program, "PlotLRPaths_cl", &err);
    if(err < 0) {
       perror("Couldn't create a kernel");
       exit(1);
@@ -3753,6 +3891,8 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
       fprintf(stderr,"Couldn't read the buffer\n");
       exit(1);
    }
+   
+   copyLossResult(lossBuffer,distance,siteArraySize,ARRAYSIZE,source,siteArray,length,mask_value); 
 
    delete lossBuffer;
    delete pathBuffer;
