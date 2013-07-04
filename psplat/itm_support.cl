@@ -139,6 +139,7 @@ __kernel void PlotLRPaths_cl_test(
    ){
    int pathId = get_global_id(0);
    int pointId = get_global_id(1);
+   printf("Point %d on path %d means address %d\n",pointId,pathId,pathId*(*pathArraySize)+pointId);
 
    loss[pathId*(*pathArraySize)+pointId] = 133.37;
 }
