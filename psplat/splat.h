@@ -9,8 +9,7 @@
 
 /* We always use HD mode for testing */
 #define HD_MODE 1
-/* Smaller number of pages for testing */
-#define MAXPAGES 1
+#define MAXPAGES 25 
 
 /**
  * Bunch of preproscessor definations. These exist so that both host and device
