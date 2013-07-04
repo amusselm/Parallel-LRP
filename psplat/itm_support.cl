@@ -31,7 +31,9 @@
 void PlotLRPath_test(struct site source, 
    double altitude, 
    struct LR_min LRM, 
-   const path_m path,
+   double distance,
+   double length,
+   __global double *terrain,
    const double clutter, const double max_range, 
    const unsigned char got_elevation_pattern, 
    const unsigned char dbm,
@@ -162,7 +164,7 @@ __kernel void PlotLRPaths_cl(
 
    double pointLoss;
     
-   PlotLRPath(*source,
+   PlotLRPath_test(*source,
       *altitude,
      *LR,
       distance[pathId],
