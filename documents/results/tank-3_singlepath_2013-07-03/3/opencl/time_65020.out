@@ -1,0 +1,6 @@
+Run with 65020 points:
+./singlepath_benchmark.sh: line 48: 29703 Segmentation fault      ../psplat/pathtest -m 2 -v 1 -p $profile -a $altitude -t $txheight -r $rxheight -f $frequendy -d $distance
+
+real	0m0.224s
+user	0m0.184s
+sys	0m0.040s
