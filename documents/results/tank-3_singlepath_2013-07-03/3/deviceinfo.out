@@ -1,0 +1,13 @@
+Platforms:
+Platform 0
+CL PLATFORM INFO: FULL_PROFILE 
+CL_PLATFORM_VERSION : OpenCL 1.1 LINUX 
+CL_PLATFORM_NAME : Intel(R) OpenCL 
+CL_PLATFORM_VENDOR : Intel(R) Corporation 
+CL_PLATFORM_EXTENSIONS : cl_khr_fp64 cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_byte_addressable_store cl_intel_printf cl_ext_device_fission cl_intel_immediate_execution cl_khr_icd 
+Devices:
+Device 0
+CL_DEVICE_NAME:       Intel(R) Core(TM) i5-2430M CPU @ 2.40GHz
+CL_DEVICE_MAX_PARAMETER_SIZE: 1024
+CL_DEVICE_MAX_MEM_ALLOC_SIZE: 980268032
+CL_DEVICE_LOCAL_MEM_SIZE: 32768

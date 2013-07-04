@@ -1,0 +1,7 @@
+Run with 85970 points:
+pure virtual method called
+terminate called without an active exception
+
+real	0m0.207s
+user	0m0.184s
+sys	0m0.020s

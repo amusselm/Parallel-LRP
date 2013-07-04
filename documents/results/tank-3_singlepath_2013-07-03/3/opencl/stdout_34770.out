@@ -1,0 +1,14 @@
+Path Attributes:
+numElevElements: 2000
+elevDistance: 100.000000
+sourceAlt: 20.000000
+destAlt: 10.000000
+eps_dielect: 15.000000
+sgm_conductivity: 0.005000
+eno_ns_surfref: 301.000000
+frq_mhz: 0.000000
+radio_climate: 5
+pol: 0
+conf: 0.500000
+rel: 0.500000
+
