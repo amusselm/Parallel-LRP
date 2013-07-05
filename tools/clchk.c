@@ -68,25 +68,21 @@ int build_program(cl_context ctx, cl_device_id dev, const char* filename) {
 
    /* Build program */
    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-   if(err < 0) {
 
-      /* Find size of log and print to std output */
-      clGetProgramBuildInfo(program, dev, CL_PROGRAM_BUILD_LOG, 
-            0, NULL, &log_size);
-      program_log = (char*) malloc(log_size + 1);
-      if(program_log == NULL){
-         perror("Couldn't allocate memoery, malloc failure");
-         exit(1);
-      }
-      program_log[log_size] = '\0';
-      clGetProgramBuildInfo(program, dev, CL_PROGRAM_BUILD_LOG, 
-            log_size + 1, program_log, NULL);
-      printf("Error Compiling: %s\n", program_log);
-      free(program_log);
-      return(err);
+   /* Find size of log and print to std output */
+   clGetProgramBuildInfo(program, dev, CL_PROGRAM_BUILD_LOG, 
+         0, NULL, &log_size);
+   program_log = (char*) malloc(log_size + 1);
+   if(program_log == NULL){
+      perror("Couldn't allocate memoery, malloc failure");
+      exit(1);
    }
-
-   return 0;
+   program_log[log_size] = '\0';
+   clGetProgramBuildInfo(program, dev, CL_PROGRAM_BUILD_LOG, 
+         log_size + 1, program_log, NULL);
+   printf("Compiler Message  %s\n", program_log);
+   free(program_log);
+   return(err);
 }
 
 int main(int argc, char* argv[]) {
