@@ -2835,6 +2835,7 @@ void PlotLRPath(struct site source, struct site destination,
 	terrain[path.length-1]=path.elevation[path.length-1]*METERS_PER_FOOT;
 
    double pointDist = path.distance[2]-path.distance[1];
+   printf("PointDist: %lf\n",pointDist);
    size_t numElev = path.length;
    cl_int err;
 
