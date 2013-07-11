@@ -2800,7 +2800,11 @@ void PlotPath(struct site source, struct site destination, char mask_value)
 	}
 }
 
-void PlotLRPath(struct site source, struct site destination, unsigned char mask_value, FILE *fd)
+void PlotLRPath(struct site source, struct site destination,
+   unsigned char mask_value, FILE *fd, 
+   cl_kernel kernel, 
+   cl_command_queue queue,
+   cl_context context)
 {
 	/* This function plots the RF path loss between source and
 	   destination points based on the ITWOM propagation model,
@@ -2814,6 +2818,8 @@ void PlotLRPath(struct site source, struct site destination, unsigned char mask_
 		distance=0.0, four_thirds_earth, rxp, dBm,
 		field_strength=0.0;
 	struct	site temp;
+   double terrain[ARRAYSIZE];
+   double signalLoss[ARRAYSIZE];
 
 	ReadPath(source,destination);
 
@@ -2822,13 +2828,157 @@ void PlotLRPath(struct site source, struct site destination, unsigned char mask_
 	/* Copy elevations plus clutter along path into the elev[] array. */
 
 	for (x=1; x<path.length-1; x++)
-		elev[x+2]=(path.elevation[x]==0.0?path.elevation[x]*METERS_PER_FOOT:(clutter+path.elevation[x])*METERS_PER_FOOT);
+		terrain[x]=(path.elevation[x]==0.0?path.elevation[x]*METERS_PER_FOOT:(clutter+path.elevation[x])*METERS_PER_FOOT);
 
 	/* Copy ending points without clutter */
+	terrain[0]=path.elevation[0]*METERS_PER_FOOT;
+	terrain[path.length-1]=path.elevation[path.length-1]*METERS_PER_FOOT;
 
-	elev[2]=path.elevation[0]*METERS_PER_FOOT;
-	elev[path.length+1]=path.elevation[path.length-1]*METERS_PER_FOOT;
+   double pointDist = path.distance[2]-path.distance[1];
+   size_t numElev = path.length;
+   cl_int err;
 
+   //Array to represent the elevation array
+   cl_mem elevBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(double)*numElev,
+      terrain,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   //dbloss - this is the result buffer
+   cl_mem dblossBuffer = clCreateBuffer(context, 
+      CL_MEM_READ_WRITE, 
+      sizeof(double)*numElev,
+      NULL,
+      &err);
+   if(err < 0) {
+      perror("Couldn't create a buffer");
+      exit(1);   
+   };
+
+   
+
+
+   /* Create Kernel arguments */
+   err = clSetKernelArg(kernel, 0, sizeof(cl_int),(void*)&path.length);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:elevSize Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &elevBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:elev Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 2, sizeof(cl_double), (void*)&pointDist);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:pathDist Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 3, sizeof(cl_double),(void*)&source.alt);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:scourceAlt Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 4, sizeof(cl_double),(void*)&destination.alt );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:destAlt Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 5, sizeof(cl_double), (void*)&LR.eps_dielect);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:eps Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 6, sizeof(cl_double), (void*)&LR.sgm_conductivity);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:sgm Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 7, sizeof(cl_double), &LR.eno_ns_surfref);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:surfref Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 8, sizeof(cl_double), (void*)&LR.frq_mhz );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:frq Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 9, sizeof(cl_int), (void*)&LR.radio_climate);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:climate Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 10, sizeof(cl_int), &LR.pol);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:pol Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 11, sizeof(cl_double),(void*)&LR.conf );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:conf Code:%d",err);
+      exit(1);
+   }
+ 
+   err = clSetKernelArg(kernel, 12, sizeof(cl_double), (void*)&LR.rel);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:relBuffer Code:%d",err);
+      exit(1);
+   }
+
+   err = clSetKernelArg(kernel, 13, sizeof(cl_mem), &dblossBuffer );
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:dbloss Code:%d",err);
+      exit(1);
+   }
+
+   /* Enqueue kernel */
+   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &numElev, 
+         NULL, 0, NULL, NULL); 
+   if(err < 0) {
+      fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
+      exit(1);
+   }
+
+   err = clFinish(queue);
+   if(err < 0){
+      fprintf(stderr,"Kernel didn't finish, code: %d",err);
+      exit(1);
+   }
+
+   /* Read the kernel's output */
+   err = clEnqueueReadBuffer(
+         queue,//Command Queue 
+         dblossBuffer, //CL buffer
+         CL_TRUE, //Blocking read
+         0, //Offset
+         sizeof(double)*numElev, //size to read
+         signalLoss, 
+         0, 
+         NULL, 
+         NULL);
+   if(err < 0) {
+      fprintf(stderr,"Error code %d\n",err);
+      perror("Couldn't read the buffer");
+      exit(1);
+   }
+   
 	/* Since the only energy the propagation model considers
 	   reaching the destination is based on what is scattered
 	   or deflected from the first obstruction along the path,
@@ -2934,6 +3084,9 @@ void PlotLRPath(struct site source, struct site destination, unsigned char mask_
 				strmode, errnum);
             */
          }
+         /* Read loss from array retruned from open cl */
+         loss = signalLoss[y]; 
+         printf("Loss at %lf, %lf: %lf\n",temp.lat,temp.lon,loss); 
 
 			temp.lat=path.lat[y];
 			temp.lon=path.lon[y];
@@ -3051,6 +3204,8 @@ void PlotLRPath(struct site source, struct site destination, unsigned char mask_
 			PutMask(path.lat[y],path.lon[y],(GetMask(path.lat[y],path.lon[y])&7)+(mask_value<<3));
 		}
 	}
+   clReleaseMemObject(elevBuffer);
+   clReleaseMemObject(dblossBuffer);
 }
 
 void PlotLOSMap(struct site source, double altitude)
@@ -3471,14 +3626,35 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
    //The acctual count of sites in the array. This may be smaller than the acctual array size, but not bigger!
    size_t siteArrayCount = 0;
 
-   //Output from OpenCL
-   double *lossBuffer = new double[siteArraySize*ARRAYSIZE];
-   double *pathBuffer = new double[siteArraySize*ARRAYSIZE]; 
-   double *distance = new double[siteArraySize];
-   int *length = new int[siteArraySize];
-   struct site *siteArray = new struct site[siteArraySize];
-   //path_m *pathBuffer = new path_m[siteArraySize];
+   //Create OpenCL devices/etc...
+   cl_uint numPlatforms;
+   cl_uint numDevices[MAX_DEVICE];
+   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE];
+   cl_platform_id platforms;
+   if(getDevices(devices,MAX_PLATFORM,MAX_DEVICE,&numPlatforms,numDevices) > 0){
+      fprintf(stderr,"Couldn't get devices");    
+      exit(1);
+   }
    
+   //Hardcoded to get first device...
+   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
+
+   program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
+
+   /* Create a command queue */
+   queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
+   if(err < 0) {
+      perror("Couldn't create a command queue");
+      exit(1);   
+   };
+   
+   /* create kernel */
+   kernel = clCreateKernel(program, "point_to_point_cl", &err);
+   if(err < 0) {
+      perror("Couldn't create a kernel");
+      exit(1);
+   }
+
 
 	for (lon=minwest, x=0, y=0; (LonDiff(lon,(double)max_west)<=0.0); y++, lon=minwest+(dpp*(double)y))
 	{
@@ -3489,16 +3665,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=lon;
 		edge.alt=altitude;
 
-      //I hope this adds edge to the array
-      ReadPath_im(source,edge,
-                  &pathBuffer[siteArrayCount*ARRAYSIZE],
-                  &distance[siteArrayCount],
-                  &length[siteArrayCount]);
-      siteArray[siteArrayCount] = edge;
-      siteArrayCount++;
-
-      //Foo 4?
-		//PlotLRPath(source,edge,mask_value,fd);
+		PlotLRPath(source,edge,mask_value,fd,kernel,queue,context);
 		count++;
 
 		if (count==z) 
@@ -3526,15 +3693,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=min_west;
 		edge.alt=altitude;
 
-      //I hope this adds edge to the array
-      ReadPath_im(source,edge,
-                  &pathBuffer[siteArrayCount*ARRAYSIZE],
-                  &distance[siteArrayCount],
-                  &length[siteArrayCount]);
-      siteArray[siteArrayCount] = edge;
-      siteArrayCount++;
-      //Foo1?
-		//PlotLRPath(source,edge,mask_value,fd);
+		PlotLRPath(source,edge,mask_value,fd,kernel,queue,context);
 		count++;
 
 		if (count==z) 
@@ -3565,15 +3724,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=lon;
 		edge.alt=altitude;
 
-      //I hope this adds edge to the array
-      ReadPath_im(source,edge,
-                  &pathBuffer[siteArrayCount*ARRAYSIZE],
-                  &distance[siteArrayCount],
-                  &length[siteArrayCount]);
-      siteArray[siteArrayCount] = edge;
-      siteArrayCount++;
-      //Foo2?
-		//PlotLRPath(source,edge,mask_value,fd);
+		PlotLRPath(source,edge,mask_value,fd,kernel,queue,context);
 		count++;
 
 		if (count==z)
@@ -3601,15 +3752,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		edge.lon=max_west;
 		edge.alt=altitude;
 
-      //I hope this adds edge to the array
-      ReadPath_im(source,edge,
-                  &pathBuffer[siteArrayCount*ARRAYSIZE],
-                  &distance[siteArrayCount],
-                  &length[siteArrayCount]);
-      siteArray[siteArrayCount] = edge;
-      siteArrayCount++;
-      //Foo3?
-		//PlotLRPath(source,edge,mask_value,fd);
+		PlotLRPath(source,edge,mask_value,fd,kernel,queue,context);
 		count++;
 
 		if (count==z)
@@ -3625,289 +3768,7 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 		}
 	}
 
-   fprintf(stderr,"Site Array Size: %d \n",siteArraySize);
-   fprintf(stderr,"Site Array Count: %ld \n",siteArrayCount);
-   assert(siteArrayCount <= siteArraySize);
-   //Create OpenCL devices/etc...
-   cl_uint numPlatforms;
-   cl_uint numDevices[MAX_DEVICE];
-   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE];
-   cl_platform_id platforms;
-   if(getDevices(devices,MAX_PLATFORM,MAX_DEVICE,&numPlatforms,numDevices) > 0){
-      fprintf(stderr,"Couldn't get devices");    
-      exit(1);
-   }
-
-   cl_mem destBuffer;
-    
-   //Hardcoded to get first device...
-   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
-   //Call the OpenCL Kernel:
-   
-
-   fprintf(stderr,"Building Program\n");
-   program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
-
-   cl_mem sourceBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(struct site),
-      &source,
-      &err);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a buffer (source): error code: %d\n",err);
-      exit(1);   
-   };
-
-   //Receiver altitude
-   cl_mem altBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &altitude,
-      &err);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a buffer (alt): error code: %d\n",err);
-      exit(1);   
-   };
-
-   cl_mem LRBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(struct LR_min),
-      &minimalLR,
-      &err);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a buffer (LR): error code: %d\n",err);
-      exit(1);   
-   };
-
-   cl_mem pathsBuffer = clCreateBuffer(context,
-      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-      sizeof(double)*siteArrayCount*ARRAYSIZE,
-      pathBuffer,
-      &err);  
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
-      exit(1);   
-   }
-
-   cl_mem distanceBuffer = clCreateBuffer(context,
-      CL_MEM_READ_ONLY  | CL_MEM_COPY_HOST_PTR,
-      sizeof(double)*siteArrayCount,
-      distance,
-      &err);  
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
-      exit(1);   
-   }  
-
-   cl_mem lengthBuffer = clCreateBuffer(context,
-      CL_MEM_COPY_HOST_PTR,
-      sizeof(int)*siteArrayCount,
-      length,
-      &err);  
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a buffer (paths): error code: %d\n",err);
-      exit(1);   
-   }  
-
-   cl_mem clutterBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &clutter,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };  
-
-   cl_mem max_rangeBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(double),
-      &max_range,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   cl_mem got_elevation_patternBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(unsigned char),
-      &got_elevation_pattern,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   cl_mem dbmBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(unsigned char),
-      &dbm,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   cl_mem lossResultBuffer = clCreateBuffer(context,
-      CL_MEM_COPY_HOST_PTR,
-      sizeof(double)*siteArraySize*ARRAYSIZE,
-      lossBuffer,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   size_t pathArraySize = ARRAYSIZE;
-   cl_mem pathArraySizeBuffer = clCreateBuffer(context, 
-      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
-      sizeof(size_t),
-      &pathArraySize,
-      &err);
-   if(err < 0) {
-      perror("Couldn't create a buffer");
-      exit(1);   
-   };
-
-   /* Create a command queue */
-   queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
-   if(err < 0) {
-      perror("Couldn't create a command queue");
-      exit(1);   
-   };
-   
-   /* create kernel */
-   kernel = clCreateKernel(program, "PlotLRPaths_cl_test", &err);
-   if(err < 0) {
-      perror("Couldn't create a kernel");
-      exit(1);
-   }
-
-   
-   fprintf(stderr,"Creating Kernel Aargs\n");
-   /* Create Kernel arguments */
-   err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &sourceBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:Source Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 1, sizeof(cl_mem), &altBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:altitude Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 2, sizeof(cl_mem), &LRBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:LR buffer Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 3, sizeof(cl_mem), &pathsBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:paths Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 4, sizeof(cl_mem), &distanceBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:distance Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 5, sizeof(cl_mem), &lengthBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:length Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 6, sizeof(cl_mem), &clutterBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:clutter Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 7, sizeof(cl_mem), &max_rangeBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:max_range Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 8, sizeof(cl_mem), &got_elevation_patternBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:got_ele Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 9, sizeof(cl_mem), &dbmBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:dbm Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 10, sizeof(cl_mem), &lossResultBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:lossResult Code:%d",err);
-      exit(1);
-   }
-
-   err = clSetKernelArg(kernel, 11, sizeof(cl_mem), &pathArraySizeBuffer);
-   if(err < 0) {
-      fprintf(stderr,"Couldn't create a kernel argument:pathArraySize Code:%d",err);
-      exit(1);
-   }
-
-
-   fprintf(stderr,"Enqueue Kernel!\n");
-   /* Enqueue kernel */
-
-   size_t workSize[2];
-   workSize[0]=siteArrayCount;
-   workSize[1]=ARRAYSIZE;
-   err = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, workSize, 
-         NULL, 0, NULL, NULL); 
-
-   if(err < 0) {
-      fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
-      exit(1);
-   }
-
-   err = clFinish(queue);
-   if(err < 0){
-      fprintf(stderr,"Kernel didn't finish, code: %d",err);
-      exit(1);
-   }
-
-   fprintf(stderr,"Eh?\n");
-   //Segfault happens here, due to the loss Result not being a valid hunk of mem
-   /* Read the kernel's output */
-   err = clEnqueueReadBuffer(
-         queue,//Command Queue 
-         lossResultBuffer, //CL buffer
-         CL_TRUE, //Blocking read
-         0, //Offset
-         sizeof(double)*siteArraySize*ARRAYSIZE,//size to read
-         lossBuffer, 
-         0, 
-         NULL, 
-         NULL);
-   if(err < 0) {
-      fprintf(stderr,"Error code %d ",err);
-      fprintf(stderr,"Couldn't read the buffer\n");
-      exit(1);
-   }
-   
-   copyLossResult(lossBuffer,distance,siteArraySize,ARRAYSIZE,source,siteArray,length,mask_value); 
-
-   delete lossBuffer;
-   delete pathBuffer;
-   delete distance;
-   delete length;
-   delete siteArray;
-
-	if (fd!=NULL)
+   if (fd!=NULL)
 		fclose(fd);
 
 	fprintf(stdout,"\nDone!\n");
@@ -3915,6 +3776,12 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
 	if (mask_value<30)
 		mask_value++;
+   
+   
+   clReleaseKernel(kernel);
+   clReleaseCommandQueue(queue);
+   clReleaseProgram(program);
+   clReleaseContext(context);
 }
 
 void LoadSignalColors(struct site xmtr)
