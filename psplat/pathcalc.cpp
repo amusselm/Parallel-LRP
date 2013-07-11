@@ -46,41 +46,13 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
    }
 }
 
-
-void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
+void allPoints_runCl(size_t numElev, double dist, double *elev, double *signal,
                   double sourceAlt, double destAlt, double eps_dielect, 
                   double sgm_conductivity, double eno_ns_surfref, 
                   double frq_mhz, int radio_climate, int pol, double conf,
-                  double rel){
+                  double rel,cl_kernel kernel,cl_context context,
+                  cl_command_queue queue){
    int err;
-
-   /* OpenCL structures */
-   cl_device_id device;
-   cl_context context;
-   cl_program program;
-   cl_kernel kernel;
-   cl_command_queue queue;
-   cl_int i, j;
-
-   cl_uint numPlatforms;
-   cl_uint numDevices[MAX_DEVICE];
-   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE];
-   cl_platform_id platforms;
-   if(getDevices(devices,MAX_PLATFORM,MAX_DEVICE,&numPlatforms,numDevices) > 0){
-      fprintf(stderr,"Couldn't get devices");    
-      exit(1);
-   }
-
-   cl_mem destBuffer;
-   cl_mem demBuffer;
-    
-   //Hardcoded to get first device...
-   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
-   //Call the OpenCL Kernel:
-   
-
-   program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
-
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -102,21 +74,6 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       perror("Couldn't create a buffer");
       exit(1);   
    };
-
-
-   /* Create a command queue */
-   queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
-   if(err < 0) {
-      perror("Couldn't create a command queue");
-      exit(1);   
-   };
-   
-   /* create kernel */
-   kernel = clCreateKernel(program, "point_to_point_cl", &err);
-   if(err < 0) {
-      perror("Couldn't create a kernel");
-      exit(1);
-   }
 
    /* Create Kernel arguments */
    err = clSetKernelArg(kernel, 0, sizeof(cl_int),(void*)&numElev);
@@ -234,10 +191,64 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);
    }
 
-   //Program cleanup
-   clReleaseKernel(kernel);
+   //Cleanup Buffers
    clReleaseMemObject(elevBuffer);
    clReleaseMemObject(dblossBuffer);
+
+}
+
+void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
+                  double sourceAlt, double destAlt, double eps_dielect, 
+                  double sgm_conductivity, double eno_ns_surfref, 
+                  double frq_mhz, int radio_climate, int pol, double conf,
+                  double rel){
+   int err;
+
+   /* OpenCL structures */
+   cl_device_id device;
+   cl_context context;
+   cl_program program;
+   cl_kernel kernel;
+   cl_command_queue queue;
+   cl_int i, j;
+
+   cl_uint numPlatforms;
+   cl_uint numDevices[MAX_DEVICE];
+   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE];
+   cl_platform_id platforms;
+   if(getDevices(devices,MAX_PLATFORM,MAX_DEVICE,&numPlatforms,numDevices) > 0){
+      fprintf(stderr,"Couldn't get devices");    
+      exit(1);
+   }
+
+   cl_mem destBuffer;
+   cl_mem demBuffer;
+    
+   //Hardcoded to get first device...
+   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
+   //Call the OpenCL Kernel:
+   
+
+   program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
+   /* Create a command queue */
+   queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
+   if(err < 0) {
+      perror("Couldn't create a command queue");
+      exit(1);   
+   };
+   
+   /* create kernel */
+   kernel = clCreateKernel(program, "point_to_point_cl", &err);
+   if(err < 0) {
+      perror("Couldn't create a kernel");
+      exit(1);
+   }
+   allPoints_runCl(numElev,dist,elev,signal,sourceAlt,destAlt,
+                eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,radio_climate,
+                pol,conf,rel,kernel,context,queue);
+
+   //Program cleanup
+   clReleaseKernel(kernel);
    clReleaseCommandQueue(queue);
    clReleaseProgram(program);
    clReleaseContext(context);
