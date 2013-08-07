@@ -5,11 +5,14 @@
  *
  * @author Andrew J. Musselman 
  */
+using namespace std;
 
 #include "clutil.h"
 #include "splat.h"
 #include<unistd.h>
 #include<assert.h>
+#include<iostream>
+#include<fstream>
 
 //Declration of point to point for serial ITWOM
 void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode, int &errnum);
@@ -383,6 +386,15 @@ void printAttrs(size_t numElevElements,
 
 }
 
+void readTerrain(double* elev,int numElevElements,string inputFilename){
+   ifstream input;
+   input.open(inputFilename.c_str(), ios::in);
+   for(int i = 0; i < numElevElements && i < ARRAYSIZE && input.eof() != 0; i++){
+      input >> elev[i];
+   }
+   input.close();
+}
+
 int main(int argc, char* argv[]){
    size_t numElevElements = ELEVSIZE_DFLT;
    double elevDistance = ELEVDIST_DFLT;
@@ -402,31 +414,33 @@ int main(int argc, char* argv[]){
    int profileAlt = 0; /* default to flat */
 
    int mode = 0;
-   int runSerial = 1;
-   int runCl = 1;
-   int compareResults = 1;
+   bool runSerial = true;
+   bool runCl = true;
+   bool compareResults = true;
+   string inputFile;
+   bool readInput = false; 
 
    int opt;
 
-   while ((opt = getopt(argc,argv,"d:t:r:f:n:p:a:v:m:h")) != -1){
+   while ((opt = getopt(argc,argv,"d:t:r:f:n:p:a:v:m:l:h")) != -1){
       switch(opt) {
-         case 'v':
+         case 'v': /* Verbose */
             verbose = atoi(optarg);
             break;
-         case 'd':
+         case 'd': /* Distance Between Points */
             elevDistance = atof(optarg);
             break;
-         case 't':
+         case 't': /* Transmitter Altitude */
             sourceAlt = atof(optarg);
             break;
-         case 'r':
+         case 'r': /* Receiver Altitude */
             destAlt = atof(optarg);
             break;
-         case 'n':
+         case 'n': /* Number of Elev Elements */
             numElevElements = atoi(optarg);
             assert(numElevElements <= ARRAYSIZE);
             break;
-         case 'm':
+         case 'm': /* Mode - ie run both CL and non CL code? */
             mode = atoi(optarg);
             if(mode > 3 || mode < 0){
                fprintf(stderr,"Invalid mode\n");
@@ -434,16 +448,20 @@ int main(int argc, char* argv[]){
                exit(EXIT_FAILURE);
             }
             break;
-         case 'f': 
+         case 'f': /* Frequency */
             frq_mhz = atof(optarg);
             break;
-         case 'p':
+         case 'p': /* Terrain Profile - Canned Data */
             profile = atoi(optarg);
             if(profile > 3 || profile < 0){
                fprintf(stderr,"Invalid Terain profile\n");
                printUsage();
                exit(EXIT_FAILURE);
             }
+            break;
+         case 'l':/* Load terrain profile */
+            inputFile = optarg;
+            readInput = true;
             break;
          case 'a':
             profileAlt = atof(optarg);
@@ -488,7 +506,12 @@ int main(int argc, char* argv[]){
 
 
    double *elev = new double [numElevElements];
-   generateTerrain(elev,numElevElements,profile,profileAlt);
+   if(!readInput){
+      generateTerrain(elev,numElevElements,profile,profileAlt);
+   }
+   else{
+      readTerrain(elev,numElevElements,inputFile);
+   }
 
    if(verbose){
       printAttrs(numElevElements, elevDistance,sourceAlt, destAlt,eps_dielect,
