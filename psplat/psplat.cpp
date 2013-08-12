@@ -2799,6 +2799,36 @@ void PlotPath(struct site source, struct site destination, char mask_value)
 		}
 	}
 }
+
+void printAttrs(size_t numElevElements, 
+   double elevDistance,
+   double sourceAlt, /* Source Altitude (meters) */
+   double destAlt, /* Source Altitude (meters) */
+   double eps_dielect,
+	double sgm_conductivity,
+	double eno_ns_surfref,
+	double frq_mhz,
+	int radio_climate,
+	int pol,
+	double conf,
+	double rel)
+{
+   fprintf(stderr,"Path Attributes:\n");
+   fprintf(stderr,"numElevElements: %ld\n",numElevElements);
+   fprintf(stderr,"elevDistance: %lf\n",elevDistance);
+   fprintf(stderr,"sourceAlt: %lf\n",sourceAlt); /* Source Altitude (meters) */
+   fprintf(stderr,"destAlt: %lf\n",destAlt); /* Source Altitude (meters) */
+   fprintf(stderr,"eps_dielect: %lf\n",eps_dielect);
+   fprintf(stderr,"sgm_conductivity: %lf\n",sgm_conductivity);
+   fprintf(stderr,"eno_ns_surfref: %lf\n",eno_ns_surfref);
+   fprintf(stderr,"frq_mhz: %lf\n",frq_mhz);
+   fprintf(stderr,"radio_climate: %d\n",radio_climate);
+   fprintf(stderr,"pol: %d\n",pol);
+   fprintf(stderr,"conf: %lf\n",conf);
+   fprintf(stderr,"rel: %lf\n",rel);
+
+}
+
 void allPoints_runCl(size_t numElev, double dist, double *elev, double *signal,
                   double sourceAlt, double destAlt, double eps_dielect, 
                   double sgm_conductivity, double eno_ns_surfref, 
@@ -2806,6 +2836,7 @@ void allPoints_runCl(size_t numElev, double dist, double *elev, double *signal,
                   double rel,cl_kernel kernel,cl_context context,
                   cl_command_queue queue){
    int err;
+
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -2984,12 +3015,17 @@ void PlotLRPath(struct site source, struct site destination,
 	terrain[0]=path.elevation[0]*METERS_PER_FOOT;
 	terrain[path.length-1]=path.elevation[path.length-1]*METERS_PER_FOOT;
 
-   double pointDist = path.distance[2]-path.distance[1];
-   printf("PointDist: %lf\n",pointDist);
+   double pointDist = METERS_PER_MILE*(path.distance[2]-path.distance[1]);
 
-   allPoints_runCl(path.length,pointDist,terrain,signalLoss,source.alt,
-                   destination.alt,LR.eps_dielect,LR.sgm_conductivity,
-                   LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate,LR.pol,LR.conf,                    LR.rel, kernel,context,queue);
+   /*printAttrs(path.length,pointDist,source.alt,destination.alt,LR.eps_dielect,
+         LR.sgm_conductivity,
+         LR.eno_ns_surfref,LR.frq_mhz,LR.radio_climate,LR.pol,LR.conf,LR.rel);
+   */
+
+   allPoints_runCl(path.length,pointDist,terrain,signalLoss,source.alt*METERS_PER_FOOT,
+                   destination.alt*METERS_PER_FOOT,LR.eps_dielect,LR.sgm_conductivity,
+                   LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate,LR.pol,LR.conf,
+                   LR.rel, kernel,context,queue);
    
 	/* Since the only energy the propagation model considers
 	   reaching the destination is based on what is scattered
@@ -3098,8 +3134,6 @@ void PlotLRPath(struct site source, struct site destination,
          }
          /* Read loss from array retruned from open cl */
          loss = signalLoss[y]; 
-         printf("Loss at %lf, %lf: %lf\n",temp.lat,temp.lon,loss); 
-
 			temp.lat=path.lat[y];
 			temp.lon=path.lon[y];
 
@@ -3696,9 +3730,12 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	fflush(stdout);
 	
 	z=(int)(th*(double)(max_north-min_north));
+   int secondCount = 0;
 
 	for (lat=maxnorth, x=0, y=0; lat>=(double)min_north; y++, lat=maxnorth-(dpp*(double)y))
 	{
+      fprintf(stderr,"Count is %d\n",secondCount);
+      secondCount++;
 		edge.lat=lat;
 		edge.lon=min_west;
 		edge.alt=altitude;

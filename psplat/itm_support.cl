@@ -50,7 +50,7 @@ __kernel void point_to_point_cl(
       char strmode[10000];
       int errnum;
      
-      itm_elev[0] = id*1.00;
+      itm_elev[0] = (id-1)*1.00;
       itm_elev[1] = path_dist;
       for(int i = 0; i < elev_size; i++){
          itm_elev[i+2]=elev[i];

@@ -38,8 +38,8 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
    }
 
 
-   for(int i = 1; i <= numElev; i++){
-      itm_elev[0] = i; /* Number of points */ 
+   for(int i = 2; i <= numElev; i++){
+      itm_elev[0] = i-1; /* Number of points */ 
       itm_elev[1] = dist; /* Distance between points */
    
       point_to_point(itm_elev,sourceAlt, destAlt, eps_dielect, sgm_conductivity,
@@ -164,7 +164,8 @@ void allPoints_runCl(size_t numElev, double dist, double *elev, double *signal,
    }
 
    /* Enqueue kernel */
-   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &numElev, 
+   size_t startPoint = 2;
+   err = clEnqueueNDRangeKernel(queue, kernel, 1, &startPoint, &numElev, 
          NULL, 0, NULL, NULL); 
    if(err < 0) {
       fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);

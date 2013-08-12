@@ -42,11 +42,40 @@
 #include <complex>
 #include <assert.h>
 #include <string.h>
-#include<stdio.h>
+#include <stdio.h>
 
 #define THIRD (1.0/3.0)
 
 using namespace std;
+void printAttrsPoint(size_t numElevElements, 
+   double elevDistance,
+   double sourceAlt, /* Source Altitude (meters) */
+   double destAlt, /* Source Altitude (meters) */
+   double eps_dielect,
+	double sgm_conductivity,
+	double eno_ns_surfref,
+	double frq_mhz,
+	int radio_climate,
+	int pol,
+	double conf,
+	double rel)
+{
+   fprintf(stderr,"Path Attributes:\n");
+   fprintf(stderr,"numElevElements: %ld\n",numElevElements);
+   fprintf(stderr,"elevDistance: %lf\n",elevDistance);
+   fprintf(stderr,"sourceAlt: %lf\n",sourceAlt); /* Source Altitude (meters) */
+   fprintf(stderr,"destAlt: %lf\n",destAlt); /* Source Altitude (meters) */
+   fprintf(stderr,"eps_dielect: %lf\n",eps_dielect);
+   fprintf(stderr,"sgm_conductivity: %lf\n",sgm_conductivity);
+   fprintf(stderr,"eno_ns_surfref: %lf\n",eno_ns_surfref);
+   fprintf(stderr,"frq_mhz: %lf\n",frq_mhz);
+   fprintf(stderr,"radio_climate: %d\n",radio_climate);
+   fprintf(stderr,"pol: %d\n",pol);
+   fprintf(stderr,"conf: %lf\n",conf);
+   fprintf(stderr,"rel: %lf\n",rel);
+}
+
+
 
 struct tcomplex
 {	double tcreal;
@@ -89,15 +118,14 @@ struct prop_type
 };
 
 struct propv_type
-{	
-   double sgc;
+{	double sgc;
 	int lvar;
 	int mdvar;
 	int klim;
 };
 
-struct propa_type{	
-   double dlsa;
+struct propa_type
+{	double dlsa;
 	double dx;
 	double ael;
 	double ak1;
@@ -419,7 +447,6 @@ double saalos(double d, prop_type &prop, propa_type &propa)
 		saalosv=arte;
 	}
 	return saalosv;
-
 }			
 
 
@@ -921,8 +948,6 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 	int rp;
 	double alosv;
 	
-
-
 	cd=0.0;
 	cr=0.0;
 	htg=prop.hg[0];
@@ -967,7 +992,7 @@ double alos2(double d, prop_type &prop, propa_type &propa)
 	
 		s=0.78*q*exp(-pow(q/16.0,0.25));
 		q=exp(-mymin(10.0,prop.wn*s*sps));
-      r=q*(sps-prop_zgnd)/(sps+prop_zgnd);
+		r=q*(sps-prop_zgnd)/(sps+prop_zgnd);
 		q=abq_alos(r);
 		q=mymin(q,1.0);		
 	
@@ -1412,8 +1437,8 @@ void lrprop2(double d, prop_type &prop, propa_type &propa)
 				}
 				else if (int(prop.dist-prop.dl[0])>0.0)    /* if past 1st horiz */
 				{
-               q=adiff2(0.0,prop,propa);
-               prop.aref=adiff2(pd1,prop,propa);
+				q=adiff2(0.0,prop,propa);
+				prop.aref=adiff2(pd1,prop,propa);
 				}			
 				else
 				{
@@ -1852,6 +1877,9 @@ void hzns2(double pfl[], prop_type &prop, propa_type &propa)
 	}
 	rp=2+(int)(floor(0.5+dr/xi));
 	prop.rpl=rp;	
+   if(rp > pfl[0] || rp < 0){
+      rp=pfl[0];
+   }
 	prop.rph=pfl[rp];
 }
 
@@ -2488,6 +2516,9 @@ void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielec
 	prop_type   prop;
 	propv_type  propv;
 	propa_type  propa;
+   /* printAttrsPoint((size_t)elev[0],elev[1],tht_m,rht_m,eps_dielect,sgm_conductivity,
+      eno_ns_surfref,frq_mhz,radio_climate,pol,conf,rel);      
+   */
 
 	double zsys=0;
 	double zc, zr;
