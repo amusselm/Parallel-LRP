@@ -26,6 +26,13 @@
   year           = 2010
 }
 
+@Unpublished{cloudrf,
+  Author         = {{Alex Farrent}},
+  Title          = {Discussion of {SPLAT} and {C}loud{RF}},
+  month          = {20 } # jul,
+  year           = 2013
+}
+
 @Misc{Int13,
   Author         = {{Intel Corperation}},
   Title          = {Intel {A}rk - {I}ntel {X}eon {P}rocessor {E}5504 (4{M}
@@ -34,6 +41,16 @@
   month          = {29 } # apr,
   url            = {http://ark.intel.com/products/40711/},
   year           = 2013
+}
+
+@Book{hetero_book,
+  Author         = {Benedict Gaster and Lee Howes and David R. Kaeli and
+                   Perhaad Mistry and Dana Schaa},
+  Title          = {Heterogeneous Computing with OpenCL},
+  Publisher      = {Morgan Kaufmann},
+  isbn           = {0123877660},
+  url            = {http://www.amazon.com/Heterogeneous-Computing-OpenCL-Benedict-Gaster/dp/0123877660%3FSubscriptionId%3D0JYN1NVW651KCA56C102%26tag%3Dtechkie-20%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3D0123877660},
+  year           = 2011
 }
 
 @Article{lrp_itm_gpu,
@@ -77,6 +94,15 @@
   month          = {14 } # mar,
   url            = {http://www.qsl.net/kd2bd/splat.html},
   year           = 2011
+}
+
+@Misc{gpl,
+  Author         = {{Free Software Foundation}},
+  Title          = {G{NU} {G}eneral {P}ublic {L}icense},
+  HowPublished   = {World Wide Web},
+  month          = {2 } # jun,
+  url            = {http://www.gnu.org/licenses/gpl-2.0.html},
+  year           = 1991
 }
 
 @Misc{us_commerce,

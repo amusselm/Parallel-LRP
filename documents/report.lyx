@@ -111,12 +111,32 @@ General Description
 \end_layout
 
 \begin_layout Standard
-The Irregular Terrain With Obstructions Model (ITWOM) is a mathematical
- model that attempts to predict how radio waves will propagate over a given
- path with known elevations.
+Imagine driving through a hilly area while listening to a terrestrial FM
+ broadcaster on the car radio.
+ In many places a radio listener will have a rich, clear signal.
+ In other places, the reception might be choppy or weak.
+ And, in some places the station might be completely inaudible.
+ This hypothetical example shows a problem that broadcasters and other radio
+ system planners have to deal with: the effects of terrain on signal reception.
+ 
+\end_layout
+
+\begin_layout Standard
+Sine the 1960s engineers have used computers to attempt to model the effects
+ of terrain on where a signal can be heard and at what strength.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "longley1968prediction"
+
+\end_inset
+
  By repeating this process for a number of different paths over an area,
  its possible to generate a coverage map that shows the theoretical signal
  strength of a transmitter over a given area.
+ There are many software packages that do just this using many different
+ models, including an open source application called SPLAT (Signal Propagation,
+ Loss, And Terrain) that is developed by John A.
+ Magliacane.
  
 \end_layout
 
@@ -167,10 +187,26 @@ The Irregular Terrain With Obstructions Model (ITWOM) is derived from the
  older Longley-Rice Model, with a number of changes and corrections that
  its author, Sidney E.
  Shumate, claims improve its overall accuracy.
- Additionally, their changes allow the practical use of higher-resolution
- elevation data.
- Shumate also designed his code to work as a drop-in replacement for the
- Longley-Rice Model.
+ Other dispute that claim: Alex Farrent, author and maintainer CloudRF,
+ a graphical interface for radio frequency propagation modeling, says that
+ he has 
+\begin_inset Quotes eld
+\end_inset
+
+yet to see a proper independent assessment that it is better as claimed
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cloudrf"
+
+\end_inset
+
+.
+ Shumate designed his code to work as a drop-in replacement for the Longley-Rice
+ Model.
 \begin_inset CommandInset citation
 LatexCommand cite
 key "VTC_IWOTM"
@@ -323,6 +359,25 @@ key "lrp_itm_gpu"
  They also found that the Tesla GPU was around 2-3 times as fast as the
  IBM cell processor.
  
+\end_layout
+
+\begin_layout Standard
+Finally, Alex Farrent, maintainer of graphical program for radio frequency
+ terrain modeling called CloudRF has attempted to modify SPLAT to calculate
+ Longley-Rice path loss in parallel using pthreads.
+ In the process he reported encountering issues with SPLAT's extensive global
+ variables.
+ He later successfully implemented process-level parallelization by having
+ two instances of SPLAT each generate one half of the image and using an
+ external image manipulation library to combine them into one image.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cloudrf"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -492,6 +547,160 @@ key "longley1968prediction"
 \end_layout
 
 \begin_layout Subsection
+Parallelization Strategies 
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Parallelization-Strategies"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Generate Paths on the Device
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:path-on-device"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One approach to parallelizing this problem is to take the task of generating
+ each terrain profile and put it on the device side.
+ Then, run through a loop on the device side processing each point along
+ each path, putting the results back into the data structure that represents
+ both signal loss and elevation at each point.
+ The advantage to this approach is that the system has to transfer vastly
+ less data to and from the device and it requires less device and host memory.
+ 
+\end_layout
+
+\begin_layout Standard
+However, this comes at a cost of greater complexity of the code that is
+ run on the device.
+ Implementation is much more difficult than some of the other approaches
+ because there is that much more code that has to be adapted to run in OpenCL
+ and synchronization of work items that are accessing the same data structure
+ becomes more of an issue.
+ There is also additional complexity in the act of copying the results to
+ and from the device.
+ Since the host memory exists independently of the device memory, it's necessary
+ to write additional code that that makes a deep copy of the terrain and
+ signal loss data structure(s).
+ 
+\end_layout
+
+\begin_layout Standard
+The author initially attempted to implement this approach before encountering
+ difficulties, and switching to the multidimensional work-items approach
+ described in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Path at a Time
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Path-at-a-time"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Another approach is to simply push one path at a time to the device and
+ run the path loss calculations in parallel for each point along that path.
+ This approach has the advantage of having the lowest memory requirements
+ of all of these proposed methods.
+ This comes at a cost of having to transfer much more data to and from the
+ device over the course of plotting the path loss over an area.
+ For points that are close to the transmitter, the distance between two
+ paths is minimal, which means the same altitude data is sent to device
+ code multiple times with this approach.
+ There is also the additional cost in having to enqueue each item separately.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Block at a Time
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Block-at-a-time"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+It's possible to reduce the overhead of the path-at-a-time approach by creating
+ a buffer that contains a certain number of paths and another buffer that
+ is used to store the path loss results from each point.
+ In exchange, both the host system and the device must have the memory to
+ support this buffer.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Multiple Paths/Blocks at a Time With Callbacks
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Multiple-Paths/Blocks-at-time-callback"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+OpenCL also provides a callback functionality that allows host system code
+ to be called when a work item completes.
+ With the right host system code, this could be used load more data onto
+ the device while other elements are calculating.
+ One could even go so far as to have calculations running while more data
+ is being loaded from disk, so that the system can do path loss calculations
+ while also doing IO.
+ However, the author believes that this would effectively require a complete
+ re-write of SPLAT, which doesn't currently support any sort of dynamic
+ loading of terrain data at all.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Multidimensional Work Items
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+OpenCL also provides functionality to deal with multidimensional work items.
+ This gives each device-side work item an address in multiple dimensions,
+ allowing multiple work items to process each path simultaneously.
+ This eliminates the need to loop over elements in a path on the device,
+ which makes the task more parallel.
+ However, this approach still requires sending each path to the device individua
+lly, which means that more data must be sent to the device than if the paths
+ were generated on the device itself.
+ 
+\end_layout
+
+\begin_layout Subsection
 Issues with Parallelization 
 \end_layout
 
@@ -506,14 +715,36 @@ ation.
 
 \begin_layout Subsubsection
 Repeated Points
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Repeated-Points"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 The only data dependency is the marking of points as having already been
  analyzed.
  Due to the geometry of each path, points closest will be hit multiple times,
- so this check is still necessary to prevent duplication of effort.
- If the approach described in 
+ as shown 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:paths-and-grids"
+
+\end_inset
+
+, so this check is still necessary to prevent duplication of effort.
+ If the 
+\begin_inset Quotes eld
+\end_inset
+
+generate paths on device
+\begin_inset Quotes erd
+\end_inset
+
+ approach described in section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:path-on-device"
@@ -522,16 +753,76 @@ reference "sub:path-on-device"
 
 is used, it might be possible to avoid this duplication of effort by synchronizi
 ng reads and writes to the global data structure.
- If one of the other approaches is used, the host code will have to throw
- some results away after reading from the device.
- This is shown by 
+ If the 
+\begin_inset Quotes eld
+\end_inset
+
+path-at-a-time
+\begin_inset Quotes erd
+\end_inset
+
+ approach described in section 
 \begin_inset CommandInset ref
-LatexCommand formatted
-reference "fig:paths-and-grids"
+LatexCommand ref
+reference "sub:Path-at-a-time"
 
 \end_inset
 
-.
+, it should be possible to determine which points need to be calculated
+ before sending the data to OpenCL.
+ The host code can then bundle this up as an extra parameter for the OpenCL
+ Kernel, which can ignore the repeated point.
+ It might be simpler to simply throw away the calculations, but this comes
+ at a cost of potentially hurting performance, possibly to the point that
+ performance is worse than without parallelization.
+ 
+\end_layout
+
+\begin_layout Standard
+It may also be possible to apply some sort of memoization to the other approache
+s, but it becomes somewhat more complicated.
+ The multi-dimensional work-item approach described in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+requires synchronization between multiple device-side work-items.
+ In either of the 
+\begin_inset Quotes eld
+\end_inset
+
+block-at-a-time
+\begin_inset Quotes erd
+\end_inset
+
+ approaches described in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Block-at-a-time"
+
+\end_inset
+
+ and section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multiple-Paths/Blocks-at-time-callback"
+
+\end_inset
+
+ code must check both against SPLAT's host-side count of which points have
+ been calculated and with each other.
+ Any approach that involves multiple host-side threads, such as the approach
+ involving callbacks described in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multiple-Paths/Blocks-at-time-callback"
+
+\end_inset
+
+ requires synchronization between these host-side client threads, in addition
+ to any device-side synchronization.
  
 \begin_inset Float figure
 placement H
@@ -624,124 +915,152 @@ key "lrp_itm_gpu"
  to modify this function beyond what was necessary run it in OpenCL.
  This means that the qlrps() function is called multiple times on the OpenCL
  device.
+\end_layout
+
+\begin_layout Section
+Implementation and Modifications to SPLAT and the ITWOM 
+\begin_inset CommandInset label
+LatexCommand label
+name "implementation"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Changes to the ITWOM 
+\end_layout
+
+\begin_layout Standard
+Regardless of which overall approach is taken to parallelization, the ITWOM
+ code must be modified to allow it to even compile in OpenCL.
+ The ITWOM code contains many instances of static and it often uses a special
+ call to initialize a function's static local variables before calling the
+ same function again to execute the actual calculations needed to produce
+ a projected signal loss.
+ OpenCL does not support the static keyword.
+ Therefore the author had to modify the ITWOM to store these static variables
+ in a struct that is kept as a local variable in the calling function.
+ Whenever one of these functions is called that once contained a static
+ variable is called, it is passed to a pointer to an instance of the struct
+ that is declared in the calling function.
+ 
+\end_layout
+
+\begin_layout Standard
+Some parts of the ITWOM use the C++ Standard Template Library and complex
+ number library.
+ Neither of these exist in the Intel OpenCL implementation that the author
+ was using for the bulk of this project.
+ As a result, the author had to implement his own complex number type and
+ a number of complex number mathematical operations.
+ 
+\end_layout
+
+\begin_layout Standard
+The hzns2() function in the ITWOM has some statements that take the result
+ of some mathematical calculations and attempts to use it as an array index.
+ In rare instances, this can result in an array index that is out of bounds,
+ in turn resulting in a segmentation fault when the program attempts to
+ access this out-of-bounds memory.
+ The author added a simple bounds check to prevent the program from attempting
+ to access a piece of undefined memory.
+ The author also suspects that the case that caused a segfault with this
+ line would have normally been suppressed by SPLAT's check for repeated
+ points.
+ As a result, he also suspects that implementing one of the memorization
+ schemes described in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Repeated-Points"
+
+\end_inset
+
+ might also have avoided this segfault, at least with the specific test
+ conditions he used for his benchmarks.
  
 \end_layout
 
 \begin_layout Subsection
-Parallelization Strategies 
-\begin_inset CommandInset label
-LatexCommand label
-name "sub:Parallelization-Strategies"
+Implementation of Parallelization 
+\end_layout
+
+\begin_layout Standard
+Any use of Open CL requires additional code to compile the device side code,
+ set up any device-side buffers and potentially populate them with data,
+ set the kernel arguments and read data from from the device.
+ These steps would add some overhead to the process, which is an unavoidable
+ cost of using OpenCL for parallelization.
+ This might put OpenCL at a disadvantage to other parallelization techniques
+ on some systems.
+\end_layout
+
+\begin_layout Standard
+The other changes that are necessary to SPLAT and the ITWOM depend on which
+ overall approach to parallelization a programmer takes.
+ Through the course of the project, the author attempted to implement the
+ 
+\begin_inset Quotes eld
+\end_inset
+
+generate paths on device
+\begin_inset Quotes erd
+\end_inset
+
+ strategy as described in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:path-on-device"
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Subsubsection
-Generate Paths on the Device
-\begin_inset CommandInset label
-LatexCommand label
-name "sub:path-on-device"
-
+, the 
+\begin_inset Quotes eld
 \end_inset
 
+multidimensional work-item
+\begin_inset Quotes erd
+\end_inset
 
-\end_layout
-
-\begin_layout Standard
-One approach to parallelizing this problem is to take the task of generating
- each terrain profile and put it on the device side.
- Then, run through a loop on the device side processing each point along
- each path, putting the results back into the data structure that represents
- both signal loss and elevation at each point.
- The advantage to this approach is that the system has to transfer vastly
- less data to and from the device and it requires less device and host memory.
- 
-\end_layout
-
-\begin_layout Standard
-However, this comes at a cost of greater complexity of the code that is
- run on the device.
- Implementation is much more difficult than some of the other approaches
- because there is that much more code that has to be adapted to run in OpenCL
- and synchronization of work items that are accessing the same data structure
- becomes more of an issue.
- There is also additional complexity in the act of copying the results to
- and from the device.
- Since the host memory exists independently of the device memory, it's necessary
- to write additional code that that makes a deep copy of the terrain and
- signal loss data structure(s).
- 
-\end_layout
-
-\begin_layout Standard
-The author initially attempted to implement this approach before encountering
- difficulties, and switching to the multidimensional work-items approach
- described in section 
+ strategy as described in section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:Multidimensional-Work-Items"
 
 \end_inset
 
+, and the 
+\begin_inset Quotes eld
+\end_inset
+
+path at a time
+\begin_inset Quotes erd
+\end_inset
+
+ strategy as described in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Path-at-a-time"
+
+\end_inset
+
 .
-\end_layout
-
-\begin_layout Subsubsection
-Path at a Time
-\end_layout
-
-\begin_layout Standard
-Another approach is to simply push one path at a time to the device and
- run the path loss calculations in parallel for each point along that path.
- This approach has the advantage of having the lowest memory requirements
- of all of these proposed methods.
- This comes at a cost of having to transfer much more data to and from the
- device over the course of plotting the path loss over an area.
- For points that are close to the transmitter, the distance between two
- paths is minimal, which means the same altitude data is sent to device
- code multiple times with this approach.
- There is also the additional cost in having to enqueue each item separately.
  
 \end_layout
 
 \begin_layout Subsubsection
-Block at a Time
-\end_layout
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Standard
-It's possible to reduce the overhead of the path-at-a-time approach by creating
- a buffer that contains a certain number of paths and another buffer that
- is used to store the path loss results from each point.
- In exchange, both the host system and the device must have the memory to
- support this buffer.
- 
-\end_layout
+Generate all Paths on the Device
+\begin_inset Quotes erd
+\end_inset
 
-\begin_layout Subsubsection
-Multiple Paths/Blocks at a Time With Callbacks
-\end_layout
 
-\begin_layout Standard
-OpenCL also provides a callback functionality that allows host system code
- to be called when a work item completes.
- With the right host system code, this could be used load more data onto
- the device while other elements are calculating.
- One could even go so far as to have calculations running while more data
- is being loaded from disk, so that the system can do path loss calculations
- while also doing IO.
- However, the author believes that this would effectively require a complete
- re-write of SPLAT, which doesn't currently support any sort of dynamic
- loading of terrain data at all.
- 
-\end_layout
-
-\begin_layout Subsubsection
-Multidimensional Work Items
 \begin_inset CommandInset label
 LatexCommand label
-name "sub:Multidimensional-Work-Items"
+name "sub:Generate-all-Paths-implmentation"
 
 \end_inset
 
@@ -749,23 +1068,7 @@ name "sub:Multidimensional-Work-Items"
 \end_layout
 
 \begin_layout Standard
-OpenCL also provides functionality to deal with multidimensional work items.
- This gives each device-side work item an address in multiple dimensions,
- allowing multiple work items to process each path simultaneously.
- This eliminates the need to loop over elements in a path on the device,
- which makes the task more parallel.
- However, this approach still requires sending each path to the device individua
-lly, which means that more data must be sent to the device than if the paths
- were generated on the device itself.
- 
-\end_layout
-
-\begin_layout Section
-Implementation and Modifications to SPLAT and the ITM
-\end_layout
-
-\begin_layout Standard
-The author initially attempted to implement the ITM in parallel by generating
+The author initially attempted to implement the ITWOM in parallel by generating
  all paths on the device, as decried in section
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -788,8 +1091,37 @@ reference "sub:IntelCLBUg"
  Because the host and device have completely separate memory spaces, pointers
  that are valid in the host process will not be valid in any of the device's
  memory spaces unless they have been explicitly set as a kernel argument.
- As a result, the author switched to the multidimensional work-item approach
- described in section 
+ 
+\end_layout
+
+\begin_layout Standard
+Due to the structure of SPLAT and some of the limitations of OpenCL, a number
+ of features would to be removed from SPLAT in order to make it work using
+ OpenCL using this approach.
+ Because OpenCL lacks a direct file input and output functionality, the
+ author decided to remove a feature that allowed storing of signal loss
+ results in a log file in addition to being displayed in the final output.
+ Had SPLAT handled the output of the contents of this log file differently,
+ this measure would not have been necessary.
+ Additionally, the author believes it would be necessary to a feature that
+ computes loss based vertical radiation pattern of an antenna to avoid triggerin
+g a potential Intel OpenCL compiler bug.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
+
+Multidimensional work-items
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The author then attempted the multidimensional work-item approach described
+ in section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:Multidimensional-Work-Items"
@@ -797,54 +1129,93 @@ reference "sub:Multidimensional-Work-Items"
 \end_inset
 
 .
+ In this process, he encountered an unknown crash in the device side code.
+ As a result he, abandoned this approach in favor of the easier to implement
+ 
+\begin_inset Quotes eld
+\end_inset
+
+path at a time
+\begin_inset Quotes erd
+\end_inset
+
+ approach.
  
 \end_layout
 
 \begin_layout Standard
-In order translate the ITWOM code to OpenCL and run it in parallel, a number
- of changes had to be made to both the ITWOM code and SPLAT.
- Some of these changes, such as removing the instances of static that appear
- in the ITWOM code are necessary due to limitations of the OpenCL programming
- language.
- Parts of SPLAT required some refactoring due to SPLAT's prodigious abuse
- of global variables and to create the necessary buffers for OpenCL to read
- data from and write data to.
+Like an implementation of 
+\begin_inset Quotes eld
+\end_inset
+
+generate all paths on the device
+\begin_inset Quotes erd
+\end_inset
+
+ approach mentioned in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Generate-all-Paths-implmentation"
+
+\end_inset
+
+, the author believes this approach would have required removing the signal
+ loss result log file and the ability to account for antenna elevation patterns
+ in signal loss calculations for the same reasons.
  
 \end_layout
 
-\begin_layout Standard
-Additionally, the author had to add code that compiled the OpenCL code and
- set up the devices that would run this code.
- These steps would add some overhead to the process, which is an unavoidable
- cost of using OpenCL for parallelization.
- This might put OpenCL at a disadvantage to other parallelization techniques
- on some systems.
- 
-\end_layout
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
 
-\begin_layout Standard
-Finally, due to some of the limitations of OpenCL, a number of features
- had to be removed from SPLAT in order to make it work using OpenCL.
- Because OpenCL lacks a direct file input and output functionality, the
- author decided to remove a feature that allowed storing of signal loss
- results in a log file in addition to being displayed in the final output.
- Had SPLAT handled the output of the contents of this log file differently,
- this measure would not have been necessary.
- Additionally, the author removed a feature that computes loss based vertical
- radiation pattern of an antenna to avoid triggering a potential Intel OpenCL
- compiler bug.
- 
-\begin_inset CommandInset label
-LatexCommand label
-name "implementation"
-
+Path at a time
+\begin_inset Quotes erd
 \end_inset
 
 
 \end_layout
 
+\begin_layout Standard
+The author then successful implemented the 
+\begin_inset Quotes eld
+\end_inset
+
+path at a time approach
+\begin_inset Quotes erd
+\end_inset
+
+ as described in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Path-at-a-time"
+
+\end_inset
+
+.
+ Since this approach retains the per-path client-side code from SPLAT, it
+ is possible to retain the signal loss result log file and the ability to
+ account for antenna elevation patterns in signal loss calculations.
+ This is the approach used for all of the benchmark results described in
+ section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:SPLAT-Benchmark-results"
+
+\end_inset
+
+.
+\end_layout
+
 \begin_layout Section
 SPLAT Benchmark results
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:SPLAT-Benchmark-results"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -867,7 +1238,7 @@ To establish a baseline benchmark for SPLAT, the author ran a set number
  tests on the existing SPLAT implementation.
  For these tests, the author modified SPLAT's build script to embed debug
  information and generate runtime profiles, which may have hurt overall
- performance somewhat.
+ performance slightly.
  
 \end_layout
 
@@ -1476,10 +1847,6 @@ name "fig:theoretical-runtime"
 \end_layout
 
 \begin_layout Subsubsection
-Parallel Single Path Performance Benchmarks
-\end_layout
-
-\begin_layout Subsubsection
 Parallel SPLAT Performance Benchmarks
 \end_layout
 
@@ -1495,11 +1862,8 @@ Verification of Results
 Although SPLAT has an option for outputting the raw signal loss data, it's
  implemented in such a way as to require file output functionality in the
  code that calculates the loss at each point.
- Since the author's parallelization efforts required moving this code to
- the device side, this functionality was removed from the parallel version
- of SPLAT used for these tests.
- However, the author did write a single-path test driver to verify functionality
- of the ITWOM code.
+ The author wrote a single-path test driver to verify functionality of the
+ ITWOM code.
  
 \end_layout
 
@@ -1585,7 +1949,9 @@ In the process of adapting SPLAT to use OpenCL, the author found SPLAT to
  With the exception of the ITWOM and Longley-Rice code, all of SPLAT's functiona
 lity is contained in a single file.
  SPLAT uses global variables extensively, making it difficult to re-factor
- or re-use SPLAT's code.
+ or re-use SPLAT's code or to attempt to parallelize it.
+ Additionally, since SPLAT loads all of the necessary terrain data at once,
+ it has high memory usage.
  
 \end_layout
 
@@ -1807,8 +2173,82 @@ al array to a function causes the causes the Intel OpenCL compiler to fail
  
 \end_layout
 
+\begin_layout Subsubsection
+Copyright Status of ITWOM
+\end_layout
+
+\begin_layout Standard
+In the header file of the ITWOM.3.0.cpp file that comes with SPLAT there is
+ a notice which reads:
+\end_layout
+
+\begin_layout Quotation
+This file is copyright(c) 2011 by Sid Shumate and Givens & Bell, Inc.
+ All rights reserved.
+ Commercial use, and resale, including when compiled with wrap-around software,
+ is prohibited except under Givens & Bell, Inc.
+ license.
+\end_layout
+
+\begin_layout Standard
+This seems to conflict with SPLAT's licensing under the terms of the GNU
+ GPL version 2 which specifically allows charging a fee to for transferring
+ a copy in section 1.
+ Section 2 of the GPL v2 specifically requires programs that distributed
+ with any component that is covered by the GPL be covered in whole by the
+ GPL and section 6 forbids anyone from adding restrictions to GPLed code.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "gpl"
+
+\end_inset
+
+ Since John A.
+ Magliacane distributes SPLAT with the ITWOM built into it and doesn't expressib
+ly state any exception to the GPL for the ITWOM, we cannot be entirely sure
+ what the license status of the ITWOM is based upon the SPLAT source code
+ itself.
+ While this does not impose any restrictions on the author's work, it has
+ caused confusion amongst other users.
+ For example, Alex Farrent does not include ITWOM functionality in CloudRF
+ due to fear of running afoul of the language prohibiting commercial use.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cloudrf"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Adding to this confusion is FCC filing 
+\end_layout
+
 \begin_layout Section
 Further Work
+\end_layout
+
+\begin_layout Subsection
+ITOWM on GPU and other Hardware
+\end_layout
+
+\begin_layout Standard
+Through this project, the author did not attempt to optimize his version
+ of the ITWOM for a GPU or any other platform supported by OpenCL.
+ Although there may be significant changes that must be made to allow the
+ code to run properly on a GPU or other platform, there may be significant
+ performance gains in doing so.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+after "41"
+key "hetero_book"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -1856,7 +2296,7 @@ key "longley1968prediction"
 \end_layout
 
 \begin_layout Subsection
-Implementing a Better Wrapper for ITWOM and Longely Rice
+Implementing an Improved Wrapper for ITWOM and Longely Rice
 \end_layout
 
 \begin_layout Standard
@@ -1872,7 +2312,8 @@ wrapper
 
  code that handles the loading of the terrain data and other propagation
  information and calling the existing ITWOM or Longely Rice Code.
- Such a program might have the following new features:
+ In addition to being more maintainable and being structured to allow easier
+ parallelization, such a program might have the following new features:
 \end_layout
 
 \begin_layout Itemize
