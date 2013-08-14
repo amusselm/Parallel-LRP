@@ -3733,7 +3733,6 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 
 	for (lat=maxnorth, x=0, y=0; lat>=(double)min_north; y++, lat=maxnorth-(dpp*(double)y))
 	{
-      secondCount++;
 		edge.lat=lat;
 		edge.lon=min_west;
 		edge.alt=altitude;
