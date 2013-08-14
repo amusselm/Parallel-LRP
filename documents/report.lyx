@@ -771,7 +771,8 @@ reference "sub:Path-at-a-time"
 , it should be possible to determine which points need to be calculated
  before sending the data to OpenCL.
  The host code can then bundle this up as an extra parameter for the OpenCL
- Kernel, which can ignore the repeated point.
+ Kernel, which can then use that parameter to know that the repeated point
+ is repeated and ignore it.
  It might be simpler to simply throw away the calculations, but this comes
  at a cost of potentially hurting performance, possibly to the point that
  performance is worse than without parallelization.
@@ -930,6 +931,13 @@ name "implementation"
 
 \begin_layout Subsection
 Changes to the ITWOM 
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Changes-to-the-ITWOM"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1205,6 +1213,64 @@ reference "sec:SPLAT-Benchmark-results"
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Subsection
+Debugging Techniques
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Debugging-Techniques"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Although newer versions of the Intel OpenCL tools support debugging, the
+ version of the Intel OpenCL tools that the author used for the majority
+ of this project does not have any means to use a debugger on the device
+ side code.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "gdb_opencl"
+
+\end_inset
+
+ While there is a printf function available as an OpenCL extension in many
+ implementations of OpenCL, these implementations often do not function
+ as might be expected.
+ The author found that Intel's printf function would not correctly output
+ variables of the type double.
+ This required the author to take a few creative approaches to debugging.
+ 
+\end_layout
+
+\begin_layout Standard
+One technique for troubleshooting a crash was to simply comment out code
+ until the program started working.
+ This was one case where the printf extension was genuinely useful: it would
+ show which code had actually run.
+ To find more subtle errors, the author wrote a simple single-path test
+ program that passed a single path both an unmodified version point_to_point
+ and the OpenCL implementation thereof and compare the results.
+ This code revealed a number of discrepancies under certain circumstances.
+ However, finding the source of these discrepancies within the functions
+ called by point_to_point requires more effort.
+ 
+\end_layout
+
+\begin_layout Standard
+Since OpenCL is derived from the C programming language, the author was
+ able to compile the modified version of the ITWOM as host side code, allowing
+ him to run the usual debugging tools on it.
+ To find the source of a numerical discrepancy, he would add a number of
+ printf statements into same points in both the stock version of ITWOM and
+ the modified version that had been translated back to C from OpenCL.
+ Then, he would run both sets of code with the same inputs and compare the
+ output from debug printf statements between both versions of the code.
+ 
 \end_layout
 
 \begin_layout Section
@@ -1859,16 +1925,47 @@ Verification of Results
 \end_layout
 
 \begin_layout Standard
-Although SPLAT has an option for outputting the raw signal loss data, it's
- implemented in such a way as to require file output functionality in the
- code that calculates the loss at each point.
- The author wrote a single-path test driver to verify functionality of the
- ITWOM code.
- 
+As mentioned in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Debugging-Techniques"
+
+\end_inset
+
+, the author wrote a single-path test driver to verify functionality of
+ the ITWOM code.
+ He used this to verify the correct output of the ITWOM in with a verity
+ of generated terrain, including terrain that has multiple peaks or valleys,
+ has a single peak or valley or is completely flat.
+ He also tested the ITWOM with a verity of frequencies, transmitter and
+ receiver heights and distance between points.
+ These tests revealed a number of problems with the initial implementation
+ of the complex math functions mentioned in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Changes-to-the-ITWOM"
+
+\end_inset
+
+.
+ These tests also revealed an issue with very low-resolution terrain data,
+ that the author chose to ignore because SPLAT uses higher resolution terrain
+ data.
+ A technical report from Sid Shumate states:
 \end_layout
 
-\begin_layout Standard
-(This section to be completed...)
+\begin_layout Quotation
+This computation proved to be unstable and problem-causing beyond a distance
+ of 67 kilometers, and was reburied, as it is not used for high-definition
+ terrain databases, and has been inactive since at least 1967 
+\begin_inset CommandInset citation
+LatexCommand cite
+after "250"
+key "ITOWM_desc"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -2220,10 +2317,6 @@ key "cloudrf"
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-Adding to this confusion is FCC filing 
 \end_layout
 
 \begin_layout Section

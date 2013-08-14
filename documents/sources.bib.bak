@@ -28,7 +28,7 @@
 
 @Unpublished{cloudrf,
   Author         = {{Alex Farrent}},
-  Title          = {Discussion of {SPLAT} and {C}loud{RF}},
+  Title          = {Discussion of {SPLAT} and {C}loud{RF} via email},
   month          = {20 } # jul,
   year           = 2013
 }
@@ -41,6 +41,16 @@
   month          = {29 } # apr,
   url            = {http://ark.intel.com/products/40711/},
   year           = 2013
+}
+
+@Misc{gdb_opencl,
+  Author         = {{Intel Corperation}},
+  Title          = {Introducing the {I}ntel({R}) {SDK} for {O}pen{CL}* -
+                   {D}ebugger for {L}inux* {OS}},
+  HowPublished   = {World Wide Web},
+  month          = {19 } # dec,
+  url            = {http://software.intel.com/sites/landingpage/ioclsdk/2013XE/UG/Introducing_the_Intel_SDK_for_OpenCL_-_Debugger_for_Linux_OS.htm},
+  year           = 2012
 }
 
 @Book{hetero_book,
