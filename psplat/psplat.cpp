@@ -3730,11 +3730,9 @@ void PlotLRMap(struct site source, double altitude, char *plo_filename)
 	fflush(stdout);
 	
 	z=(int)(th*(double)(max_north-min_north));
-   int secondCount = 0;
 
 	for (lat=maxnorth, x=0, y=0; lat>=(double)min_north; y++, lat=maxnorth-(dpp*(double)y))
 	{
-      fprintf(stderr,"Count is %d\n",secondCount);
       secondCount++;
 		edge.lat=lat;
 		edge.lon=min_west;
