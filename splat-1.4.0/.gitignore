@@ -1,9 +1,9 @@
 #Ignore splat's compiled files
-splat
-splat-hd
-util/bearing
-util/citydecoder
-util/srtm2sdf
-util/srtm2sdf-hd
-util/usgs2sdf
+./splat
+./splat-hd
+./util/bearing
+./util/citydecoder
+./util/srtm2sdf
+./util/srtm2sdf-hd
+./util/usgs2sdf
 
