@@ -1,0 +1,21 @@
+
+		--==[ Welcome To SPLAT! HD v1.4.0 ]==--
+
+Loading "../../splat/eledata/sdf/35:36:120:121-hd.sdf" into page 1... Done!
+Loading "../../splat/eledata/sdf/34:35:120:121-hd.sdf" into page 2... Done!
+Region  "34:35:121:122-hd" assumed as sea-level into page 3... Done!
+Loading "../../splat/eledata/sdf/35:36:121:122-hd.sdf" into page 4... Done!
+
+Computing ITWOM path loss contours of "W6BHZ Shack"
+out to a radius of 69.00 miles with an RX antenna at 10.00 feet AGL...
+
+ 0% to  25% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+25% to  50% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+50% to  75% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+75% to 100% .oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo.oOo
+Done!
+
+Site analysis report written to: "W6BHZ_Shack-site_report.txt"
+
+Writing "../documents/W6BHZ.ppm" (7200x7230 pixmap image)... Done!
+
