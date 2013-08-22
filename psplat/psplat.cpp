@@ -2829,13 +2829,20 @@ void printAttrs(size_t numElevElements,
 
 }
 
-void allPoints_runCl(size_t numElev, double dist, double *elev, double *signal,
+//Note, max_range should be in meters
+void allPoints_runCl(double max_range,
+                  size_t numElev, double dist, double *elev, double *signal,
                   double sourceAlt, double destAlt, double eps_dielect, 
                   double sgm_conductivity, double eno_ns_surfref, 
                   double frq_mhz, int radio_climate, int pol, double conf,
                   double rel,cl_kernel kernel,cl_context context,
                   cl_command_queue queue){
    int err;
+
+   size_t max_point = ceil(max_range/dist);
+   if(max_point > numElev){
+      max_point=numElev;
+   }
 
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
@@ -2945,7 +2952,7 @@ void allPoints_runCl(size_t numElev, double dist, double *elev, double *signal,
    }
 
    /* Enqueue kernel */
-   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &numElev, 
+   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &max_point, 
          NULL, 0, NULL, NULL); 
    if(err < 0) {
       fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
@@ -3022,7 +3029,7 @@ void PlotLRPath(struct site source, struct site destination,
          LR.eno_ns_surfref,LR.frq_mhz,LR.radio_climate,LR.pol,LR.conf,LR.rel);
    */
 
-   allPoints_runCl(path.length,pointDist,terrain,signalLoss,source.alt*METERS_PER_FOOT,
+   allPoints_runCl(METERS_PER_MILE*max_range,path.length,pointDist,terrain,signalLoss,source.alt*METERS_PER_FOOT,
                    destination.alt*METERS_PER_FOOT,LR.eps_dielect,LR.sgm_conductivity,
                    LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate,LR.pol,LR.conf,
                    LR.rel, kernel,context,queue);
