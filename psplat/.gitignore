@@ -1,3 +1,4 @@
 psplat
 pathtest
 *.o
+*.lcf
