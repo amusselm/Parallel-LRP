@@ -2830,7 +2830,7 @@ void printAttrs(size_t numElevElements,
 }
 
 //Note, max_range should be in meters
-void allPoints_runCl(double max_range,
+void allPoints_runCl(char* pointNeeded, double max_range,
                   size_t numElev, double dist, double *elev, double *signal,
                   double sourceAlt, double destAlt, double eps_dielect, 
                   double sgm_conductivity, double eno_ns_surfref, 
@@ -2843,6 +2843,17 @@ void allPoints_runCl(double max_range,
    if(max_point > numElev){
       max_point=numElev;
    }
+   
+   cl_mem pointNeededBuffer = clCreateBuffer(context,
+      CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
+      sizeof(char)*ARRAYSIZE,
+      pointNeeded,
+      &err);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a buffer");
+      exit(1);   
+   };
+   
 
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
@@ -2951,6 +2962,12 @@ void allPoints_runCl(double max_range,
       exit(1);
    }
 
+   err = clSetKernelArg(kernel, 14, sizeof(cl_mem), &pointNeededBuffer);
+   if(err < 0) {
+      fprintf(stderr,"Couldn't create a kernel argument:pointNeeded Code:%d",err);
+      exit(1);
+   }
+
    /* Enqueue kernel */
    err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &max_point, 
          NULL, 0, NULL, NULL); 
@@ -3008,6 +3025,7 @@ void PlotLRPath(struct site source, struct site destination,
 	struct	site temp;
    double terrain[ARRAYSIZE];
    double signalLoss[ARRAYSIZE];
+   char pointNeeded[ARRAYSIZE];
 
 	ReadPath(source,destination);
 
@@ -3024,12 +3042,18 @@ void PlotLRPath(struct site source, struct site destination,
 
    double pointDist = METERS_PER_MILE*(path.distance[2]-path.distance[1]);
 
+   for (int i=0; i<ARRAYSIZE; i++){
+      pointNeeded[i] = 0;
+      pointNeeded[i] = (GetMask(path.lat[i],path.lon[i])&248)!=(mask_value<<3);
+   }
+
    /*printAttrs(path.length,pointDist,source.alt,destination.alt,LR.eps_dielect,
          LR.sgm_conductivity,
          LR.eno_ns_surfref,LR.frq_mhz,LR.radio_climate,LR.pol,LR.conf,LR.rel);
    */
 
-   allPoints_runCl(METERS_PER_MILE*max_range,path.length,pointDist,terrain,signalLoss,source.alt*METERS_PER_FOOT,
+   allPoints_runCl(pointNeeded,METERS_PER_MILE*max_range,path.length,
+                   pointDist,terrain,signalLoss,source.alt*METERS_PER_FOOT,
                    destination.alt*METERS_PER_FOOT,LR.eps_dielect,LR.sgm_conductivity,
                    LR.eno_ns_surfref, LR.frq_mhz, LR.radio_climate,LR.pol,LR.conf,
                    LR.rel, kernel,context,queue);
@@ -3048,8 +3072,7 @@ void PlotLRPath(struct site source, struct site destination,
 	{
 		/* Process this point only if it
 		   has not already been processed. */
-
-		if ((GetMask(path.lat[y],path.lon[y])&248)!=(mask_value<<3))
+		if (pointNeeded[y])
 		{
 			distance=5280.0*path.distance[y];
 			xmtr_alt=four_thirds_earth+source.alt+path.elevation[0];
