@@ -43,21 +43,27 @@ __kernel void point_to_point_cl(
    int pol,//10 - Polarity 
    double conf,// 11 
    double rel,// 12
-   __global double *dbloss// 13 - Path loss results 
+   __global double *dbloss,// 13 - Path loss results 
+   __global char *pointNeeded// 14
    ){
       int id = get_global_id(0);
       double itm_elev[ARRAYSIZE+2];
       double loss;
       char strmode[10000];
       int errnum;
-     
-      itm_elev[0] = (id-1)*1.00;
-      itm_elev[1] = path_dist;
-      for(int i = 0; i < elev_size; i++){
-         itm_elev[i+2]=elev[i];
+      
+      if(pointNeeded[id]){
+         itm_elev[0] = (id-1)*1.00;
+         itm_elev[1] = path_dist;
+         for(int i = 0; i < elev_size; i++){
+            itm_elev[i+2]=elev[i];
+         }
+         point_to_point(itm_elev,tht_m, rht_m, eps_dielect, sgm_conductivity, 
+            eno_ns_surfref, frq_mhz, radio_climate, pol, conf, rel, &loss,
+            strmode,&errnum);
       }
-      point_to_point(itm_elev,tht_m, rht_m, eps_dielect, sgm_conductivity, 
-         eno_ns_surfref, frq_mhz, radio_climate, pol, conf, rel, &loss,
-         strmode,&errnum);
+      else{
+         loss = -1;
+      }
       dbloss[id] = loss;
 }
