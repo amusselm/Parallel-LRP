@@ -24,6 +24,7 @@
 * and device code, 0n addation to code that generates a Path from the terrain *
 * data structure
 \****************************************************************************/
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
 #include "psplatcombinedsize.h"
 
 #include "itwom3.0.cl"
