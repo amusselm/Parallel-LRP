@@ -71,7 +71,7 @@ Andrew J.
 \end_layout
 
 \begin_layout Date
-April 30, 2012
+August 30, 2013
 \end_layout
 
 \begin_layout Abstract
@@ -80,9 +80,10 @@ This document describes the results of efforts to port the Irregular Terrain
  to the OpenCL programming language so that it can be run in parallel.
  It describes various approaches that could be taken to parallelize the
  use of the ITWOM, the modifications necessary to the SPLAT wrapper program
- and the ITOWM code itself necessary for parallelization and gives some
- theoretical estimates to the maximum performance gain that might be possible
- by parallelizing this application.
+ and the ITOWM code itself necessary for parallelization.
+ It also describes the results of benchmarking a modified version of the
+ ITWOM and it's wrapper program to measure the performance gain and loss
+ that resulted from parallelization.
  
 \end_layout
 
@@ -1330,10 +1331,18 @@ key "Int13"
 
 .
  As a result, the machine has a total of 8 CPU cores.
- The build of SPLAT used was configured to analyze the largest possible
- region, which the highest possible memory requirements.
+ The build of SPLAT used was configured to analyze up to 25 
+\begin_inset Quotes eld
+\end_inset
+
+pages
+\begin_inset Quotes erd
+\end_inset
+
+ of terrain, each of which is one degree by one degree wide.
  Additionally, the author elected to use the highest-resolution elevation
- data that is available for use with SPLAT.
+ data that is available for use with SPLAT, which has data points around
+ 1 arc second apart.
  
 \end_layout
 
@@ -1724,6 +1733,13 @@ Performance Changes with Parallelization
 
 \begin_layout Subsubsection
 Maximum Theoretical Performance Gain
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Maximum-Theoretical-Performance"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1917,7 +1933,260 @@ Parallel SPLAT Performance Benchmarks
 \end_layout
 
 \begin_layout Standard
-This section is to be completed....
+To test the change in performance of the parallelized version of SPLAT,
+ the author ran a series of benchmarks similar to the initial benchmarks
+ described in section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Test-Procedure-stock"
+
+\end_inset
+
+ on both the stock version of SPLAT and a number of modified versions.
+ Unlike the test described in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Test-Procedure-stock"
+
+\end_inset
+
+, both the stock and modified versions of SPLAT were compiled to use only
+ 4 
+\begin_inset Quotes eld
+\end_inset
+
+pages
+\begin_inset Quotes erd
+\end_inset
+
+ of terrain data.
+ This is due to problems that the author encountered with his modifications
+ with builds that analyze more terrain.
+ The author suspects that this is due to memory limitations of the OpenCL
+ implementations he used.
+ Like the stock benchmarks, the author ran these tests on Tesla, the Cal
+ Poly Science Science department server.
+ All the OpenCL code was run with the Intel SDK for OpenCL Applications
+ XE 2013, version 3.0 on the server's CPU.
+\end_layout
+
+\begin_layout Standard
+The author benchmarked 3 different versions of the parallelized code in
+ addition to the stock version SPLAT: One that calculated the entire path
+ without regard to the distance parameter given to SPLAT, one that only
+ calculates path points out to the given radius, and a third that attempts
+ to avoid re-calculating points that had been already been calculated through
+ memoization.
+ The results of these benchmarks are shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:modified-runtime"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_modified_time.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Chart showing the overall runtime for the stock and modified versions of
+ SPLAT.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:modified-runtime"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Overall, all of the parallelized versions that respect the distance parameter
+ showed significantly improved performance at radii longer than approximately
+ 30 miles.
+ At 100 miles radius, the memorized version of the code is nearly 4 times
+ as fast as the stock version.
+ This relationship is shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Performance-comparison"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_preformance_compairison.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Performance comparison of modified versions of SPLAT.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Performance-comparison"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The data shows several other interesting trends: 
+\end_layout
+
+\begin_layout Itemize
+Unlike the previous benchmark, the run time of stock version starts to increase
+ more slowly at longer radii.
+ This is most likely due to smaller smaller maximum area of analysis.
+ The modified versions show a somewhat similar trend.
+\end_layout
+
+\begin_layout Itemize
+For all radii longer than 53 miles, all of the modified versions had improvement
+s over the stock version of SPLAT have better improved runtime over the
+ stock version of SPLAT.
+ This even includes the version that does not respect the radius parameter
+ and calculates unnecessary additional points.
+ 
+\end_layout
+
+\begin_layout Itemize
+Even the modified version that does not respect distance has a change in
+ execution time at a radius of around 16 miles.
+ This is more likely due to SPLAT loading additional terrain data at that
+ point.
+ 
+\end_layout
+
+\begin_layout Itemize
+At very short radii, the all of the parallelization efforts are worse than
+ the stock.
+ This is likely due to the overhead of loading and compiling the OpenCL
+ code.
+ 
+\end_layout
+
+\begin_layout Itemize
+All of the parallelized versions have significantly more 
+\begin_inset Quotes eld
+\end_inset
+
+User
+\begin_inset Quotes erd
+\end_inset
+
+ CPU time reported by the 
+\begin_inset Quotes eld
+\end_inset
+
+time
+\begin_inset Quotes erd
+\end_inset
+
+ command than overall time.
+ This suggest that time is counting time on each CPU core towards the total
+ 
+\begin_inset Quotes eld
+\end_inset
+
+User
+\begin_inset Quotes erd
+\end_inset
+
+ time.
+ This is why the author elected to compare overall wall time for this benchmark.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -1968,6 +2237,191 @@ key "ITOWM_desc"
 
 \end_layout
 
+\begin_layout Standard
+Despite these efforts, the author discovered some discrepancies in the overall
+ output of SPLAT in both the memoized and non-memoized versions.
+ Some small minority of paths in the non-memoized version show vastly less
+ loss than the stock version.
+ The author believes this is due to the bounds-check modification mentioned
+ in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Changes-to-the-ITWOM"
+
+\end_inset
+
+.
+ In the memoized version, the author noticed that the corner paths were
+ not being calculated, leaving four small slivers where no loss data was
+ calculated.
+ These defects are shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Comparison-of-SPLAT-Output-1"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename stockplot.png
+	width 5cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Stock Signal Loss Plot
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename myplot_memoized.png
+	width 5cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Memoized OpenCL Signal Loss Plot
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename myplot.png
+	width 5cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Non-Memoized OpenCL Signal Loss Plot
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Comparison of SPLAT Output.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Comparison-of-SPLAT-Output-1"
+
+\end_inset
+
+ Notice how some of the paths in the plot generated by the non-memoized
+ version of the OpenCL modifications has a few small slivers of paths where
+ SPLAT has reported a far higher signal intensity than the stock version.
+ Also note that the 
+\begin_inset Quotes eld
+\end_inset
+
+corner paths
+\begin_inset Quotes erd
+\end_inset
+
+ are not calculated at all in the version of the OpenCL modifications that
+ does implement memoization.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Conclusions
 \end_layout
@@ -1977,7 +2431,104 @@ Performance Data
 \end_layout
 
 \begin_layout Standard
-To Be Completed
+The results of this project show that there are significant performance
+ gains to be had by parallelizing SPLAT.
+ While OpenCL has it's drawbacks and adds some amount of overhead to the
+ process, an OpenCL implementation of the ITWOM running on a CPU is an effective
+ way of parallelizing SPLAT's signal loss mapping functionality.
+ With large enough area of analysis and 8 CPU cores, this approach can cut
+ running time by as much as nearly 400%.
+ 
+\end_layout
+
+\begin_layout Standard
+The results for longer radii come close to or even beat the earlier numbers
+ that the author calculated as a theoretical upper bound of performance
+ in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Maximum-Theoretical-Performance"
+
+\end_inset
+
+.
+ This relationship is shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Comparison-of-Theoretical"
+
+\end_inset
+
+.
+ It's worth noting that this may be in part due to the fact the theoretical
+ numbers were derived from a benchmark that was run on a version of SPLAT
+ that was compiled to use a larger maximum area of analysis.
+ With paths near 100 miles, the actual benchmark results may be the results
+ calculating fewer points than the results of the stock benchmark that was
+ used to calculate the performance estimates, which might explain some of
+ the discrepancy.
+ 
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_theroeticalvacctual.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Comparison of Theoretical running times to actual benchmark results 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Comparison-of-Theoretical"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -2450,6 +3001,16 @@ Support for dynamically loading terrain and elevation data.
  This could reduce the program's memory footprint over large areas and it
  might even improve performance by allowing propagation calculations to
  occur while other pieces of terrain are being loaded.
+\end_layout
+
+\begin_layout Section
+\start_of_appendix
+Complete Source Code and Data
+\end_layout
+
+\begin_layout Standard
+The complete source code, revision history and data used in the project
+ are available at http://github.com/amusselm/Parallel-LRP
 \end_layout
 
 \begin_layout Standard
