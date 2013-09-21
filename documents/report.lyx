@@ -83,7 +83,7 @@ This document describes the results of efforts to port the Irregular Terrain
  The report also describes various approaches that could be taken to parallelize
  the use of the ITWOM, the modifications necessary to the SPLAT! wrapper
  program which is an open-source command-line interface for radio frequency
- propagation modeling and the ITOWM code itself necessary for parallelization.
+ propagation modeling and the ITWOM code itself necessary for parallelization.
  It also describes the results of benchmarking a modified version of the
  ITWOM and it's wrapper program to measure the performance gain and loss
  that resulted from parallelization.
@@ -157,7 +157,7 @@ name "sub:lr-background"
 
 \begin_layout Standard
 The Longley-Rice propagation model was initially developed by Anita G.
- Longley and Phillip Rice in the 1960s, following a series of studies on
+ Langley and Phillip Rice in the 1960s, following a series of studies on
  the topic 
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -325,7 +325,7 @@ Related Works
 \end_layout
 
 \begin_layout Standard
-There are a number the existing serial implementations of the Longley-Rice
+There are a number of existing serial implementations of the Longley-Rice
  Model, including a reference implementation maintained by the US Department
  of Commerce
 \begin_inset CommandInset citation
@@ -391,8 +391,8 @@ SPLAT!'s Approach to Signal Loss Analysis Over an Area
 \end_layout
 
 \begin_layout Standard
-After loading the necessary terrain files, SPLAT! chooses loops over all
- points on the border of a square around the transmitter site.
+After loading the necessary terrain files, SPLAT! loops over all points
+ on the border of a square around the transmitter site.
  For each point, it generates a path from the transmitter site to the point
  on the border of this square.
  This path consists of an array that represents the terrain heights between
@@ -520,11 +520,11 @@ name "alg:splat-description"
 \end_layout
 
 \begin_layout Subsection
-Longely Rice and ITWOM Approach to Path Loss
+Langley Rice and ITWOM Approach to Path Loss
 \end_layout
 
 \begin_layout Standard
-Both Longley Rice and the ITWOM have the same overall program structure.
+Both Langley Rice and the ITWOM have the same overall program structure.
  In fact, the ITWOM source file that shipped with SPLAT! contained both
  versions of the Irregular Terrain Model.
  Many of the functions were shared between them, and the ones that weren't
@@ -1709,7 +1709,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_execuation_makeup.png
-	scale 45
+	width 10cm
 
 \end_inset
 
@@ -2565,8 +2565,8 @@ first open, royalty-free standard for general-purpose parallel programming
  of heterogeneous systems.
  OpenCL provides a uniform programming environment for software developers
  to write efficient, portable code for high-performance compute servers,
- desktop computer systems and handheld devices using a diverse mix of multi-core
- CPUs, GPUs, Cell-type architectures and other parallel processors such
+ desktop computer systems and hand-held devices using a diverse mix of multi-cor
+e CPUs, GPUs, Cell-type architectures and other parallel processors such
  as DSPs
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -2893,7 +2893,7 @@ Further Work
 \end_layout
 
 \begin_layout Subsection
-ITOWM on GPU and other Hardware
+ITWOM on GPU and other Hardware
 \end_layout
 
 \begin_layout Standard
@@ -2913,7 +2913,7 @@ key "hetero_book"
 \end_layout
 
 \begin_layout Subsection
-ITWOM and Longely Rice Code Cleanup
+ITWOM and Langley Rice Code Cleanup
 \end_layout
 
 \begin_layout Standard
@@ -2924,10 +2924,10 @@ reference "sub:lr-background"
 
 \end_inset
 
-, the code that implements the Longely-Rice model and the ITWOM have had
+, the code that implements the Longley-Rice model and the ITWOM have had
  a long history of different entities modifying it.
  In fact, Anita G.
- Longely and Phillip Rice's paper describing the model warns, 
+ Langley and Phillip Rice's paper describing the model warns, 
 \begin_inset Quotes eld
 \end_inset
 
@@ -2950,14 +2950,14 @@ key "longley1968prediction"
  the number of elements in the array at the first index in the array and
  the distance between points in the array as the second index in the array.
  Additionally, most of the comments and documentation that appears in the
- original Longely-Rice report have been stripped from the newer versions.
+ original Longley-Rice report have been stripped from the newer versions.
  Correcting these issues would greatly improve the maintainability of the
  Longley-Rice code as well as any wrapper program that uses it.
  
 \end_layout
 
 \begin_layout Subsection
-Implementing an Improved Wrapper for ITWOM and Longely Rice
+Implementing an Improved Wrapper for ITWOM and Langley Rice
 \end_layout
 
 \begin_layout Standard
@@ -2972,7 +2972,7 @@ wrapper
 \end_inset
 
  code that handles the loading of the terrain data and other propagation
- information and calling the existing ITWOM or Longely Rice Code.
+ information and calling the existing ITWOM or Langley Rice Code.
  In addition to being more maintainable and being structured to allow easier
  parallelization, such a program might have the following new features:
 \end_layout
@@ -3013,7 +3013,7 @@ clutter
 Support for dynamically loading terrain and elevation data.
  SPLAT! currently loads ALL elevation data before running a single propagation
  calculation.
- Since each path is independent with Longely Rice, terrain can be loaded
+ Since each path is independent with Langley Rice, terrain can be loaded
  dynamically and discarded when no longer needed.
  This could reduce the program's memory footprint over large areas and it
  might even improve performance by allowing propagation calculations to

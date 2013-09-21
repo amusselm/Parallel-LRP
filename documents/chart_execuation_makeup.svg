@@ -14,7 +14,10 @@
    version="1.1"
    id="svg2"
    inkscape:version="0.48.2 r9819"
-   sodipodi:docname="chart_execuation_makeup.svg">
+   sodipodi:docname="chart_execuation_makeup.svg"
+   inkscape:export-filename="/home/amusselm/projects/srproject/Parallel-LRP/documents/chart_execuation_makeup.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <metadata
      id="metadata499">
     <rdf:RDF>
@@ -23,6 +26,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
