@@ -54,7 +54,7 @@ while($line = <STDIN>) {
       }
    }
    else{
-      die("Invalid Format");
+      die("Invalid Format: couldn't read user");
    }
    #Read sys time...
    $line=<STDIN>;

@@ -1,0 +1,8 @@
+Run with 38750 points:
+pure virtual method called
+terminate called without an active exception
+./singlepath_benchmark.sh: line 48: 11284 Segmentation fault      ../psplat/pathtest -m 2 -v 1 -p $profile -a $altitude -t $txheight -r $rxheight -f $frequendy -d $distance
+
+real	0m0.214s
+user	0m0.168s
+sys	0m0.044s

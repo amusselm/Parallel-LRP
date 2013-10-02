@@ -1710,6 +1710,9 @@ void hzns2(double pfl[], struct prop_type *prop, struct propa_type *propa)
 	}
 	rp=2+(int)(floor(0.5+dr/xi));
 	prop->rpl=rp;	
+   if(rp > pfl[0] || rp < 0){
+      rp = pfl[0];
+   }
 	prop->rph=pfl[rp];
 }
  

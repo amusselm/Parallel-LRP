@@ -1,0 +1,40 @@
+Platforms:
+Platform 0
+CL PLATFORM INFO: FULL_PROFILE 
+CL_PLATFORM_VERSION : OpenCL 1.2 LINUX 
+CL_PLATFORM_NAME : Intel(R) OpenCL 
+CL_PLATFORM_VENDOR : Intel(R) Corporation 
+CL_PLATFORM_EXTENSIONS : cl_khr_fp64 cl_khr_icd cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_byte_addressable_store cl_intel_printf cl_ext_device_fission cl_intel_exec_by_local_thread  
+Devices:
+Device 0
+CL_DEVICE_NAME:Intel(R) Xeon(R) CPU           E5504  @ 2.00GHz
+CL_DEVICE_MAX_PARAMETER_SIZE: 3840
+CL_DEVICE_MAX_MEM_ALLOC_SIZE: 2839156736
+CL_DEVICE_LOCAL_MEM_SIZE: 32768
+Platform 1
+CL PLATFORM INFO: FULL_PROFILE 
+CL_PLATFORM_VERSION : OpenCL 1.1 CUDA 4.2.1 
+CL_PLATFORM_NAME : NVIDIA CUDA 
+CL_PLATFORM_VENDOR : NVIDIA Corporation 
+CL_PLATFORM_EXTENSIONS : cl_khr_byte_addressable_store cl_khr_icd cl_khr_gl_sharing cl_nv_compiler_options cl_nv_device_attribute_query cl_nv_pragma_unroll  
+Devices:
+Device 0
+CL_DEVICE_NAME:Tesla C2050
+CL_DEVICE_MAX_PARAMETER_SIZE: 4352
+CL_DEVICE_MAX_MEM_ALLOC_SIZE: 704495616
+CL_DEVICE_LOCAL_MEM_SIZE: 49152
+Device 1
+CL_DEVICE_NAME:Tesla C2050
+CL_DEVICE_MAX_PARAMETER_SIZE: 4352
+CL_DEVICE_MAX_MEM_ALLOC_SIZE: 704495616
+CL_DEVICE_LOCAL_MEM_SIZE: 49152
+Device 2
+CL_DEVICE_NAME:Tesla C2050
+CL_DEVICE_MAX_PARAMETER_SIZE: 4352
+CL_DEVICE_MAX_MEM_ALLOC_SIZE: 704430080
+CL_DEVICE_LOCAL_MEM_SIZE: 49152
+Device 3
+CL_DEVICE_NAME:Tesla C2050
+CL_DEVICE_MAX_PARAMETER_SIZE: 4352
+CL_DEVICE_MAX_MEM_ALLOC_SIZE: 704495616
+CL_DEVICE_LOCAL_MEM_SIZE: 49152

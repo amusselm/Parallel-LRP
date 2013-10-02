@@ -1,0 +1,13 @@
+Platforms:
+Platform 0
+CL PLATFORM INFO: FULL_PROFILE 
+CL_PLATFORM_VERSION : OpenCL 1.2 AMD-APP (923.1) 
+CL_PLATFORM_NAME : AMD Accelerated Parallel Processing 
+CL_PLATFORM_VENDOR : Advanced Micro Devices, Inc. 
+CL_PLATFORM_EXTENSIONS : cl_khr_icd cl_amd_event_callback cl_amd_offline_devices 
+Devices:
+Device 0
+CL_DEVICE_NAME:AMD Athlon(tm) II X3 445 Processor
+CL_DEVICE_MAX_PARAMETER_SIZE: 4096
+CL_DEVICE_MAX_MEM_ALLOC_SIZE: 2147483648
+CL_DEVICE_LOCAL_MEM_SIZE: 32768

@@ -11,3 +11,6 @@
 # And vim
 *.swp
 *.swo
+
+# And Splat output
+*.ppm

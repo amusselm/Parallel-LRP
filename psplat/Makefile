@@ -4,7 +4,7 @@ PATHTEST=pathtest
 
 CC=g++
 
-CFLAGS=  -DUNIX -g -DDEBUG
+CFLAGS= -pg -DUNIX -g -DDEBUG
 
 # Check for 32-bit vs 64-bit
 PROC_TYPE = $(strip $(shell uname -m | grep 64))

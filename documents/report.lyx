@@ -71,18 +71,22 @@ Andrew J.
 \end_layout
 
 \begin_layout Date
-April 30, 2012
+September 10, 2013
 \end_layout
 
 \begin_layout Abstract
 This document describes the results of efforts to port the Irregular Terrain
  with Obstructions Model (ITWOM) for radio-frequency propagation prediction
  to the OpenCL programming language so that it can be run in parallel.
- It describes various approaches that could be taken to parallelize the
- use of the ITWOM, the modifications necessary to the SPLAT wrapper program
- and the ITOWM code itself necessary for parallelization and gives some
- theoretical estimates to the maximum performance gain that might be possible
- by parallelizing this application.
+ It summarizes the history of the ITWOM and it's predecessor the Longly-Rice
+ Irregular Terrain Model (ITM).
+ The report also describes various approaches that could be taken to parallelize
+ the use of the ITWOM, the modifications necessary to the SPLAT! wrapper
+ program which is an open-source command-line interface for radio frequency
+ propagation modeling and the ITWOM code itself necessary for parallelization.
+ It also describes the results of benchmarking a modified version of the
+ ITWOM and it's wrapper program to measure the performance gain and loss
+ that resulted from parallelization.
  
 \end_layout
 
@@ -111,12 +115,32 @@ General Description
 \end_layout
 
 \begin_layout Standard
-The Irregular Terrain With Obstructions Model (ITWOM) is a mathematical
- model that attempts to predict how radio waves will propagate over a given
- path with known elevations.
+Imagine driving through a hilly area while listening to a terrestrial FM
+ broadcaster on the car radio.
+ In many places, a radio listener will have a rich, clear signal.
+ In other places, the reception might be choppy or weak.
+ In some, places the station might be completely inaudible.
+ This hypothetical example shows a problem that broadcasters and other radio
+ system planners have to deal with: the effects of terrain on signal reception.
+ 
+\end_layout
+
+\begin_layout Standard
+Sine the 1960s engineers have used computers to attempt to model the effects
+ of terrain on where a signal can be heard and at what strength.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "longley1968prediction"
+
+\end_inset
+
  By repeating this process for a number of different paths over an area,
  its possible to generate a coverage map that shows the theoretical signal
  strength of a transmitter over a given area.
+ There are many software packages that do just this using many different
+ models, including an open source application called SPLAT! (Signal Propagation,
+ Loss, And Terrain) that is developed by John A.
+ Magliacane.
  
 \end_layout
 
@@ -133,33 +157,32 @@ name "sub:lr-background"
 
 \begin_layout Standard
 The Longley-Rice propagation model was initially developed by Anita G.
- Longley and Phillip Rice in the 1960s, following a series of studies on
- the topic.
- 
+ Langley and Phillip Rice in the 1960s, following a series of studies on
+ the topic 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "longley1968prediction"
 
 \end_inset
 
+.
  It was initially implemented using the Fortran IV programming language
- on a Control Data Corporation CDC-3600.
- 
+ on a Control Data Corporation CDC-3600 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "longley1968prediction"
 
 \end_inset
 
- This code was later ported to C by the United States Department of Commerce.
- 
+.
+ This code was later ported to C by the United States Department of Commerce
 \begin_inset CommandInset citation
 LatexCommand cite
 key "us_commerce"
 
 \end_inset
 
-
+.
 \end_layout
 
 \begin_layout Standard
@@ -167,18 +190,35 @@ The Irregular Terrain With Obstructions Model (ITWOM) is derived from the
  older Longley-Rice Model, with a number of changes and corrections that
  its author, Sidney E.
  Shumate, claims improve its overall accuracy.
- Additionally, their changes allow the practical use of higher-resolution
- elevation data.
- Shumate also designed his code to work as a drop-in replacement for the
- Longley-Rice Model.
+ Other dispute that claim: Alex Farrent, author and maintainer CloudRF,
+ a graphical interface for radio frequency propagation modeling, says that
+ he has 
+\begin_inset Quotes eld
+\end_inset
+
+yet to see a proper independent assessment that it is better as claimed
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cloudrf"
+
+\end_inset
+
+.
+ Shumate designed his code to work as a drop-in replacement for the Longley-Rice
+ Model
 \begin_inset CommandInset citation
 LatexCommand cite
 key "VTC_IWOTM"
 
 \end_inset
 
+.
  Since the two algorithms are so similar in terms of their overall structure
- and control flow, exiting research into how one is parallelized is directly
+ and control flow, existing research into how one is parallelized is directly
  applicable to the other.
  
 \end_layout
@@ -188,23 +228,23 @@ SPLAT!
 \end_layout
 
 \begin_layout Standard
-SPLAT is a command-line wrapper program for the ITWOM, Longley-Rice Model
+SPLAT! is a command-line wrapper program for the ITWOM, Longley-Rice Model
  and other RF-Propagation algorithms.
  It takes in appropriately formatted elevation data and various parameters
  about each of the transmitters or receivers that the user wishes to model.
  It has the option of outputting a bitmap or a KML file for Google Earth
  for graphically representation coverage information.
  It also generates text files that contain information about each radio
- site and nearby obstructions.
- 
+ site and nearby obstructions
 \begin_inset CommandInset citation
 LatexCommand cite
 key "splat_www"
 
 \end_inset
 
- An example of the type of area coverage plot that SPLAT generates is shown
- in figure 
+.
+ An example of the type of area coverage plot that SPLAT! generates is shown
+ in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:splat-plot"
@@ -246,9 +286,8 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-An example of a RF prediction plot generated by SPLAT.
- Image by John A.
- Magliacane as retrieved from the SPLAT website.
+An example of a RF prediction plot generated by SPLAT! Image by John A.
+ Magliacane as retrieved from the SPLAT! website.
  
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -282,11 +321,11 @@ name "fig:splat-plot"
 \end_layout
 
 \begin_layout Section
-Existing Related Works
+Related Works
 \end_layout
 
 \begin_layout Standard
-There are a number the existing serial implementations of the Longley-Rice
+There are a number of existing serial implementations of the Longley-Rice
  Model, including a reference implementation maintained by the US Department
  of Commerce
 \begin_inset CommandInset citation
@@ -309,8 +348,8 @@ key "VTC_IWOTM"
 
 \begin_layout Standard
 Additionally, a pair of University of Arizona researchers have recently
- made implementations of the Longley-Rice Model for both for IBM's Cell
- processor and for Nvidia's Tesla C870 GPU
+ made implementations of the Longley-Rice Model for both IBM's Cell processor
+ and for Nvidia's Tesla C870 GPU
 \begin_inset CommandInset citation
 LatexCommand cite
 key "lrp_itm_gpu"
@@ -318,11 +357,29 @@ key "lrp_itm_gpu"
 \end_inset
 
 .
- These researchers found that were able to reduce execution times to less
- than a second.
- They also found that the Tesla GPU was around 2-3 times as fast as the
+ These researchers were able to reduce execution times to less than a second
+ for some data sets.
+ They also found that the Tesla GPU was around 2-3 times faster than the
  IBM cell processor.
  
+\end_layout
+
+\begin_layout Standard
+Finally, Alex Farrent, maintainer of graphical program for radio frequency
+ terrain modeling called CloudRF has attempted to modify SPLAT! to calculate
+ Longley-Rice path loss in parallel using pthreads.
+ In the process he reported encountering issues with SPLAT!'s extensive
+ global variables.
+ He later successfully implemented process-level parallelization by having
+ two instances of SPLAT! each generate one half of the image and using an
+ external image manipulation library to combine them into one image
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cloudrf"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Section
@@ -330,12 +387,12 @@ Program Description
 \end_layout
 
 \begin_layout Subsection
-SPLAT's Approach to Signal Loss Analysis Over an Area
+SPLAT!'s Approach to Signal Loss Analysis Over an Area
 \end_layout
 
 \begin_layout Standard
-After loading the necessary terrain files, SPLAT chooses loops over all
- points on the border of a square around the transmitter site.
+After loading the necessary terrain files, SPLAT! loops over all points
+ on the border of a square around the transmitter site.
  For each point, it generates a path from the transmitter site to the point
  on the border of this square.
  This path consists of an array that represents the terrain heights between
@@ -345,8 +402,8 @@ After loading the necessary terrain files, SPLAT chooses loops over all
  path loss function for every possible point between the transmitter and
  the point on the edge of the analysis area.
  This point to point path loss function returns theoretical amount of signal
- loss along that path, which SPLAT stores in the area's data structure.
- This is described using psuedocode in Algorithm
+ loss along that path, which SPLAT! stores in the area's data structure.
+ This is described using psuedocode in Algorithm 
 \begin_inset CommandInset ref
 LatexCommand formatted
 reference "alg:splat-description"
@@ -442,7 +499,7 @@ the analysis area
 \begin_inset Caption
 
 \begin_layout Plain Layout
-General description of SPLAT's area analysis
+General description of SPLAT!'s area analysis
 \begin_inset CommandInset label
 LatexCommand label
 name "alg:splat-description"
@@ -463,13 +520,13 @@ name "alg:splat-description"
 \end_layout
 
 \begin_layout Subsection
-Longely Rice and ITWOM Approach to Path Loss
+Langley Rice and ITWOM Approach to Path Loss
 \end_layout
 
 \begin_layout Standard
-Both Longley Rice and the ITWOM have the same overall program structure.
- In fact, the ITWOM source file that shipped with SPLAT contained both versions
- of the Irregular Terrain Model.
+Both Langley Rice and the ITWOM have the same overall program structure.
+ In fact, the ITWOM source file that shipped with SPLAT! contained both
+ versions of the Irregular Terrain Model.
  Many of the functions were shared between them, and the ones that weren't
  often shared the same parameters and purpose.
  
@@ -478,152 +535,16 @@ Both Longley Rice and the ITWOM have the same overall program structure.
 \begin_layout Standard
 Both algorithms first determine if the receiver site is in line of site
  of transmitter.
- Then, they call a separate set of calculations for each.
- 
+ Then, they call a separate set of calculations for each 
 \begin_inset CommandInset citation
 LatexCommand cite
 key "longley1968prediction"
 
 \end_inset
 
+.
  As a result, the calculations within the point_to_point() function cannot
  be easily parallelized.
- 
-\end_layout
-
-\begin_layout Subsection
-Issues with Parallelization 
-\end_layout
-
-\begin_layout Standard
-For the most part, each path is independent of the others.
- The results of one point to point calculation are not needed to calculate
- others.
- However, there are some issues with the ITWOM code that might effect paralleliz
-ation.
- 
-\end_layout
-
-\begin_layout Subsubsection
-Repeated Points
-\end_layout
-
-\begin_layout Standard
-The only data dependency is the marking of points as having already been
- analyzed.
- Due to the geometry of each path, points closest will be hit multiple times,
- so this check is still necessary to prevent duplication of effort.
- If the approach described in 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sub:path-on-device"
-
-\end_inset
-
-is used, it might be possible to avoid this duplication of effort by synchronizi
-ng reads and writes to the global data structure.
- If one of the other approaches is used, the host code will have to throw
- some results away after reading from the device.
- This is shown by 
-\begin_inset CommandInset ref
-LatexCommand formatted
-reference "fig:paths-and-grids"
-
-\end_inset
-
-.
- 
-\begin_inset Float figure
-placement H
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Box Boxed
-position "t"
-hor_pos "c"
-has_inner_box 1
-inner_pos "t"
-use_parbox 0
-use_makebox 0
-width "100col%"
-special "none"
-height "1in"
-height_special "totalheight"
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename paths_and_grid.png
-	width 5cm
-	height 5cm
-	keepAspectRatio
-
-\end_inset
-
-
-\begin_inset Caption
-
-\begin_layout Plain Layout
-Graphic representing how paths converge near the transmitter.
- Each intersection in the grid contains variables for both an elevation
- value for input and a signal loss value as output.
- The transmitter site is represented with a yellow 'X'.
- Note how some points, like the one that is two rows up and one column to
- the right of the transmitter, are close to multiple paths.
- 
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:paths-and-grids"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsubsection
-The qlrps() Function
-\end_layout
-
-\begin_layout Standard
-Both the Longley-Rice and ITWOM ITM algorithms use a function called qlrps()
- to initialize several parts of an internal data structure.
- This function does not take the terrain profile or any other path specific
- parameters as inputs.
- Since all the parameters it takes as input are the same for all paths that
- SPLAT is calculating, this results in the same code being repeated multiple
- times with the same inputs, which might be considered a waste of resources.
- The University of Arizona researchers who were investigating a parallel
- implementation of Longley-Rice modified the program so that this initialization
- step was only needed once 
-\begin_inset CommandInset citation
-LatexCommand cite
-key "lrp_itm_gpu"
-
-\end_inset
-
-.
- To simplify implementation and to minimize the effects of modifications
- that are not necessarily related to parallelization the author choose not
- to modify this function beyond what was necessary run it in OpenCL.
- This means that the qlrps() function is called multiple times on the OpenCL
- device.
  
 \end_layout
 
@@ -678,7 +599,7 @@ However, this comes at a cost of greater complexity of the code that is
 \begin_layout Standard
 The author initially attempted to implement this approach before encountering
  difficulties, and switching to the multidimensional work-items approach
- described in section 
+ described in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:Multidimensional-Work-Items"
@@ -690,6 +611,13 @@ reference "sub:Multidimensional-Work-Items"
 
 \begin_layout Subsubsection
 Path at a Time
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Path-at-a-time"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -708,6 +636,13 @@ Another approach is to simply push one path at a time to the device and
 
 \begin_layout Subsubsection
 Block at a Time
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Block-at-a-time"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -721,6 +656,13 @@ It's possible to reduce the overhead of the path-at-a-time approach by creating
 
 \begin_layout Subsubsection
 Multiple Paths/Blocks at a Time With Callbacks
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Multiple-Paths/Blocks-at-time-callback"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -732,7 +674,7 @@ OpenCL also provides a callback functionality that allows host system code
  is being loaded from disk, so that the system can do path loss calculations
  while also doing IO.
  However, the author believes that this would effectively require a complete
- re-write of SPLAT, which doesn't currently support any sort of dynamic
+ re-write of SPLAT!, which doesn't currently support any sort of dynamic
  loading of terrain data at all.
  
 \end_layout
@@ -760,13 +702,401 @@ lly, which means that more data must be sent to the device than if the paths
  
 \end_layout
 
-\begin_layout Section
-Implementation and Modifications to SPLAT and the ITM
+\begin_layout Subsection
+Issues with Parallelization 
 \end_layout
 
 \begin_layout Standard
-The author initially attempted to implement the ITM in parallel by generating
- all paths on the device, as decried in section
+For the most part, each path is independent of the others.
+ The results of one point to point calculation are not needed to calculate
+ others.
+ However, there are some issues with the ITWOM code that might effect paralleliz
+ation.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Repeated Points
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Repeated-Points"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The only data dependency is the marking of points as having already been
+ analyzed.
+ Due to the geometry of each path, points closest will be hit multiple times,
+ as shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:paths-and-grids"
+
+\end_inset
+
+, so this check is still necessary to prevent duplication of effort.
+ If the 
+\begin_inset Quotes eld
+\end_inset
+
+generate paths on device
+\begin_inset Quotes erd
+\end_inset
+
+ approach described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:path-on-device"
+
+\end_inset
+
+ is used, it might be possible to avoid this duplication of effort by synchroniz
+ing reads and writes to the global data structure.
+ If the 
+\begin_inset Quotes eld
+\end_inset
+
+path-at-a-time
+\begin_inset Quotes erd
+\end_inset
+
+ approach described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Path-at-a-time"
+
+\end_inset
+
+, it should be possible to determine which points need to be calculated
+ before sending the data to OpenCL.
+ The host code can then bundle this up as an extra parameter for the OpenCL
+ Kernel, which can then use that parameter to know that the repeated point
+ is repeated and ignore it.
+ It might be simpler to simply throw away the calculations, but this comes
+ at a cost of potentially hurting performance, possibly to the point that
+ performance is worse than without parallelization.
+ 
+\end_layout
+
+\begin_layout Standard
+It may also be possible to apply some sort of memoization to the other approache
+s, but it becomes somewhat more complicated.
+ The multi-dimensional work-item approach described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+ requires synchronization between multiple device-side work items.
+ In either of the 
+\begin_inset Quotes eld
+\end_inset
+
+block-at-a-time
+\begin_inset Quotes erd
+\end_inset
+
+ approaches described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Block-at-a-time"
+
+\end_inset
+
+ and Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multiple-Paths/Blocks-at-time-callback"
+
+\end_inset
+
+ code must check both against SPLAT!'s host-side count of which points have
+ been calculated and with each other.
+ Any approach that involves multiple host-side threads, such as the approach
+ involving callbacks described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multiple-Paths/Blocks-at-time-callback"
+
+\end_inset
+
+ requires synchronization between these host-side client threads, in addition
+ to any device-side synchronization.
+ 
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Frameless
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename paths_and_grid.png
+	width 10cm
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Graphic representing how paths converge near the transmitter.
+ Each intersection in the grid contains variables for both an elevation
+ value for input and a signal loss value as output.
+ The transmitter site is represented with a yellow 'X'.
+ Note how some points, like the one that is two rows up and one column to
+ the right of the transmitter, are close to multiple paths.
+ 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:paths-and-grids"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+The qlrps() Function
+\end_layout
+
+\begin_layout Standard
+Both the Longley-Rice and ITWOM ITM algorithms use a function called qlrps()
+ to initialize several parts of an internal data structure.
+ This function does not take the terrain profile or any other path specific
+ parameters as inputs.
+ Since all the parameters it takes as input are the same for all paths that
+ SPLAT! is calculating, this results in the same code being repeated multiple
+ times with the same inputs, which might be considered a waste of resources.
+ The University of Arizona researchers who were investigating a parallel
+ implementation of Longley-Rice modified the program so that this initialization
+ step was only needed once 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "lrp_itm_gpu"
+
+\end_inset
+
+.
+ To simplify implementation and to minimize the effects of modifications
+ which are not necessarily related to parallelization the author choose
+ not to modify this function beyond what was necessary run it in OpenCL.
+ This means that the qlrps() function is called multiple times on the OpenCL
+ device.
+\end_layout
+
+\begin_layout Section
+Implementation and Modifications to SPLAT! and the ITWOM 
+\begin_inset CommandInset label
+LatexCommand label
+name "implementation"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Changes to the ITWOM 
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Changes-to-the-ITWOM"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Regardless of which overall approach is taken to parallelization, the ITWOM
+ code must be modified to allow it to even compile in OpenCL.
+ The ITWOM code contains many instances of static and it often uses a special
+ call to initialize a function's static local variables before calling the
+ same function again to execute the actual calculations needed to produce
+ a projected signal loss.
+ OpenCL does not support the static keyword.
+ Therefore the author had to modify the ITWOM to store these static variables
+ in a struct that is kept as a local variable in the calling function.
+ Whenever one of these functions is called that once contained a static
+ variable is called, it is passed to a pointer to an instance of the struct
+ that is declared in the calling function.
+ 
+\end_layout
+
+\begin_layout Standard
+Some parts of the ITWOM use the C++ Standard Template Library and complex
+ number library.
+ Neither of these exist in the Intel OpenCL implementation that the author
+ was using for the bulk of this project.
+ As a result, the author had to implement his own complex number type and
+ a number of complex number mathematical operations.
+ 
+\end_layout
+
+\begin_layout Standard
+The hzns2() function in the ITWOM has some statements that take the result
+ of some mathematical calculations and attempts to use it as an array index.
+ In rare instances, this can result in an array index that is out of bounds,
+ in turn resulting in a segmentation fault when the program attempts to
+ access this out-of-bounds memory.
+ The author added a simple bounds check to prevent the program from attempting
+ to access a piece of undefined memory.
+ The author also suspects that the case that caused a segfault with this
+ line would have normally been suppressed by SPLAT!'s check for repeated
+ points.
+ As a result, he also suspects that implementing one of the memorization
+ schemes described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Repeated-Points"
+
+\end_inset
+
+ might also have avoided this segfault, at least with the specific test
+ conditions he used for his benchmarks.
+ 
+\end_layout
+
+\begin_layout Subsection
+Implementation of Parallelization 
+\end_layout
+
+\begin_layout Standard
+Any use of Open CL requires additional code to compile the device side code,
+ set up any device-side buffers and potentially populate them with data,
+ set the kernel arguments and read data from from the device.
+ These steps would add some overhead to the process, which is an unavoidable
+ cost of using OpenCL for parallelization.
+ This might put OpenCL at a disadvantage to other parallelization techniques
+ on some systems.
+\end_layout
+
+\begin_layout Standard
+The other changes that are necessary to SPLAT! and the ITWOM depend on which
+ overall approach to parallelization a programmer takes.
+ Through the course of the project, the author attempted to implement the
+ 
+\begin_inset Quotes eld
+\end_inset
+
+generate paths on device
+\begin_inset Quotes erd
+\end_inset
+
+ strategy as described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:path-on-device"
+
+\end_inset
+
+, the 
+\begin_inset Quotes eld
+\end_inset
+
+multidimensional work-item
+\begin_inset Quotes erd
+\end_inset
+
+ strategy as described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Multidimensional-Work-Items"
+
+\end_inset
+
+, and the 
+\begin_inset Quotes eld
+\end_inset
+
+path at a time
+\begin_inset Quotes erd
+\end_inset
+
+ strategy as described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Path-at-a-time"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
+
+Generate all Paths on the Device
+\begin_inset Quotes erd
+\end_inset
+
+
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Generate-all-Paths-implmentation"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The author initially attempted to implement the ITWOM in parallel by generating
+ all paths on the device, as decried in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:path-on-device"
@@ -776,7 +1106,7 @@ reference "sub:path-on-device"
 .
  However this implementation did not work.
  The author attributes the failure of this method to a combination of the
- potential compiler bug mentioned in section 
+ potential compiler bug mentioned in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:IntelCLBUg"
@@ -788,8 +1118,37 @@ reference "sub:IntelCLBUg"
  Because the host and device have completely separate memory spaces, pointers
  that are valid in the host process will not be valid in any of the device's
  memory spaces unless they have been explicitly set as a kernel argument.
- As a result, the author switched to the multidimensional work-item approach
- described in section 
+ 
+\end_layout
+
+\begin_layout Standard
+Due to the structure of SPLAT! and some of the limitations of OpenCL, a
+ number of features would to be removed from SPLAT! in order to make it
+ work using OpenCL using this approach.
+ Because OpenCL lacks a direct file input and output functionality, the
+ author decided to remove a feature that allowed storing of signal loss
+ results in a log file in addition to being displayed in the final output.
+ Had SPLAT! handled the output of the contents of this log file differently,
+ this measure would not have been necessary.
+ Additionally, the author believes it would be necessary to a feature that
+ computes loss based vertical radiation pattern of an antenna to avoid triggerin
+g a potential Intel OpenCL compiler bug.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
+
+Multidimensional work-items
+\begin_inset Quotes erd
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The author then attempted the multidimensional work-item approach described
+ in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:Multidimensional-Work-Items"
@@ -797,58 +1156,155 @@ reference "sub:Multidimensional-Work-Items"
 \end_inset
 
 .
+ In this process, he encountered an unknown crash in the device side code.
+ As a result he, abandoned this approach in favor of the easier to implement
+ 
+\begin_inset Quotes eld
+\end_inset
+
+path at a time
+\begin_inset Quotes erd
+\end_inset
+
+ approach.
  
 \end_layout
 
 \begin_layout Standard
-In order translate the ITWOM code to OpenCL and run it in parallel, a number
- of changes had to be made to both the ITWOM code and SPLAT.
- Some of these changes, such as removing the instances of static that appear
- in the ITWOM code are necessary due to limitations of the OpenCL programming
- language.
- Parts of SPLAT required some refactoring due to SPLAT's prodigious abuse
- of global variables and to create the necessary buffers for OpenCL to read
- data from and write data to.
+Like an implementation of 
+\begin_inset Quotes eld
+\end_inset
+
+generate all paths on the device
+\begin_inset Quotes erd
+\end_inset
+
+ approach mentioned in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Generate-all-Paths-implmentation"
+
+\end_inset
+
+, the author believes this approach would have required removing the signal
+ loss result log file and the ability to account for antenna elevation patterns
+ in signal loss calculations for the same reasons.
  
 \end_layout
 
-\begin_layout Standard
-Additionally, the author had to add code that compiled the OpenCL code and
- set up the devices that would run this code.
- These steps would add some overhead to the process, which is an unavoidable
- cost of using OpenCL for parallelization.
- This might put OpenCL at a disadvantage to other parallelization techniques
- on some systems.
- 
+\begin_layout Subsubsection
+\begin_inset Quotes eld
+\end_inset
+
+Path at a time
+\begin_inset Quotes erd
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Finally, due to some of the limitations of OpenCL, a number of features
- had to be removed from SPLAT in order to make it work using OpenCL.
- Because OpenCL lacks a direct file input and output functionality, the
- author decided to remove a feature that allowed storing of signal loss
- results in a log file in addition to being displayed in the final output.
- Had SPLAT handled the output of the contents of this log file differently,
- this measure would not have been necessary.
- Additionally, the author removed a feature that computes loss based vertical
- radiation pattern of an antenna to avoid triggering a potential Intel OpenCL
- compiler bug.
- 
+The author then successful implemented the 
+\begin_inset Quotes eld
+\end_inset
+
+path at a time approach
+\begin_inset Quotes erd
+\end_inset
+
+ as described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Path-at-a-time"
+
+\end_inset
+
+.
+ Since this approach retains the per-path client-side code from SPLAT!,
+ it is possible to retain the signal loss result log file and the ability
+ to account for antenna elevation patterns in signal loss calculations.
+ This is the approach used for all of the benchmark results described in
+ Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:SPLAT-Benchmark-results"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Debugging Techniques
 \begin_inset CommandInset label
 LatexCommand label
-name "implementation"
+name "sub:Debugging-Techniques"
 
 \end_inset
 
 
 \end_layout
 
+\begin_layout Standard
+Although newer versions of the Intel OpenCL tools support debugging, the
+ version of the Intel OpenCL tools that the author used for the majority
+ of this project does not have any means to use a debugger on the device
+ side code.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "gdb_opencl"
+
+\end_inset
+
+ While there is a printf function available as an OpenCL extension in many
+ implementations of OpenCL, these implementations often do not function
+ as might be expected.
+ The author found that Intel's printf function would not correctly output
+ variables of the type double.
+ This required the author to take a few creative approaches to debugging.
+ 
+\end_layout
+
+\begin_layout Standard
+One technique for troubleshooting a crash was to simply comment out code
+ until the program started working.
+ This was one case where the printf extension was genuinely useful: it would
+ show which code had actually run.
+ To find more subtle errors, the author wrote a simple single-path test
+ program that passed a single path both an unmodified version point_to_point
+ and the OpenCL implementation thereof and compare the results.
+ This code revealed a number of discrepancies under certain circumstances.
+ However, finding the source of these discrepancies within the functions
+ called by point_to_point requires more effort.
+ 
+\end_layout
+
+\begin_layout Standard
+Since OpenCL is derived from the C programming language, the author was
+ able to compile the modified version of the ITWOM as host side code, allowing
+ him to run the usual debugging tools on it.
+ To find the source of a numerical discrepancy, he would add a number of
+ printf statements into same points in both the stock version of ITWOM and
+ the modified version that had been translated back to C from OpenCL.
+ Then, he would run both sets of code with the same inputs and compare the
+ output from debug printf statements between both versions of the code.
+ 
+\end_layout
+
 \begin_layout Section
-SPLAT Benchmark results
+Benchmark results
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:SPLAT-Benchmark-results"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
-SPLAT Baseline Performance
+SPLAT! Baseline Performance
 \end_layout
 
 \begin_layout Subsubsection
@@ -863,19 +1319,19 @@ name "sub:Test-Procedure-stock"
 \end_layout
 
 \begin_layout Standard
-To establish a baseline benchmark for SPLAT, the author ran a set number
- tests on the existing SPLAT implementation.
- For these tests, the author modified SPLAT's build script to embed debug
+To establish a baseline benchmark for SPLAT!, the author ran a set number
+ tests on the existing SPLAT! implementation.
+ For these tests, the author modified SPLAT!'s build script to embed debug
  information and generate runtime profiles, which may have hurt overall
- performance somewhat.
+ performance slightly.
  
 \end_layout
 
 \begin_layout Standard
 These tests focused on the terrain surrounding Cal Poly, San Luis Obispo.
- SPLAT does not load terrain data for ocean areas.
- Therefore, running SPLAT over a coastal area like the terrain surrounding
- Cal Poly would result in SPLAT spending less time reading terrain data
+ SPLAT! does not load terrain data for ocean areas.
+ Therefore, running SPLAT! over a coastal area like the terrain surrounding
+ Cal Poly would result in SPLAT! spending less time reading terrain data
  from disk compared to inland areas.
  Additionally, all of these tests assume a receiver at 10 feet above ground.
 \end_layout
@@ -893,17 +1349,25 @@ key "Int13"
 
 .
  As a result, the machine has a total of 8 CPU cores.
- The build of SPLAT used was configured to analyze the largest possible
- region, which the highest possible memory requirements.
+ The build of SPLAT! used was configured to analyze up to 25 
+\begin_inset Quotes eld
+\end_inset
+
+pages
+\begin_inset Quotes erd
+\end_inset
+
+ of terrain, each of which is one degree by one degree wide.
  Additionally, the author elected to use the highest-resolution elevation
- data that is available for use with SPLAT.
+ data that is available for use with SPLAT!, which has data points around
+ 1 arc second apart.
  
 \end_layout
 
 \begin_layout Standard
 The author created a simple shell script to run these tests.
  This script ran as a loop: for each integer between 1 and 100, the script
- told SPLAT to simulate propagation of a given frequency from 50 foot high
+ told SPLAT! to simulate propagation of a given frequency from 50 foot high
  antenna on the Cal Poly campus to a hypothetical receiver that was located
  10 feet off of the ground for all points within that integer miles radius
  of the transmitter.
@@ -1019,7 +1483,7 @@ name "alg:Shell-script-used"
 \end_inset
 
 .
- The options given to SPLAT are: -d for the directory that contains the
+ The options given to SPLAT! are: -d for the directory that contains the
  elevation data, -L for the height of the receiver (in feet), -R for the
  radius in miles and -t for a file that describes the transmitter's location.
  
@@ -1046,9 +1510,9 @@ Running Time
 \begin_layout Standard
 When comparing the radius to the execution time, The author found that the
  execution time increases polynomially with the radius of the area.
- This relationship is shown in 
+ This relationship is shown in Figure 
 \begin_inset CommandInset ref
-LatexCommand formatted
+LatexCommand ref
 reference "fig:timevradius"
 
 \end_inset
@@ -1118,11 +1582,11 @@ name "fig:timevradius"
 \end_layout
 
 \begin_layout Standard
-However, the amount of terrain data that SPLAT has to load and process also
- increases polynomially.
+However, the amount of terrain data that SPLAT! has to load and process
+ also increases polynomially.
  Therefore, it makes sense to compare the execution time to the total area
- over which SPLAT is calculating signal strengths.
- This relationship is showed in the graph in
+ over which SPLAT! is calculating signal strengths.
+ This relationship is showed in the graph in 
 \begin_inset CommandInset ref
 LatexCommand formatted
 reference "fig:timevarea"
@@ -1205,13 +1669,13 @@ Running Makeup
 \end_layout
 
 \begin_layout Standard
-For all but the smallest areas, the vast majority of SPLAT's computing time
- is spent running the ITWOM calculations.
+For all but the smallest areas, the vast majority of SPLAT!'s computing
+ time is spent running the ITWOM calculations.
  Generally, as the radius of analysis increases, so does the proportion
- of time that SPLAT spends on the ITWOM calculations.
+ of time that SPLAT! spends on the ITWOM calculations.
  However, there are some points where the proportion of time SPLAT spends
  on the ITWOM calculations briefly decreases.
- This pattern is shown in figure 
+ This pattern is shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:percentvsradius"
@@ -1245,7 +1709,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_execuation_makeup.png
-	scale 45
+	width 10cm
 
 \end_inset
 
@@ -1253,7 +1717,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-A graph showing the how much of the total execution time of SPLAT is dedicated
+A graph showing the how much of the total execution time of SPLAT! is dedicated
  to the ITWOM path loss calculations as related to the maximum radius of
  each given path.
  
@@ -1287,6 +1751,13 @@ Performance Changes with Parallelization
 
 \begin_layout Subsubsection
 Maximum Theoretical Performance Gain
+\begin_inset CommandInset label
+LatexCommand label
+name "sub:Maximum-Theoretical-Performance"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -1296,7 +1767,7 @@ Since the signal loss is at each point is calculated independently of the
  of equivalent compute cores available.
  This approach is unrealistically optimistic in that it ignores any overhead
  associated with compiling the OpenCL code, copying data to and from each
- device, and copying output data into SPLAT's global data structures.
+ device, and copying output data into SPLAT!'s global data structures.
  Nor does it account for any performance loss due to changes that may be
  necessary due to device or host memory limitations or the increased use
  of memory on the host.
@@ -1304,12 +1775,12 @@ Since the signal loss is at each point is calculated independently of the
  a number of equivalent processor cores.
  For example, the differing performance characteristics of a CPU and a GPU
  might make this approach invalid for estimating the maximum performance
- of SPLAT if its ITWOM operations were to be run on a GPU.
+ of SPLAT! if its ITWOM operations were to be run on a GPU.
  
 \end_layout
 
 \begin_layout Standard
-Based on the data gathered by the benchmark described in section
+Based on the data gathered by the benchmark described in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:Test-Procedure-stock"
@@ -1338,7 +1809,7 @@ Further incremental performance improvements might be possible by adding
 \end_layout
 
 \begin_layout Standard
-The theoretical running times calculated by this method are shown in figure
+The theoretical running times calculated by this method are shown in Figure
  
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -1346,7 +1817,7 @@ reference "fig:theoretical-runtime"
 
 \end_inset
 
- and the theoretical performance gains are shown in figure 
+ and the theoretical performance gains are shown in Figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:theoretical-percent"
@@ -1388,7 +1859,7 @@ status open
 
 \begin_layout Plain Layout
 Chart showing the theoretical performance improvement with 8 and 14400 CPU
- cores assigned to the ITWOM calculations within SPLAT.
+ cores assigned to the ITWOM calculations within SPLAT!.
  
 \begin_inset CommandInset label
 LatexCommand label
@@ -1449,7 +1920,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Graph displaying theoretical run times for a parallelized version of SPLAT
+Graph displaying theoretical run times for a parallelized version of SPLAT!
  along side actual benchmark results
 \begin_inset CommandInset label
 LatexCommand label
@@ -1476,15 +1947,263 @@ name "fig:theoretical-runtime"
 \end_layout
 
 \begin_layout Subsubsection
-Parallel Single Path Performance Benchmarks
-\end_layout
-
-\begin_layout Subsubsection
-Parallel SPLAT Performance Benchmarks
+Parallel SPLAT! Performance Benchmarks
 \end_layout
 
 \begin_layout Standard
-This section is to be completed....
+To test the change in performance of the parallelized version of SPLAT!,
+ the author ran a series of benchmarks similar to the initial benchmarks
+ described in Section
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Test-Procedure-stock"
+
+\end_inset
+
+ on both the stock version of SPLAT! and a number of modified versions.
+ Unlike the test described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Test-Procedure-stock"
+
+\end_inset
+
+, both the stock and modified versions of SPLAT! were compiled to use only
+ 4 
+\begin_inset Quotes eld
+\end_inset
+
+pages
+\begin_inset Quotes erd
+\end_inset
+
+ of terrain data.
+ This is due to problems that the author encountered with his modifications
+ with builds that analyze more terrain.
+ The author suspects that this is due to memory limitations of the OpenCL
+ implementations he used.
+ Like the stock benchmarks, the author ran these tests on Tesla, the Cal
+ Poly Computer Science department server.
+ All the OpenCL code was run with the Intel SDK for OpenCL Applications
+ XE 2013, version 3.0 on the server's CPU.
+\end_layout
+
+\begin_layout Standard
+The author benchmarked 3 different versions of the parallelized code in
+ addition to the stock version SPLAT!: One that calculated the entire path
+ without regard to the distance parameter given to SPLAT!, one that only
+ calculates path points out to the given radius, and a third that attempts
+ to avoid re-calculating points that had been already been calculated through
+ memoization.
+ The results of these benchmarks are shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:modified-runtime"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_modified_time.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Chart showing the overall runtime for the stock and modified versions of
+ SPLAT!.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:modified-runtime"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Overall, all of the parallelized versions that respect the distance parameter
+ showed significantly improved performance at radii longer than approximately
+ 30 miles.
+ At 100 miles radius, the memorized version of the code is nearly 4 times
+ as fast as the stock version.
+ This relationship is shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Performance-comparison"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_preformance_compairison.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Performance comparison of modified versions of SPLAT!.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Performance-comparison"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The data shows several other interesting trends: 
+\end_layout
+
+\begin_layout Itemize
+Unlike the previous benchmark, the run time of stock version starts to increase
+ more slowly at longer radii.
+ This is most likely due to smaller smaller maximum area of analysis.
+ The modified versions show a somewhat similar trend.
+\end_layout
+
+\begin_layout Itemize
+For all radii longer than 53 miles, all of the modified versions had improvement
+s over the stock version of SPLAT! This even includes the version that does
+ not respect the radius parameter and calculates unnecessary additional
+ points.
+ 
+\end_layout
+
+\begin_layout Itemize
+Even the modified version that does not respect distance has a change in
+ execution time at a radius of around 16 miles.
+ This is more likely due to SPLAT! loading additional terrain data at that
+ point.
+ 
+\end_layout
+
+\begin_layout Itemize
+At very short radii, the all of the parallelization efforts are worse than
+ the stock.
+ This is likely due to the overhead of loading and compiling the OpenCL
+ code.
+ 
+\end_layout
+
+\begin_layout Itemize
+All of the parallelized versions have significantly more 
+\begin_inset Quotes eld
+\end_inset
+
+User
+\begin_inset Quotes erd
+\end_inset
+
+ CPU time reported by the 
+\begin_inset Quotes eld
+\end_inset
+
+time
+\begin_inset Quotes erd
+\end_inset
+
+ command than overall time.
+ This suggest that time is counting time on each CPU core towards the total
+ 
+\begin_inset Quotes eld
+\end_inset
+
+User
+\begin_inset Quotes erd
+\end_inset
+
+ time.
+ This is why the author elected to compare overall wall time for this benchmark.
+ 
 \end_layout
 
 \begin_layout Subsection
@@ -1492,19 +2211,232 @@ Verification of Results
 \end_layout
 
 \begin_layout Standard
-Although SPLAT has an option for outputting the raw signal loss data, it's
- implemented in such a way as to require file output functionality in the
- code that calculates the loss at each point.
- Since the author's parallelization efforts required moving this code to
- the device side, this functionality was removed from the parallel version
- of SPLAT used for these tests.
- However, the author did write a single-path test driver to verify functionality
- of the ITWOM code.
- 
+As mentioned in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Debugging-Techniques"
+
+\end_inset
+
+, the author wrote a single-path test driver to verify functionality of
+ the ITWOM code.
+ He used this to verify the correct output of the ITWOM with a verity of
+ generated terrain, including terrain that has multiple peaks or valleys,
+ has a single peak or valley or is completely flat.
+ He also tested the ITWOM with a verity of frequencies, transmitter and
+ receiver heights and distance between points.
+ These tests revealed a number of problems with the initial implementation
+ of the complex math functions mentioned in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Changes-to-the-ITWOM"
+
+\end_inset
+
+.
+ These tests also revealed an issue with very low-resolution terrain data,
+ that the author chose to ignore because SPLAT! uses higher resolution terrain
+ data.
+ A technical report from Sid Shumate states:
+\end_layout
+
+\begin_layout Quotation
+This computation proved to be unstable and problem-causing beyond a distance
+ of 67 kilometers, and was reburied, as it is not used for high-definition
+ terrain databases, and has been inactive since at least 1967 
+\begin_inset CommandInset citation
+LatexCommand cite
+after "250"
+key "ITOWM_desc"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-(This section to be completed...)
+Despite these efforts, the author discovered some discrepancies in the overall
+ output of SPLAT! in both the memoized and non-memoized versions.
+ Some small minority of paths in the non-memoized version show vastly less
+ loss than the stock version.
+ The author believes this is due to the bounds-check modification mentioned
+ in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Changes-to-the-ITWOM"
+
+\end_inset
+
+.
+ In the memoized version, the author noticed that the corner paths were
+ not being calculated, leaving four small slivers where no loss data was
+ calculated.
+ These defects are shown in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Comparison-of-SPLAT-Output-1"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename stockplot.png
+	width 5cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Stock Signal Loss Plot
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename myplot_memoized.png
+	width 5cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Memoized OpenCL Signal Loss Plot
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename myplot.png
+	width 5cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Non-Memoized OpenCL Signal Loss Plot
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Comparison of SPLAT! Output.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Comparison-of-SPLAT-Output-1"
+
+\end_inset
+
+ Notice how some of the paths in the plot generated by the non-memoized
+ version of the OpenCL modifications has a few small slivers of paths where
+ SPLAT! has reported a far higher signal intensity than the stock version.
+ Also note that the 
+\begin_inset Quotes eld
+\end_inset
+
+corner paths
+\begin_inset Quotes erd
+\end_inset
+
+ are not calculated at all in the version of the OpenCL modifications that
+ does implement memoization.
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -1516,7 +2448,103 @@ Performance Data
 \end_layout
 
 \begin_layout Standard
-To Be Completed
+The results of this project show that there are significant performance
+ gains to be had by parallelizing SPLAT!.
+ While OpenCL has it's drawbacks and adds some amount of overhead to the
+ process, an OpenCL implementation of the ITWOM running on a CPU is an effective
+ way of parallelizing SPLAT!'s signal loss mapping functionality.
+ With large enough area of analysis and 8 CPU cores, this approach can cut
+ running time by as much as nearly 400%.
+ 
+\end_layout
+
+\begin_layout Standard
+The results for longer radii come close to or even beat the earlier numbers
+ that the author calculated as a theoretical upper bound of performance
+ in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Maximum-Theoretical-Performance"
+
+\end_inset
+
+.
+ This relationship is shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Comparison-of-Theoretical"
+
+\end_inset
+
+.
+ It's worth noting that this may be in part due to the fact the theoretical
+ numbers were derived from a benchmark that was run on a version of SPLAT!
+ which was compiled to use a larger maximum area of analysis.
+ With paths near 100 miles long, the actual benchmark results may be the
+ result of calculating fewer points than stock benchmark calculated, which
+ might explain some of the discrepancy.
+ 
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename chart_theroeticalvacctual.png
+	width 10cm
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Comparison of Theoretical running times to actual benchmark results 
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Comparison-of-Theoretical"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -1528,8 +2556,8 @@ OpenCL
 \end_layout
 
 \begin_layout Standard
-The Khronos, who maintains the Open CL specification, describes OpenCL as
- the 
+The Khronos Group, who maintains the OpenCL specification, describes OpenCL
+ as the 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1537,21 +2565,22 @@ first open, royalty-free standard for general-purpose parallel programming
  of heterogeneous systems.
  OpenCL provides a uniform programming environment for software developers
  to write efficient, portable code for high-performance compute servers,
- desktop computer systems and handheld devices using a diverse mix of multi-core
- CPUs, GPUs, Cell-type architectures and other parallel processors such
- as DSPs.
-\begin_inset Quotes erd
-\end_inset
-
-
+ desktop computer systems and hand-held devices using a diverse mix of multi-cor
+e CPUs, GPUs, Cell-type architectures and other parallel processors such
+ as DSPs
 \begin_inset CommandInset citation
 LatexCommand cite
 key "opencl_www"
 
 \end_inset
 
-In an ideal world, it should be possible to write code once and run it without
- modification across multiple types of device.
+
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In an ideal world, it should be possible to write code once and run it
+ without modification across multiple types of device.
  The inherent differences in architecture between different device types
  mean that 
 \begin_inset Quotes eld
@@ -1561,7 +2590,7 @@ true platform independence is still a goal (versus a reality)
 \begin_inset Quotes erd
 \end_inset
 
-.
+
 \begin_inset CommandInset citation
 LatexCommand cite
 after "41"
@@ -1569,6 +2598,7 @@ key "hetero_book"
 
 \end_inset
 
+.
  Beyond that, the author has himself found that some implementations of
  OpenCL may be incompatible with each other to the extent that code that
  runs on one may not run on the other.
@@ -1576,16 +2606,18 @@ key "hetero_book"
 \end_layout
 
 \begin_layout Subsubsection
-SPLAT
+SPLAT!
 \end_layout
 
 \begin_layout Standard
-In the process of adapting SPLAT to use OpenCL, the author found SPLAT to
- be difficult to use and almost unmaintainable.
- With the exception of the ITWOM and Longley-Rice code, all of SPLAT's functiona
-lity is contained in a single file.
- SPLAT uses global variables extensively, making it difficult to re-factor
- or re-use SPLAT's code.
+In the process of adapting SPLAT! to use OpenCL, the author found SPLAT!
+ to be difficult to use and almost unmaintainable.
+ With the exception of the ITWOM and Longley-Rice code, all of SPLAT!'s
+ functionality is contained in a single file.
+ SPLAT! uses global variables extensively, making it difficult to re-factor
+ or re-use SPLAT!'s code or to attempt to parallelize it.
+ Additionally, since SPLAT! loads all of the necessary terrain data at once,
+ it has high memory usage.
  
 \end_layout
 
@@ -1594,7 +2626,7 @@ Potential Intel OpenCL Bugs
 \end_layout
 
 \begin_layout Standard
-As mentioned in section 
+As mentioned in Section 
 \begin_inset CommandInset ref
 LatexCommand formatted
 reference "implementation"
@@ -1603,7 +2635,7 @@ reference "implementation"
 
 , the author believes that he might have found a bug in the OpenCL Compiler.
  In the device-side code there is a function called PlotLRPath(), which
- is described in 
+ is described in Algorithm 
 \begin_inset CommandInset ref
 LatexCommand formatted
 reference "alg:PlotLRPath-reduced"
@@ -1612,9 +2644,9 @@ reference "alg:PlotLRPath-reduced"
 
 .
  The mere presence of certain lines within that function causes any kernel
- that is defined in the same file to fail, regardless if that kernel calls
+ that is defined in the same file to fail, regardless of rather kernel calls
  the suspect function or not.
- As stated in section
+ As stated in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "implementation"
@@ -1807,26 +2839,95 @@ al array to a function causes the causes the Intel OpenCL compiler to fail
  
 \end_layout
 
+\begin_layout Subsubsection
+Copyright Status of ITWOM
+\end_layout
+
+\begin_layout Standard
+In the header file of the ITWOM.3.0.cpp file that comes with SPLAT! there is
+ a notice which reads:
+\end_layout
+
+\begin_layout Quotation
+This file is copyright(c) 2011 by Sid Shumate and Givens & Bell, Inc.
+ All rights reserved.
+ Commercial use, and resale, including when compiled with wrap-around software,
+ is prohibited except under Givens & Bell, Inc.
+ license.
+\end_layout
+
+\begin_layout Standard
+This seems to conflict with SPLAT!'s licensing under the terms of the GNU
+ GPL version 2 which specifically allows charging a fee to for transferring
+ a copy in section 1.
+ Section 2 of the GPL v2 specifically requires programs that distributed
+ with any component that is covered by the GPL be covered in whole by the
+ GPL and section 6 forbids anyone from adding restrictions to GPLed code.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "gpl"
+
+\end_inset
+
+ Since John A.
+ Magliacane distributes SPLAT! with the ITWOM built into it and doesn't
+ expressibly state any exception to the GPL for the ITWOM, we cannot be
+ entirely sure what the license status of the ITWOM is based upon the SPLAT!
+ source code itself.
+ While this does not impose any restrictions on the author's work, it has
+ caused confusion amongst other users.
+ For example, Alex Farrent does not include ITWOM functionality in CloudRF
+ due to fear of running afoul of the language prohibiting commercial use.
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "cloudrf"
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Further Work
 \end_layout
 
 \begin_layout Subsection
-ITWOM and Longely Rice Code Cleanup
+ITWOM on GPU and other Hardware
 \end_layout
 
 \begin_layout Standard
-As mentioned in section 
+Through this project, the author did not attempt to optimize his version
+ of the ITWOM for a GPU or any other platform supported by OpenCL.
+ Although there may be significant changes that must be made to allow the
+ code to run properly on a GPU or other platform, there may be significant
+ performance gains in doing so 
+\begin_inset CommandInset citation
+LatexCommand cite
+after "41"
+key "hetero_book"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+ITWOM and Langley Rice Code Cleanup
+\end_layout
+
+\begin_layout Standard
+As mentioned in Section 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "sub:lr-background"
 
 \end_inset
 
-, the code that implements the Longely-Rice model and the ITWOM have had
+, the code that implements the Longley-Rice model and the ITWOM have had
  a long history of different entities modifying it.
  In fact, Anita G.
- Longely and Phillip Rice's paper describing the model warns, 
+ Langley and Phillip Rice's paper describing the model warns, 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1835,7 +2936,6 @@ the program was written for a Control Data Corporation CDC-3600 computer
 \begin_inset Quotes erd
 \end_inset
 
-.
  
 \begin_inset CommandInset citation
 LatexCommand cite
@@ -1843,24 +2943,25 @@ key "longley1968prediction"
 
 \end_inset
 
+.
  Through this long history of modifications, many practices that many modern
  developers would consider to be archaic have remained.
  For example, the terrain profile array used in the Longly-Rice code stores
  the number of elements in the array at the first index in the array and
  the distance between points in the array as the second index in the array.
  Additionally, most of the comments and documentation that appears in the
- original Longely-Rice report have been stripped from the newer versions.
+ original Longley-Rice report have been stripped from the newer versions.
  Correcting these issues would greatly improve the maintainability of the
  Longley-Rice code as well as any wrapper program that uses it.
  
 \end_layout
 
 \begin_layout Subsection
-Implementing a Better Wrapper for ITWOM and Longely Rice
+Implementing an Improved Wrapper for ITWOM and Langley Rice
 \end_layout
 
 \begin_layout Standard
-As previously noted, SPLAT has a number of issues that make it a very difficult
+As previously noted, SPLAT! has a number of issues that make it a very difficult
  piece of software to maintain and work with.
  It should be straightforward to create a vastly improved set of 
 \begin_inset Quotes eld
@@ -1871,8 +2972,9 @@ wrapper
 \end_inset
 
  code that handles the loading of the terrain data and other propagation
- information and calling the existing ITWOM or Longely Rice Code.
- Such a program might have the following new features:
+ information and calling the existing ITWOM or Langley Rice Code.
+ In addition to being more maintainable and being structured to allow easier
+ parallelization, such a program might have the following new features:
 \end_layout
 
 \begin_layout Itemize
@@ -1885,7 +2987,7 @@ Support for external elevation databases.
 
 \begin_layout Itemize
 Support for other GIS information for clutter and other properties.
- Currently, SPLAT assumes a uniform amount of 
+ Currently, SPLAT! assumes a uniform amount of 
 \begin_inset Quotes eld
 \end_inset
 
@@ -1909,13 +3011,23 @@ clutter
 
 \begin_layout Itemize
 Support for dynamically loading terrain and elevation data.
- SPLAT currently loads ALL elevation data before running a single propagation
+ SPLAT! currently loads ALL elevation data before running a single propagation
  calculation.
- Since each path is independent with Longely Rice, terrain can be loaded
+ Since each path is independent with Langley Rice, terrain can be loaded
  dynamically and discarded when no longer needed.
  This could reduce the program's memory footprint over large areas and it
  might even improve performance by allowing propagation calculations to
  occur while other pieces of terrain are being loaded.
+\end_layout
+
+\begin_layout Section
+\start_of_appendix
+Complete Source Code and Data
+\end_layout
+
+\begin_layout Standard
+The complete source code, revision history and data used in the project
+ are available at http://github.com/amusselm/Parallel-LRP
 \end_layout
 
 \begin_layout Standard

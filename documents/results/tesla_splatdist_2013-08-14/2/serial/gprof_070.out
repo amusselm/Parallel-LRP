@@ -1,0 +1,423 @@
+Run with 70 miles:
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 46.33   1773.17  1773.17 74048958     0.02     0.02  qtile(int const&, double*, int const&)
+ 21.22   2585.50   812.33 37024512     0.02     0.07  d1thx2(double*, double const&, double const&, propa_type&)
+ 19.49   3331.54   746.04 37024512     0.02     0.02  hzns2(double*, prop_type&, propa_type&)
+  5.97   3560.14   228.60 74047654     0.00     0.00  z1sq2(double*, double const&, double const&, double&, double&)
+  2.85   3669.23   109.09 37024512     0.00     0.10  point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&)
+  1.19   3714.89    45.66 111073481     0.00     0.00  saalos(double, prop_type&, propa_type&)
+  1.13   3758.15    43.26 185031182     0.00     0.00  adiff2(double, prop_type&, propa_type&)
+  0.31   3769.83    11.68 37024512     0.00     0.00  avar(double, double, double, prop_type&, propv_type&)
+  0.20   3777.43     7.60    28816     0.26     0.53  ReadPath(site, site)
+  0.19   3784.58     7.15 123857897     0.00     0.00  GetElevation(site)
+  0.19   3791.73     7.15 140564019     0.00     0.00  OrMask(double, double, int)
+  0.13   3796.72     4.99    28800     0.17   132.75  PlotLRPath(site, site, unsigned char, _IO_FILE*)
+  0.12   3801.23     4.51 37024512     0.00     0.00  lrprop2(double, prop_type&, propa_type&)
+  0.11   3805.39     4.16 111073536     0.00     0.00  curve(double const&, double const&, double const&, double const&, double const&, double const&)
+  0.09   3808.76     3.37                             WritePPMLR(char*, unsigned char, unsigned char, unsigned char, site*, unsigned char)
+  0.08   3811.84     3.08 74049024     0.00     0.00  qerfi(double)
+  0.06   3814.15     2.31 37024512     0.00     0.00  GetSignal(double, double)
+  0.05   3816.05     1.90 31446450     0.00     0.00  ascat(double, prop_type&, propa_type&)
+  0.05   3817.87     1.82 37024512     0.00     0.10  qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&)
+  0.05   3819.60     1.73 37024512     0.00     0.00  PutMask(double, double, int)
+  0.04   3821.19     1.59 37053328     0.00     0.00  Azimuth(site, site)
+  0.04   3822.60     1.42 141988157     0.00     0.00  fht(double const&, double const&)
+  0.03   3823.91     1.31 219859845     0.00     0.00  aknfe(double const&)
+  0.02   3824.78     0.87 37024512     0.00     0.00  PutSignal(double, double, unsigned char)
+  0.02   3825.47     0.70 31446450     0.00     0.00  h0f(double, double)
+  0.01   3825.98     0.51 123799759     0.00     0.00  arccos(double, double)
+  0.01   3826.41     0.43        5    86.01    86.01  LoadSDF_SDF(char*)
+  0.01   3826.70     0.29 37024512     0.00     0.00  qlrps(double, double, double, int, double, double, prop_type&)
+  0.00   3826.88     0.18 15723225     0.00     0.00  ahd(double)
+  0.00   3826.98     0.10 21346976     0.00     0.00  alos2(double, prop_type&, propa_type&)
+  0.00   3827.07     0.10                             FORTRAN_DIM(double const&, double const&)
+  0.00   3827.16     0.09 140563611     0.00     0.00  GetMask(double, double)
+  0.00   3827.25     0.09                             interpolate(int, int, int, int, int)
+  0.00   3827.34     0.09                             adiff(double, prop_type&, propa_type&)
+  0.00   3827.41     0.07                             z1sq1(double*, double const&, double const&, double&, double&)
+  0.00   3827.46     0.05        5    10.00    96.01  LoadSDF(char*)
+  0.00   3827.49     0.03    28816     0.00     0.00  Distance(site, site)
+  0.00   3827.52     0.03                             point_to_point_ITM(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&)
+  0.00   3827.55     0.03                             lrprop(double, prop_type&, propa_type&)
+  0.00   3827.57     0.03                             abq_alos(std::complex<double>)
+  0.00   3827.59     0.02                             hzns(double*, prop_type&)
+  0.00   3827.61     0.02                             d1thx(double*, double const&, double const&)
+  0.00   3827.62     0.01        2     5.00     5.00  dec2dms(double)
+  0.00   3827.63     0.01                             qlrpfl(double*, int, int, prop_type&, propa_type&, propv_type&)
+  0.00   3827.63     0.00       16     0.00     0.53  AverageTerrain(site, double, double, double)
+  0.00   3827.63     0.00        6     0.00     0.00  ReduceAngle(double)
+  0.00   3827.63     0.00        2     0.00     0.00  LoadSDF_BZ(char*)
+  0.00   3827.63     0.00        2     0.00     0.00  ReadBearing(char*)
+  0.00   3827.63     0.00        1     0.00     0.00  LoadLossColors(site)
+  0.00   3827.63     0.00        1     0.00     4.25  haat(site)
+  0.00   3827.63     0.00        1     0.00     0.00  LoadPAT(char*)
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) for 0.00% of 3827.63 seconds
+
+index % time    self  children    called     name
+                4.99 3818.30   28800/28800       PlotLRMap(site, double, char*) [2]
+[1]     99.9    4.99 3818.30   28800         PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+              109.09 3680.19 37024512/37024512     point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [3]
+                7.60    7.69   28800/28816       ReadPath(site, site) [13]
+                7.15    0.00 140562154/140564019     OrMask(double, double, int) [15]
+                2.31    0.00 37024512/37024512     GetSignal(double, double) [20]
+                1.73    0.00 37024512/37024512     PutMask(double, double, int) [21]
+                1.59    0.00 37024512/37053328     Azimuth(site, site) [22]
+                0.87    0.00 37024512/37024512     PutSignal(double, double, unsigned char) [25]
+                0.09    0.00 140562154/140563611     GetMask(double, double) [35]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     99.9    0.00 3823.29                 PlotLRMap(site, double, char*) [2]
+                4.99 3818.30   28800/28800       PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+                0.00    0.00       2/6           ReduceAngle(double) [57]
+-----------------------------------------------
+              109.09 3680.19 37024512/37024512     PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[3]     99.0  109.09 3680.19 37024512         point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [3]
+                1.82 3659.17 37024512/37024512     qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&) [4]
+               11.68    4.16 37024512/37024512     avar(double, double, double, prop_type&, propv_type&) [12]
+                3.08    0.00 74049024/74049024     qerfi(double) [18]
+                0.29    0.00 37024512/37024512     qlrps(double, double, double, int, double, double, prop_type&) [31]
+-----------------------------------------------
+                1.82 3659.17 37024512/37024512     point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [3]
+[4]     95.6    1.82 3659.17 37024512         qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&) [4]
+              812.33 1887.48 37024512/37024512     d1thx2(double*, double const&, double const&, propa_type&) [5]
+              746.04    0.00 37024512/37024512     hzns2(double*, prop_type&, propa_type&) [7]
+              114.30    0.00 37023175/74047654     z1sq2(double*, double const&, double const&, double&, double&) [8]
+                4.51   94.51 37024512/37024512     lrprop2(double, prop_type&, propa_type&) [9]
+-----------------------------------------------
+              812.33 1887.48 37024512/37024512     qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&) [4]
+[5]     70.5  812.33 1887.48 37024512         d1thx2(double*, double const&, double const&, propa_type&) [5]
+             1773.17    0.00 74048958/74048958     qtile(int const&, double*, int const&) [6]
+              114.30    0.00 37024479/74047654     z1sq2(double*, double const&, double const&, double&, double&) [8]
+-----------------------------------------------
+             1773.17    0.00 74048958/74048958     d1thx2(double*, double const&, double const&, propa_type&) [5]
+[6]     46.3 1773.17    0.00 74048958         qtile(int const&, double*, int const&) [6]
+-----------------------------------------------
+              746.04    0.00 37024512/37024512     qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&) [4]
+[7]     19.5  746.04    0.00 37024512         hzns2(double*, prop_type&, propa_type&) [7]
+-----------------------------------------------
+              114.30    0.00 37023175/74047654     qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&) [4]
+              114.30    0.00 37024479/74047654     d1thx2(double*, double const&, double const&, propa_type&) [5]
+[8]      6.0  228.60    0.00 74047654         z1sq2(double*, double const&, double const&, double&, double&) [8]
+-----------------------------------------------
+                4.51   94.51 37024512/37024512     qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&) [4]
+[9]      2.6    4.51   94.51 37024512         lrprop2(double, prop_type&, propa_type&) [9]
+               43.26   48.36 185031182/185031182     adiff2(double, prop_type&, propa_type&) [10]
+                1.90    0.88 31446450/31446450     ascat(double, prop_type&, propa_type&) [19]
+                0.10    0.02 21346976/21346976     alos2(double, prop_type&, propa_type&) [33]
+-----------------------------------------------
+               43.26   48.36 185031182/185031182     lrprop2(double, prop_type&, propa_type&) [9]
+[10]     2.4   43.26   48.36 185031182         adiff2(double, prop_type&, propa_type&) [10]
+               45.64    0.00 111027838/111073481     saalos(double, prop_type&, propa_type&) [11]
+                1.42    0.00 141988157/141988157     fht(double const&, double const&) [23]
+                1.31    0.00 219859845/219859845     aknfe(double const&) [24]
+-----------------------------------------------
+                0.02    0.00   45643/111073481     alos2(double, prop_type&, propa_type&) [33]
+               45.64    0.00 111027838/111073481     adiff2(double, prop_type&, propa_type&) [10]
+[11]     1.2   45.66    0.00 111073481         saalos(double, prop_type&, propa_type&) [11]
+-----------------------------------------------
+               11.68    4.16 37024512/37024512     point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [3]
+[12]     0.4   11.68    4.16 37024512         avar(double, double, double, prop_type&, propv_type&) [12]
+                4.16    0.00 111073536/111073536     curve(double const&, double const&, double const&, double const&, double const&, double const&) [16]
+-----------------------------------------------
+                0.00    0.00      16/28816       AverageTerrain(site, double, double, double) [48]
+                7.60    7.69   28800/28816       PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[13]     0.4    7.60    7.69   28816         ReadPath(site, site) [13]
+                7.15    0.00 123857878/123857897     GetElevation(site) [14]
+                0.51    0.00 123799745/123799759     arccos(double, double) [27]
+                0.03    0.00   28816/28816       Distance(site, site) [39]
+                0.00    0.00   28816/37053328     Azimuth(site, site) [22]
+-----------------------------------------------
+                0.00    0.00       1/123857897     haat(site) [49]
+                0.00    0.00       2/123857897     SiteReport(site) [45]
+                0.00    0.00      16/123857897     AverageTerrain(site, double, double, double) [48]
+                7.15    0.00 123857878/123857897     ReadPath(site, site) [13]
+[14]     0.2    7.15    0.00 123857897         GetElevation(site) [14]
+-----------------------------------------------
+                0.00    0.00    1865/140564019     PlaceMarker(site) [50]
+                7.15    0.00 140562154/140564019     PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[15]     0.2    7.15    0.00 140564019         OrMask(double, double, int) [15]
+-----------------------------------------------
+                4.16    0.00 111073536/111073536     avar(double, double, double, prop_type&, propv_type&) [12]
+[16]     0.1    4.16    0.00 111073536         curve(double const&, double const&, double const&, double const&, double const&, double const&) [16]
+-----------------------------------------------
+                                                 <spontaneous>
+[17]     0.1    3.37    0.00                 WritePPMLR(char*, unsigned char, unsigned char, unsigned char, site*, unsigned char) [17]
+                0.00    0.00       2/6           ReduceAngle(double) [57]
+                0.00    0.00       1/1           LoadLossColors(site) [60]
+-----------------------------------------------
+                3.08    0.00 74049024/74049024     point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [3]
+[18]     0.1    3.08    0.00 74049024         qerfi(double) [18]
+-----------------------------------------------
+                1.90    0.88 31446450/31446450     lrprop2(double, prop_type&, propa_type&) [9]
+[19]     0.1    1.90    0.88 31446450         ascat(double, prop_type&, propa_type&) [19]
+                0.70    0.00 31446450/31446450     h0f(double, double) [26]
+                0.18    0.00 15723225/15723225     ahd(double) [32]
+-----------------------------------------------
+                2.31    0.00 37024512/37024512     PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[20]     0.1    2.31    0.00 37024512         GetSignal(double, double) [20]
+-----------------------------------------------
+                1.73    0.00 37024512/37024512     PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[21]     0.0    1.73    0.00 37024512         PutMask(double, double, int) [21]
+-----------------------------------------------
+                0.00    0.00   28816/37053328     ReadPath(site, site) [13]
+                1.59    0.00 37024512/37053328     PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[22]     0.0    1.59    0.00 37053328         Azimuth(site, site) [22]
+-----------------------------------------------
+                1.42    0.00 141988157/141988157     adiff2(double, prop_type&, propa_type&) [10]
+[23]     0.0    1.42    0.00 141988157         fht(double const&, double const&) [23]
+-----------------------------------------------
+                1.31    0.00 219859845/219859845     adiff2(double, prop_type&, propa_type&) [10]
+[24]     0.0    1.31    0.00 219859845         aknfe(double const&) [24]
+-----------------------------------------------
+                0.87    0.00 37024512/37024512     PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[25]     0.0    0.87    0.00 37024512         PutSignal(double, double, unsigned char) [25]
+-----------------------------------------------
+                0.70    0.00 31446450/31446450     ascat(double, prop_type&, propa_type&) [19]
+[26]     0.0    0.70    0.00 31446450         h0f(double, double) [26]
+-----------------------------------------------
+                0.00    0.00      14/123799759     AverageTerrain(site, double, double, double) [48]
+                0.51    0.00 123799745/123799759     ReadPath(site, site) [13]
+[27]     0.0    0.51    0.00 123799759         arccos(double, double) [27]
+-----------------------------------------------
+                0.05    0.43       5/5           LoadTopoData(int, int, int, int) [29]
+[28]     0.0    0.05    0.43       5         LoadSDF(char*) [28]
+                0.43    0.00       5/5           LoadSDF_SDF(char*) [30]
+                0.00    0.00       2/2           LoadSDF_BZ(char*) [58]
+-----------------------------------------------
+                                                 <spontaneous>
+[29]     0.0    0.00    0.48                 LoadTopoData(int, int, int, int) [29]
+                0.05    0.43       5/5           LoadSDF(char*) [28]
+                0.00    0.00       2/6           ReduceAngle(double) [57]
+-----------------------------------------------
+                0.43    0.00       5/5           LoadSDF(char*) [28]
+[30]     0.0    0.43    0.00       5         LoadSDF_SDF(char*) [30]
+-----------------------------------------------
+                0.29    0.00 37024512/37024512     point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [3]
+[31]     0.0    0.29    0.00 37024512         qlrps(double, double, double, int, double, double, prop_type&) [31]
+-----------------------------------------------
+                0.18    0.00 15723225/15723225     ascat(double, prop_type&, propa_type&) [19]
+[32]     0.0    0.18    0.00 15723225         ahd(double) [32]
+-----------------------------------------------
+                0.10    0.02 21346976/21346976     lrprop2(double, prop_type&, propa_type&) [9]
+[33]     0.0    0.10    0.02 21346976         alos2(double, prop_type&, propa_type&) [33]
+                0.02    0.00   45643/111073481     saalos(double, prop_type&, propa_type&) [11]
+-----------------------------------------------
+                                                 <spontaneous>
+[34]     0.0    0.10    0.00                 FORTRAN_DIM(double const&, double const&) [34]
+-----------------------------------------------
+                0.00    0.00    1457/140563611     PlaceMarker(site) [50]
+                0.09    0.00 140562154/140563611     PlotLRPath(site, site, unsigned char, _IO_FILE*) [1]
+[35]     0.0    0.09    0.00 140563611         GetMask(double, double) [35]
+-----------------------------------------------
+                                                 <spontaneous>
+[36]     0.0    0.09    0.00                 interpolate(int, int, int, int, int) [36]
+-----------------------------------------------
+                                                 <spontaneous>
+[37]     0.0    0.09    0.00                 adiff(double, prop_type&, propa_type&) [37]
+-----------------------------------------------
+                                                 <spontaneous>
+[38]     0.0    0.07    0.00                 z1sq1(double*, double const&, double const&, double&, double&) [38]
+-----------------------------------------------
+                0.03    0.00   28816/28816       ReadPath(site, site) [13]
+[39]     0.0    0.03    0.00   28816         Distance(site, site) [39]
+-----------------------------------------------
+                                                 <spontaneous>
+[40]     0.0    0.03    0.00                 point_to_point_ITM(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [40]
+-----------------------------------------------
+                                                 <spontaneous>
+[41]     0.0    0.03    0.00                 lrprop(double, prop_type&, propa_type&) [41]
+-----------------------------------------------
+                                                 <spontaneous>
+[42]     0.0    0.03    0.00                 abq_alos(std::complex<double>) [42]
+-----------------------------------------------
+                                                 <spontaneous>
+[43]     0.0    0.02    0.00                 hzns(double*, prop_type&) [43]
+-----------------------------------------------
+                                                 <spontaneous>
+[44]     0.0    0.02    0.00                 d1thx(double*, double const&, double const&) [44]
+-----------------------------------------------
+                                                 <spontaneous>
+[45]     0.0    0.00    0.02                 SiteReport(site) [45]
+                0.01    0.00       2/2           dec2dms(double) [46]
+                0.00    0.00       1/1           haat(site) [49]
+                0.00    0.00       8/16          AverageTerrain(site, double, double, double) [48]
+                0.00    0.00       2/123857897     GetElevation(site) [14]
+-----------------------------------------------
+                0.01    0.00       2/2           SiteReport(site) [45]
+[46]     0.0    0.01    0.00       2         dec2dms(double) [46]
+-----------------------------------------------
+                                                 <spontaneous>
+[47]     0.0    0.01    0.00                 qlrpfl(double*, int, int, prop_type&, propa_type&, propv_type&) [47]
+-----------------------------------------------
+                0.00    0.00       8/16          haat(site) [49]
+                0.00    0.00       8/16          SiteReport(site) [45]
+[48]     0.0    0.00    0.01      16         AverageTerrain(site, double, double, double) [48]
+                0.00    0.00      16/28816       ReadPath(site, site) [13]
+                0.00    0.00      16/123857897     GetElevation(site) [14]
+                0.00    0.00      14/123799759     arccos(double, double) [27]
+-----------------------------------------------
+                0.00    0.00       1/1           SiteReport(site) [45]
+[49]     0.0    0.00    0.00       1         haat(site) [49]
+                0.00    0.00       8/16          AverageTerrain(site, double, double, double) [48]
+                0.00    0.00       1/123857897     GetElevation(site) [14]
+-----------------------------------------------
+                                                 <spontaneous>
+[50]     0.0    0.00    0.00                 PlaceMarker(site) [50]
+                0.00    0.00    1865/140564019     OrMask(double, double, int) [15]
+                0.00    0.00    1457/140563611     GetMask(double, double) [35]
+-----------------------------------------------
+                0.00    0.00       2/6           PlotLRMap(site, double, char*) [2]
+                0.00    0.00       2/6           WritePPMLR(char*, unsigned char, unsigned char, unsigned char, site*, unsigned char) [17]
+                0.00    0.00       2/6           LoadTopoData(int, int, int, int) [29]
+[57]     0.0    0.00    0.00       6         ReduceAngle(double) [57]
+-----------------------------------------------
+                0.00    0.00       2/2           LoadSDF(char*) [28]
+[58]     0.0    0.00    0.00       2         LoadSDF_BZ(char*) [58]
+-----------------------------------------------
+                0.00    0.00       2/2           LoadQTH(char*) [92]
+[59]     0.0    0.00    0.00       2         ReadBearing(char*) [59]
+-----------------------------------------------
+                0.00    0.00       1/1           WritePPMLR(char*, unsigned char, unsigned char, unsigned char, site*, unsigned char) [17]
+[60]     0.0    0.00    0.00       1         LoadLossColors(site) [60]
+-----------------------------------------------
+                0.00    0.00       1/1           ReadLRParm(site, char) [65]
+[61]     0.0    0.00    0.00       1         LoadPAT(char*) [61]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+
+Index by function name
+
+  [58] LoadSDF_BZ(char*)      [49] haat(site)              [5] d1thx2(double*, double const&, double const&, propa_type&)
+   [1] PlotLRPath(site, site, unsigned char, _IO_FILE*) [43] hzns(double*, prop_type&) [41] lrprop(double, prop_type&, propa_type&)
+  [17] WritePPMLR(char*, unsigned char, unsigned char, unsigned char, site*, unsigned char) [37] adiff(double, prop_type&, propa_type&) [47] qlrpfl(double*, int, int, prop_type&, propa_type&, propv_type&)
+  [34] FORTRAN_DIM(double const&, double const&) [24] aknfe(double const&) [11] saalos(double, prop_type&, propa_type&)
+  [30] LoadSDF_SDF(char*)     [33] alos2(double, prop_type&, propa_type&) [22] Azimuth(site, site)
+  [59] ReadBearing(char*)     [19] ascat(double, prop_type&, propa_type&) [35] GetMask(double, double)
+  [57] ReduceAngle(double)    [16] curve(double const&, double const&, double const&, double const&, double const&, double const&) [61] LoadPAT(char*)
+  [36] interpolate(int, int, int, int, int) [44] d1thx(double*, double const&, double const&) [28] LoadSDF(char*)
+  [14] GetElevation(site)      [7] hzns2(double*, prop_type&, propa_type&) [21] PutMask(double, double, int)
+  [48] AverageTerrain(site, double, double, double) [18] qerfi(double) [46] dec2dms(double)
+  [60] LoadLossColors(site)   [31] qlrps(double, double, double, int, double, double, prop_type&) [9] lrprop2(double, prop_type&, propa_type&)
+   [3] point_to_point(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [6] qtile(int const&, double*, int const&) [4] qlrpfl2(double*, int, int, prop_type&, propa_type&, propv_type&)
+  [40] point_to_point_ITM(double*, double, double, double, double, double, double, int, int, double, double, double&, char*, int&) [38] z1sq1(double*, double const&, double const&, double&, double&) [39] Distance(site, site)
+  [32] ahd(double)             [8] z1sq2(double*, double const&, double const&, double&, double&) [13] ReadPath(site, site)
+  [23] fht(double const&, double const&) [15] OrMask(double, double, int) [42] abq_alos(std::complex<double>)
+  [26] h0f(double, double)    [10] adiff2(double, prop_type&, propa_type&) [20] GetSignal(double, double)
+  [12] avar(double, double, double, prop_type&, propv_type&) [27] arccos(double, double) [25] PutSignal(double, double, unsigned char)

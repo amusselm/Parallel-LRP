@@ -5,11 +5,14 @@
  *
  * @author Andrew J. Musselman 
  */
+using namespace std;
 
 #include "clutil.h"
 #include "splat.h"
 #include<unistd.h>
 #include<assert.h>
+#include<iostream>
+#include<fstream>
 
 //Declration of point to point for serial ITWOM
 void point_to_point(double elev[], double tht_m, double rht_m, double eps_dielect, double sgm_conductivity, double eno_ns_surfref, double frq_mhz, int radio_climate, int pol, double conf, double rel, double &dbloss, char *strmode, int &errnum);
@@ -35,8 +38,8 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
    }
 
 
-   for(int i = 1; i <= numElev; i++){
-      itm_elev[0] = i; /* Number of points */ 
+   for(int i = 2; i <= numElev; i++){
+      itm_elev[0] = i-1; /* Number of points */ 
       itm_elev[1] = dist; /* Distance between points */
    
       point_to_point(itm_elev,sourceAlt, destAlt, eps_dielect, sgm_conductivity,
@@ -46,41 +49,13 @@ void allPoints(size_t numElev, double dist, double *elev, double *signal,
    }
 }
 
-
-void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
+void allPoints_runCl(size_t numElev, double dist, double *elev, double *signal,
                   double sourceAlt, double destAlt, double eps_dielect, 
                   double sgm_conductivity, double eno_ns_surfref, 
                   double frq_mhz, int radio_climate, int pol, double conf,
-                  double rel){
+                  double rel,cl_kernel kernel,cl_context context,
+                  cl_command_queue queue){
    int err;
-
-   /* OpenCL structures */
-   cl_device_id device;
-   cl_context context;
-   cl_program program;
-   cl_kernel kernel;
-   cl_command_queue queue;
-   cl_int i, j;
-
-   cl_uint numPlatforms;
-   cl_uint numDevices[MAX_DEVICE];
-   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE];
-   cl_platform_id platforms;
-   if(getDevices(devices,MAX_PLATFORM,MAX_DEVICE,&numPlatforms,numDevices) > 0){
-      fprintf(stderr,"Couldn't get devices");    
-      exit(1);
-   }
-
-   cl_mem destBuffer;
-   cl_mem demBuffer;
-    
-   //Hardcoded to get first device...
-   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
-   //Call the OpenCL Kernel:
-   
-
-   program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
-
    //Array to represent the elevation array
    cl_mem elevBuffer = clCreateBuffer(context, 
       CL_MEM_READ_ONLY |CL_MEM_COPY_HOST_PTR, 
@@ -102,21 +77,6 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       perror("Couldn't create a buffer");
       exit(1);   
    };
-
-
-   /* Create a command queue */
-   queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
-   if(err < 0) {
-      perror("Couldn't create a command queue");
-      exit(1);   
-   };
-   
-   /* create kernel */
-   kernel = clCreateKernel(program, "point_to_point_cl", &err);
-   if(err < 0) {
-      perror("Couldn't create a kernel");
-      exit(1);
-   }
 
    /* Create Kernel arguments */
    err = clSetKernelArg(kernel, 0, sizeof(cl_int),(void*)&numElev);
@@ -204,7 +164,8 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
    }
 
    /* Enqueue kernel */
-   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &numElev, 
+   size_t startPoint = 2;
+   err = clEnqueueNDRangeKernel(queue, kernel, 1, &startPoint, &numElev, 
          NULL, 0, NULL, NULL); 
    if(err < 0) {
       fprintf(stderr,"Couldn't enqueue the kernel, code:%d",err);
@@ -234,10 +195,64 @@ void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
       exit(1);
    }
 
-   //Program cleanup
-   clReleaseKernel(kernel);
+   //Cleanup Buffers
    clReleaseMemObject(elevBuffer);
    clReleaseMemObject(dblossBuffer);
+
+}
+
+void allPoints_cl(size_t numElev, double dist, double *elev, double *signal,
+                  double sourceAlt, double destAlt, double eps_dielect, 
+                  double sgm_conductivity, double eno_ns_surfref, 
+                  double frq_mhz, int radio_climate, int pol, double conf,
+                  double rel){
+   int err;
+
+   /* OpenCL structures */
+   cl_device_id device;
+   cl_context context;
+   cl_program program;
+   cl_kernel kernel;
+   cl_command_queue queue;
+   cl_int i, j;
+
+   cl_uint numPlatforms;
+   cl_uint numDevices[MAX_DEVICE];
+   cl_device_id devices[MAX_PLATFORM][MAX_DEVICE];
+   cl_platform_id platforms;
+   if(getDevices(devices,MAX_PLATFORM,MAX_DEVICE,&numPlatforms,numDevices) > 0){
+      fprintf(stderr,"Couldn't get devices");    
+      exit(1);
+   }
+
+   cl_mem destBuffer;
+   cl_mem demBuffer;
+    
+   //Hardcoded to get first device...
+   context = clCreateContext(NULL, 1, &devices[0][0], NULL, NULL, &err);
+   //Call the OpenCL Kernel:
+   
+
+   program = build_program(context, device,"/home/amusselm/projects/srproject/Parallel-LRP/psplat/itm_support.cl" );
+   /* Create a command queue */
+   queue = clCreateCommandQueue(context, devices[0][0], 0, &err);
+   if(err < 0) {
+      perror("Couldn't create a command queue");
+      exit(1);   
+   };
+   
+   /* create kernel */
+   kernel = clCreateKernel(program, "point_to_point_cl", &err);
+   if(err < 0) {
+      perror("Couldn't create a kernel");
+      exit(1);
+   }
+   allPoints_runCl(numElev,dist,elev,signal,sourceAlt,destAlt,
+                eps_dielect,sgm_conductivity,eno_ns_surfref,frq_mhz,radio_climate,
+                pol,conf,rel,kernel,context,queue);
+
+   //Program cleanup
+   clReleaseKernel(kernel);
    clReleaseCommandQueue(queue);
    clReleaseProgram(program);
    clReleaseContext(context);
@@ -372,6 +387,15 @@ void printAttrs(size_t numElevElements,
 
 }
 
+void readTerrain(double* elev,int numElevElements,string inputFilename){
+   ifstream input;
+   input.open(inputFilename.c_str(), ios::in);
+   for(int i = 0; i < numElevElements && i < ARRAYSIZE && input.eof() != 0; i++){
+      input >> elev[i];
+   }
+   input.close();
+}
+
 int main(int argc, char* argv[]){
    size_t numElevElements = ELEVSIZE_DFLT;
    double elevDistance = ELEVDIST_DFLT;
@@ -391,31 +415,33 @@ int main(int argc, char* argv[]){
    int profileAlt = 0; /* default to flat */
 
    int mode = 0;
-   int runSerial = 1;
-   int runCl = 1;
-   int compareResults = 1;
+   bool runSerial = true;
+   bool runCl = true;
+   bool compareResults = true;
+   string inputFile;
+   bool readInput = false; 
 
    int opt;
 
-   while ((opt = getopt(argc,argv,"d:t:r:f:n:p:a:v:m:h")) != -1){
+   while ((opt = getopt(argc,argv,"d:t:r:f:n:p:a:v:m:l:h")) != -1){
       switch(opt) {
-         case 'v':
+         case 'v': /* Verbose */
             verbose = atoi(optarg);
             break;
-         case 'd':
+         case 'd': /* Distance Between Points */
             elevDistance = atof(optarg);
             break;
-         case 't':
+         case 't': /* Transmitter Altitude */
             sourceAlt = atof(optarg);
             break;
-         case 'r':
+         case 'r': /* Receiver Altitude */
             destAlt = atof(optarg);
             break;
-         case 'n':
+         case 'n': /* Number of Elev Elements */
             numElevElements = atoi(optarg);
             assert(numElevElements <= ARRAYSIZE);
             break;
-         case 'm':
+         case 'm': /* Mode - ie run both CL and non CL code? */
             mode = atoi(optarg);
             if(mode > 3 || mode < 0){
                fprintf(stderr,"Invalid mode\n");
@@ -423,16 +449,20 @@ int main(int argc, char* argv[]){
                exit(EXIT_FAILURE);
             }
             break;
-         case 'f': 
+         case 'f': /* Frequency */
             frq_mhz = atof(optarg);
             break;
-         case 'p':
+         case 'p': /* Terrain Profile - Canned Data */
             profile = atoi(optarg);
             if(profile > 3 || profile < 0){
                fprintf(stderr,"Invalid Terain profile\n");
                printUsage();
                exit(EXIT_FAILURE);
             }
+            break;
+         case 'l':/* Load terrain profile */
+            inputFile = optarg;
+            readInput = true;
             break;
          case 'a':
             profileAlt = atof(optarg);
@@ -477,7 +507,12 @@ int main(int argc, char* argv[]){
 
 
    double *elev = new double [numElevElements];
-   generateTerrain(elev,numElevElements,profile,profileAlt);
+   if(!readInput){
+      generateTerrain(elev,numElevElements,profile,profileAlt);
+   }
+   else{
+      readTerrain(elev,numElevElements,inputFile);
+   }
 
    if(verbose){
       printAttrs(numElevElements, elevDistance,sourceAlt, destAlt,eps_dielect,
