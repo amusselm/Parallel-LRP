@@ -80,7 +80,7 @@ for(my $i = 1; $i <= $maxMile; $i++){
    print($i);
    print(",");
    foreach my $key (keys %$results){
-      print($results->{$key}[$i]->{'timePercent'});
+      print($results->{$key}[$i]->{'timeSelfSeconds'});
       print(",");
    }
    print("\n");

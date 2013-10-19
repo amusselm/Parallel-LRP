@@ -66,12 +66,12 @@ An OpenCL Implementation of the Irregular Terrain with Obstructions Model
 \end_layout
 
 \begin_layout Author
-Andrew J.
+Christopher Lupo, Andrew J.
  Musselman
 \end_layout
 
 \begin_layout Date
-October 3, 2013
+October 18, 2013
 \end_layout
 
 \begin_layout Abstract
@@ -1560,7 +1560,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_radius.png
-	width 7cm
+	width 100col%
 
 \end_inset
 
@@ -1636,7 +1636,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_area.png
-	width 7cm
+	width 100col%
 
 \end_inset
 
@@ -1726,7 +1726,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_execuation_makeup.png
-	width 7cm
+	width 100col%
 
 \end_inset
 
@@ -1867,7 +1867,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_theoretical_percent.png
-	width 7cm
+	width 100col%
 
 \end_inset
 
@@ -1929,7 +1929,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_theoretical_seconds.png
-	width 7cm
+	width 100col%
 
 \end_inset
 
@@ -2046,7 +2046,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_modified_time.png
-	width 7cm
+	width 100col%
 
 \end_inset
 
@@ -2119,7 +2119,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename chart_preformance_compairison.png
-	width 7cm
+	width 100col%
 
 \end_inset
 
@@ -2499,15 +2499,29 @@ reference "fig:Comparison-of-Theoretical"
  With paths near 100 miles long, the actual benchmark results may be the
  result of calculating fewer points than stock benchmark calculated, which
  might explain some of the discrepancy.
+ To test this possibility, the author applied the method for estimating
+ the maximum possible performance gain described in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sub:Maximum-Theoretical-Performance"
+
+\end_inset
+
+ to the data gathered from the stock version of SPLAT compiled with the
+ smaller maximum area of analysis.
+ Even with this smaller maximum area of analysis, at long radii the OpenCL
+ version somehow preform better this theoretical maximum performance.
+ This might be caused by a difference in how the CPU caches are used, difference
+s between the Intel OpenCL compiler and the GNU compiler or other factors
+ entirely.
  
+\end_layout
+
+\begin_layout Standard
 \begin_inset Float figure
 wide false
 sideways false
 status open
-
-\begin_layout Plain Layout
-
-\end_layout
 
 \begin_layout Plain Layout
 \begin_inset Box Boxed
@@ -2598,7 +2612,7 @@ reference "implementation"
 
 , the author was able to avoid the issue by simply removing the suspect
  line and all other calculations necessary to account for the antenna's
- vertical radiation patternfrom the device side OpenCL code.
+ vertical radiation pattern from the device side OpenCL code.
  
 \begin_inset CommandInset label
 LatexCommand label
