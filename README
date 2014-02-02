@@ -1,0 +1,4 @@
+Parallel SPLAT
+==============
+
+This project is an experimental OpenCL parallel modification of [SPLAT](http://www.qsl.net/kd2bd/splat.html), which is a tool for predicting radio frequency propagation over terrain. This code is *very* unstable and may not work on some systems or with some versions of the OpenCL tools.  
